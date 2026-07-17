@@ -1,10 +1,12 @@
-# Sample
+# Cross platform C++ SDK for Rhino
 
-This repository contains a complete working sample.
+This repository contains a complete C++ SDK for Rhino, and is intended to be used as a submodule.
 
-To create your own plug-in from scratch, you will need to copy some files over from this project into yours, so you might want to clone this repo.
+The "main" branch corresponds with the latest service release of Rhino.  If you want to target a specific service release, use the corresponding branch.
 
-## Creating the project
+To create your own plug-in from scratch, follow the instructions below to set up projects for Windows and OSX.  If you intend your project to be cross platform, begin with the OSX project.
+
+## Creating the OSX project
 
 You will need to create a “Bundle” project in Xcode.  The compiled bundle will become your RHP - but it is actually set of folders much like a package.
 
