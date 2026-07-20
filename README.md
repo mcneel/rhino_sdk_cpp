@@ -6,7 +6,9 @@ The "main" branch corresponds with the latest service release of Rhino.  If you 
 
 To create your own plug-in from scratch, follow the instructions below to set up projects for Windows and OSX.  If you intend your project to be cross platform, begin with the OSX project.
 
-## Creating the OSX project
+## Apple OSX
+
+### Creating the OSX Bundle
 
 You will need to create a “Bundle” project in Xcode.  The compiled bundle will become your RHP - but it is actually set of folders much like a package.
 
@@ -14,45 +16,39 @@ You will need to create a “Bundle” project in Xcode.  The compiled bundle wi
  * Under “Framework & Library” click “Bundle” and click “Next”.
  * Name your Bundle.  Set the Organisation. Set the Bundle extension to “rhp”.
  * Select a location on the disk and click “Create”
- * Build settings using XCConfig
+ * Create a git repository, for example:
 
-Copy the XCConfig folder from the sample above into the root folder of your bundle project.  It should be at the same level as MYPROJECT.xcodeproj.
+    cd MyProjectName
+    git init
+    git add .
+    git commit -m "Initial commit"
+    gh repo create MyOrg/MyProjectName --source=. --push
 
-In XCode, select the name of your project in the Project Navigator (the leftmost bar), and choose “Add files to MYPROJECT”.  Select the XCConfig folder and click “Add”  Keep the defaults and choose “Finish”.
+* Next add this repository as a submodule
 
-In XCode, select the name of your project in the Project Navigator (the leftmost bar), and then select the name of your project under “PROJECT” slightly to the right (not TARGETS).
+    git submodule add https://github.com/mcneel/rhino_sdk_cpp.git SDK
+    git commit -m "Add Rhino SDK submodule"
 
-Select the leftmost “Info” tab.
+* In XCode, select the name of your project in the Project Navigator (the leftmost bar), and choose “Add files to MYPROJECT”.  Select the XCConfig folder inside the SDK folder and click “Add”  Select "Reference files in place" and click “Finish”.
+* In XCode, select the name of your project in the Project Navigator (the leftmost bar), and then select the name of your project under “PROJECT” slightly to the right (not TARGETS).
+* Select the leftmost “Info” tab.
+* Under “Configurations” - further to the right.  Open the “Debug” configuration drop down and Click where it says “None” on the first line under this. Select PlugInDebug.xcconfig.
+* Do the same for the release section - selecting PlugInRelease.xcconfig.
 
-Under “Configurations” - further to the right.  Open the “Debug” configuration drop down and Click where it says “None” on the first line under this. Select PlugInDebug.xcconfig.
+### Adding the frameworks.
 
-Do the same for the release section - selecting PlugInRelease.xcconfig.
+* Select the name of your Bundle under “TARGETS”.
+* Select the leftmost “General” tab.
+* On the right, click “Frameworks and Libraries” and press the “+” button.
+* On the following dialog, click “Add Other…” and choose “Add Files”
+* Navigate to the “SDK/lib” folder and select the three frameworks inside (OpenNURBS, RhCore, RhMaterialEditor).  Click Open.  They should now appear as Frameworks.
 
-## Adding the SDK headers and frameworks.
+### Adding the source files.
 
-Copy the SDK directory from the Sample Repo onto the same level as the XCConfig directory.  This includes a complete set of headers for Rhino 9 and the frameworks from an early build.  This may be updated.  A final set will be published before Rhino 9 release.
-
-You may want to add the SDK directory to the Project Navigator so you can easily inspect the header files.
-
-In XCode, select the name of your project in the Project Navigator (the leftmost bar), and choose “Add files to MYPROJECT”.  Select the SDK folder and click “Add”  Keep the defaults and choose “Finish”.
-
-Now select the name of your Bundle under “TARGETS”.
-
-Select the leftmost “General” tab.
-
-On the right, click “Frameworks and Libraries” and press the “+” button.  On the following dialog, click “Add Other…” and choose “Add Files”
-
-Find the SDK folder in your bundle project, navigate to the “lib” folder and select the three frameworks inside (OpenNURBS, RhCore, RhMaterialEditor).  Click Open.  They should now appear as Frameworks.
-
-## Adding the source files.
-
-In XCode, select the name of your project in the Project Navigator (the leftmost bar), and choose New File from Template.
-
-Add a C++ File and a Header file with the name of your Plugin (adding a C++ file will also give you the option to automatically add a header file).
-
-Make sure it is included in the target.
-
-Add the following lines to your header file:
+* In XCode, select the name of your project in the Project Navigator (the leftmost bar), and choose New File from Template.
+* Add a C++ File and a Header file with the name of your Plugin (adding a C++ file will also give you the option to automatically add a header file).
+* Make sure it is included in the target.
+* Add the following lines to your header file:
 
 #include "SDK/inc/rhinoSdkStdafxPreamble.h"
 #include "SDK/inc/rhinoSdk.h"
@@ -87,10 +83,7 @@ You are now ready to start setting up your boilerplate CRhinoPlugIn class in the
     static MYPLUGIN my_plug_in;
 
 
-
-
-## Compiling your plugin.
-
+### Compiling your plugin.
 
 Press the Go button.  Everything should compile.
 
@@ -100,9 +93,7 @@ Getting your plugin to load into Rhino.
 Download Rhino 9.
 Use the TestLoadPlugin command and select your compiled bundle.
 
-
-
-## Debugging your plug-in
+### Debugging your plug-in
 
 By default, Rhino cannot be debugged.  However, we have included a shell script make_rhino_debuggable.sh which you should run after you download Rhino to make the bundle debuggable.  Notice that the sample xcodeproj includes this script as a RunScript action meaning that you don't actually need to run the shell command.
 
