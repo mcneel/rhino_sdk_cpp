@@ -1,3 +1,4 @@
 RhCore filter=lfs diff=lfs merge=lfs -text
 RhMaterialEditor filter=lfs diff=lfs merge=lfs -text
 OpenNURBS filter=lfs diff=lfs merge=lfs -text
+*.lib filter=lfs diff=lfs merge=lfs -text
