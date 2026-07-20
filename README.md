@@ -82,13 +82,13 @@ You are now ready to start setting up your boilerplate CRhinoPlugIn class in the
     };
     static MYPLUGIN my_plug_in;
 
-
 ### Compiling your plugin.
 
-Press the Go button.  Everything should compile.
+Command-B to build.  Everything should compile.
 
 To find the compiled RHP, Choose “Show Build Folder in Finder” from the Product menu of XCode.  Navigate into the Products/Debug folder.
-Getting your plugin to load into Rhino.
+
+### Getting your plugin to load into Rhino.
 
 Download Rhino 9.
 Use the TestLoadPlugin command and select your compiled bundle.
