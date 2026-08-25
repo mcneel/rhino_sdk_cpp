@@ -37,11 +37,13 @@ You will need to create a “Bundle” project in Xcode.  The compiled bundle wi
 
 ### Adding the frameworks.
 
+The `SDK/lib` folder contains small text-based `.tbd` link stubs rather than the full framework binaries — you link against these, and Rhino provides the actual frameworks at runtime.
+
 * Select the name of your Bundle under “TARGETS”.
 * Select the leftmost “General” tab.
 * On the right, click “Frameworks and Libraries” and press the “+” button.
 * On the following dialog, click “Add Other…” and choose “Add Files”
-* Navigate to the “SDK/lib” folder and select the three frameworks inside (OpenNURBS, RhCore, RhMaterialEditor).  Click Open.  They should now appear as Frameworks.
+* Navigate to the “SDK/lib” folder and select the three stubs inside (OpenNURBS.tbd, RhCore.tbd, RhMaterialEditor.tbd).  Click Open.  They should now appear under Frameworks and Libraries.
 
 ### Adding the source files.
 
@@ -176,7 +178,7 @@ Commit the new Windows files (the `.sln`, `.vcxproj`, `.vcxproj.filters`, `stdaf
 
 CMake is an alternative to the hand-built projects above: you describe the plug-in once and CMake generates an Xcode project on macOS and a Visual Studio solution on Windows from the same sources.
 
-This assumes the layout used above — your plug-in as a git repository with this SDK added as the `SDK` submodule and your shared `.cpp` / `.h` files at the top level.  The frameworks and import libraries in `lib` are stored with Git LFS, so run `git -C SDK lfs pull` first or the link step will fail.
+This assumes the layout used above — your plug-in as a git repository with this SDK added as the `SDK` submodule and your shared `.cpp` / `.h` files at the top level.  On macOS the `lib` folder holds small text-based `.tbd` link stubs, so nothing extra is needed.  On Windows the import libraries in `lib` are stored with Git LFS, so run `git -C SDK lfs pull` first or the link step will fail.
 
 Drop this `CMakeLists.txt` at the top of your plug-in folder, renaming `MyPlugin` and the source files to match:
 
@@ -213,8 +215,10 @@ if(APPLE)
         ON_COMPILER_CLANG ON_RUNTIME_APPLE RHINO_APPLE=1 _GNU_SOURCE MY_ZCALLOC
         Z_PREFIX _UNICODE RHINO_V6_READY RHINO_THIRD_PARTY_OSX_PLUGIN_COMPILE
         $<$<CONFIG:Debug>:_DEBUG=1 ON__DEBUG> $<$<NOT:$<CONFIG:Debug>>:NDEBUG=1>)
+    # Link against the .tbd stubs; the real frameworks are resolved at runtime
+    # from inside Rhino via their @rpath install names.
     target_link_libraries(MyPlugin PRIVATE
-        "${RHINO_SDK}/lib/RhCore" "${RHINO_SDK}/lib/OpenNURBS" "${RHINO_SDK}/lib/RhMaterialEditor")
+        "${RHINO_SDK}/lib/RhCore.tbd" "${RHINO_SDK}/lib/OpenNURBS.tbd" "${RHINO_SDK}/lib/RhMaterialEditor.tbd")
     # Rhino for Mac is arm64-only.
     set_target_properties(MyPlugin PROPERTIES BUNDLE TRUE BUNDLE_EXTENSION rhp OSX_ARCHITECTURES arm64)
 endif()
@@ -229,18 +233,23 @@ endif()
 Then configure and build — an Xcode project on macOS, a Visual Studio (x64) solution on Windows:
 
 ```
-git -C SDK lfs pull
-
 # macOS (Rhino for Mac is arm64-only; the CMakeLists pins this)
 cmake -G Xcode -S . -B build
 
-# Windows (use the generator matching your Visual Studio)
+# Windows (import libs are in Git LFS; use the generator matching your Visual Studio)
+git -C SDK lfs pull
 cmake -G "Visual Studio 18 2026" -A x64 -S . -B build
 
 cmake --build build --config Debug
 ```
 
 The compiled `.rhp` is written under `build/`; load and debug it as in the platform sections above.  The macOS path is runtime-verified; the Windows CMake path has not yet been test-built.
+
+## Maintaining the macOS link stubs
+
+The macOS `lib/*.tbd` files are text-based link stubs (the equivalent of Windows import libraries), generated from a Rhino app bundle with Apple's `tapi`.  They contain only exported symbols and install names — the real frameworks are loaded at runtime from inside Rhino — so the full multi-MB framework binaries are not committed.  When the Mac frameworks change, regenerate the stubs:
+
+    script/stubify_frameworks.sh /Applications/RhinoBETA.app
 
 
 
