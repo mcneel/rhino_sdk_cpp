@@ -172,6 +172,76 @@ Start Rhino 9 and run the **TestLoadPlugin** command, then select your compiled 
 
 Commit the new Windows files (the `.sln`, `.vcxproj`, `.vcxproj.filters`, `stdafx.h` and `stdafx.cpp`) to your repository.  The shared `.cpp` / `.hpp` and the `SDK` submodule are unchanged and remain common to both platforms.
 
+## Building with CMake
+
+CMake is an alternative to the hand-built projects above: you describe the plug-in once and CMake generates an Xcode project on macOS and a Visual Studio solution on Windows from the same sources.
+
+This assumes the layout used above — your plug-in as a git repository with this SDK added as the `SDK` submodule and your shared `.cpp` / `.h` files at the top level.  The frameworks and import libraries in `lib` are stored with Git LFS, so run `git -C SDK lfs pull` first or the link step will fail.
+
+Drop this `CMakeLists.txt` at the top of your plug-in folder, renaming `MyPlugin` and the source files to match:
+
+```cmake
+cmake_minimum_required(VERSION 3.21)
+project(MyPlugin LANGUAGES CXX)
+
+set(RHINO_SDK "${CMAKE_CURRENT_SOURCE_DIR}/SDK")
+
+add_library(MyPlugin MODULE MyPlugin.cpp MyPlugin.h)
+target_include_directories(MyPlugin PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
+set_target_properties(MyPlugin PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
+
+# The SDK preamble (and the headers after it) must be compiled first in every
+# translation unit.  Force-include them so the shared source stays untouched.
+# (A forced include is used rather than target_precompile_headers, which
+# conflicts with the Objective-C++ mode required below under the Xcode generator.)
+set(RHINO_FORCED_HEADERS
+    "${RHINO_SDK}/inc/rhinoSdkStdafxPreamble.h"
+    "${RHINO_SDK}/inc/rhinoSdk.h"
+    "${RHINO_SDK}/inc/RhRdkHeaders.h"
+    "${RHINO_SDK}/inc/rhinoSdkChecks.h")
+foreach(header ${RHINO_FORCED_HEADERS})
+    if(MSVC)
+        target_compile_options(MyPlugin PRIVATE "/FI${header}")
+    else()
+        target_compile_options(MyPlugin PRIVATE "-include${header}")
+    endif()
+endforeach()
+
+if(APPLE)
+    target_compile_options(MyPlugin PRIVATE -x objective-c++ -fobjc-arc -fno-operator-names)
+    target_compile_definitions(MyPlugin PRIVATE
+        ON_COMPILER_CLANG ON_RUNTIME_APPLE RHINO_APPLE=1 _GNU_SOURCE MY_ZCALLOC
+        Z_PREFIX _UNICODE RHINO_V6_READY RHINO_THIRD_PARTY_OSX_PLUGIN_COMPILE
+        $<$<CONFIG:Debug>:_DEBUG=1 ON__DEBUG> $<$<NOT:$<CONFIG:Debug>>:NDEBUG=1>)
+    target_link_libraries(MyPlugin PRIVATE
+        "${RHINO_SDK}/lib/RhCore" "${RHINO_SDK}/lib/OpenNURBS" "${RHINO_SDK}/lib/RhMaterialEditor")
+    # Rhino for Mac is arm64-only.
+    set_target_properties(MyPlugin PROPERTIES BUNDLE TRUE BUNDLE_EXTENSION rhp OSX_ARCHITECTURES arm64)
+endif()
+
+if(WIN32)
+    set(CMAKE_MFC_FLAG 2)  # MFC in a shared DLL
+    target_compile_definitions(MyPlugin PRIVATE _AFXDLL _UNICODE UNICODE RHINO_LIB_DIR="SDK/lib")
+    set_target_properties(MyPlugin PROPERTIES SUFFIX ".rhp")
+endif()
+```
+
+Then configure and build — an Xcode project on macOS, a Visual Studio (x64) solution on Windows:
+
+```
+git -C SDK lfs pull
+
+# macOS (Rhino for Mac is arm64-only; the CMakeLists pins this)
+cmake -G Xcode -S . -B build
+
+# Windows (use the generator matching your Visual Studio)
+cmake -G "Visual Studio 18 2026" -A x64 -S . -B build
+
+cmake --build build --config Debug
+```
+
+The compiled `.rhp` is written under `build/`; load and debug it as in the platform sections above.  As with the hand-built Windows project, the Windows import libraries are not yet present in `lib`, so the Windows link step will fail until they are added.
+
 
 
 
