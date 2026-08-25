@@ -240,7 +240,7 @@ cmake -G "Visual Studio 18 2026" -A x64 -S . -B build
 cmake --build build --config Debug
 ```
 
-The compiled `.rhp` is written under `build/`; load and debug it as in the platform sections above.  As with the hand-built Windows project, the Windows import libraries are not yet present in `lib`, so the Windows link step will fail until they are added.
+The compiled `.rhp` is written under `build/`; load and debug it as in the platform sections above.  The macOS path is runtime-verified; the Windows CMake path has not yet been test-built.
 
 
 
