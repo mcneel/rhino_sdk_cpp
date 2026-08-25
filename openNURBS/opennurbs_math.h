@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -934,7 +934,7 @@ Returns:
   nullptr is returned.
 Remarks:
   The ids are invariant under invertable transformations.  
-  Specifically, if one point point set is a rotation of another, then
+  Specifically, if one point set is a rotation of another, then
   the assigned ids will be the same.
 */
 ON_DECL
@@ -2705,7 +2705,7 @@ ON_DECL unsigned ON_LeastCommonMultiple(
 /// estimating error bounds and convergence. If you choose to pass a 
 /// C2 function, you are likely to converge while getting less accurate
 /// results and incorrect error bound estimates.
-/// Using a C0 or C1 fucntion will ofter return nonsense.
+/// Using a C0 or C1 function will often return nonsense.
 /// </summary>
 /// <param name="f">
 /// The integrand function is
@@ -2769,7 +2769,7 @@ double ON_Integrate(
 /// estimating error bounds and convergence. If you choose to pass a 
 /// C2 function, you are likely to converge while getting less accurate
 /// results and incorrect error bound estimates.
-/// Using a C0 or C1 fucntion will ofter return nonsense.
+/// Using a C0 or C1 function will often return nonsense.
 /// </summary>
 /// <param name="f">
 /// The integrand function is
@@ -2827,76 +2827,6 @@ double ON_Integrate(
   double* error_bound
 );
 
-#if 0
-/// <summary>
-/// Calculates the definite integral of a piecewise smooth (C-infinity) 
-/// function of one variable using a Rhomberg integration technique
-/// and returns returns Integral(f(t)dt).
-/// The C-infinity requirement is used by the Rhomberg algorithm when
-/// estimating error bounds and convergence. If you choose to pass a 
-/// C2 function, you are likely to converge while getting less accurate
-/// results and incorrect error bound estimates.
-/// Using a C0 or C1 fucntion will ofter return nonsense.
-/// </summary>
-/// <param name="f">
-/// The integrand function is
-/// double f(ON__UINT_PTR context, int limit_direction, double t) 
-/// and returns the value of the integrand at t.
-/// The limit_direction parameter will be -1, 0, or +1 and specifies
-/// which limit direction should be used in the evaluation.
-/// If limit_direction = 1, then the integrand may not be C-infinity at t and
-/// should be evaluated using the limit from above.
-/// If limit_direction = -1, then the integrand may not be C-infinity at t and
-/// should be evaluated using the limit from below.
-/// If limit_direction = 0, then the integrand is C-infinity at t and may
-/// and evaluation from above and below will return the same answer.
-/// </param>
-/// <param name="f_context">
-/// First parameter passed into the integrand function.
-/// </param>
-/// <param name="curve">
-/// The limits of integration are curve.SpanVector().
-/// The integrand must be C-infinity on each span of the curve.
-/// NOTE WELL: The curve is used only to determine the limits of integration.
-/// If you want the value of Integral(f(t)|dC/dt|dt), then call
-/// ON_IntegrateOverCurve().
-/// </param>
-/// <param name="relative_tolerance">
-/// Desired relative tolerance.
-/// If I = mathematical value and N = numerical integration value,
-/// then the algorithm will terminate when
-/// |I - N| &lt;= relative_tolerance*|I|.
-/// For example, if you want to know the answer with 5 digits of accuracy,
-/// then pass 1e-5.
-/// </param>
-/// <param name="absolute_tolerance">
-/// Desired absolute tolerance.
-/// If I = mathematical value and N = numerical integration value,
-/// then the algorithm will terminate when
-/// |I - N| &lt;= absolute_tolerance.
-/// </param>
-/// <param name="error_bound">
-/// If error_bound is not nullptr, then the returned value is upper bound 
-/// on the error in the calculation. 
-/// If I = mathematical value and N = returned value,
-/// then |I - N| &lt;= *error_bound;
-/// </param>
-/// <returns>
-/// If the calulation succeeds, then the numerical integral is returned.
-/// Otherwise ON_DBL_QNAN is returned.
-/// </returns>
-ON_DEPRECATED_MSG("This version is confusing. Don't use it.")
-ON_DECL
-double ON_Integrate(
-  double (*f)(ON__UINT_PTR context, int limit_direction, double t),
-  ON__UINT_PTR f_context,
-  const class ON_Curve& curve,
-  double relative_tolerance,
-  double absolute_tolerance,
-  double* error_bound
-);
-#endif
-
 /// <summary>
 /// Calculates the definite integral of a smooth (C-infinity) 
 /// function of one variable using a Rhomberg integration technique
@@ -2905,7 +2835,7 @@ double ON_Integrate(
 /// estimating error bounds and convergence. If you choose to pass a 
 /// C2 function, you are likely to converge while getting less accurate
 /// results and incorrect error bound estimates.
-/// Using a C0 or C1 fucntion will ofter return nonsense.
+/// Using a C0 or C1 function will often return nonsense.
 /// </summary>
 /// <param name="curve">
 /// The integration is performed over the C-infinity spans of the curve
@@ -2979,7 +2909,7 @@ double ON_Integrate(
 /// estimating error bounds and convergence. If you choose to pass a 
 /// C2 function, you are likely to converge while getting less accurate
 /// results and incorrect error bound estimates.
-/// Using a C0 or C1 fucntion will ofter return nonsense.
+/// Using a C0 or C1 function will often return nonsense.
 /// </summary>
 /// <param name="f">
 /// The integrand function is
@@ -3051,7 +2981,7 @@ double ON_Integrate(
 /// estimating error bounds and convergence. If you choose to pass a 
 /// C2 function, you are likely to converge while getting less accurate
 /// results and incorrect error bound estimates.
-/// Using a C0 or C1 fucntion will ofter return nonsense.
+/// Using a C0 or C1 function will often return nonsense.
 /// </summary>
 /// <param name="f">
 /// The integrand function is
@@ -3126,80 +3056,6 @@ double ON_Integrate(
   double* error_bound
 );
 
-#if 0
-/// <summary>
-/// Calculates the definite integral of a piecewise smooth (C-infinity) 
-/// function of two variables using a Rhomberg integration technique and 
-/// returns Integral(f(s,t)dsdt).
-/// The C-infinity requirement is used by the Rhomberg algorithm when
-/// estimating error bounds and convergence. If you choose to pass a 
-/// C2 function, you are likely to converge while getting less accurate
-/// results and incorrect error bound estimates.
-/// Using a C0 or C1 fucntion will ofter return nonsense.
-/// </summary>
-/// <param name="f">
-/// The complete integrand function is
-/// double f(ON__UINT_PTR context, int limit_direction, double s, double t) 
-/// and returns the value of the integrand at (s, t).
-/// The limit_direction parameter is a bit field that specifies
-/// which limit directions should be used in the evaluation.
-/// If limit_direction = 1, then the integrand may not be C-infinity at (s,t) and
-/// should be evaluated using the limit from above for s and above for t.
-/// If limit_direction = 2, then the integrand may not be C-infinity at (s,t) and
-/// should be evaluated using the limit from below for s and above for t.
-/// If limit_direction = 3, then the integrand may not be C-infinity at (s,t) and
-/// should be evaluated using the limit from below for s and below for t.
-/// If limit_direction = 4, then the integrand may not be C-infinity at (s,t) and
-/// should be evaluated using the limit from above for s and below for t.
-/// If limit_direction = 0, then the integrand is C-infinity at t and may
-/// and evaluation from above and below will return the same answer.
-/// </param>
-/// <param name="f_context">
-/// First parameter passed into the integrand function.
-/// </param>
-/// <param name="surface">
-/// The limits of integration are surface.SpanVector(0) and surface.SpanVector(1).
-/// The integrand must be C-infinity on each bispan of the surface.
-/// NOTE WELL: The surface is used only to determine the limits of integration.
-/// If you want the value of Integral(f(s,t)|dS/duxdS/dt|dsdt), then call
-/// ON_IntegrateOverSurface().
-/// </param>
-/// <param name="relative_tolerance">
-/// Desired relative tolerance.
-/// If I = mathematical value and N = numerical integration value,
-/// then the algorithm will terminate when
-/// |I - N| &lt;= relative_tolerance*|I|.
-/// For example, if you want to know the answer with 5 digits of accuracy,
-/// then pass 1e-5.
-/// </param>
-/// <param name="absolute_tolerance">
-/// Desired absolute tolerance.
-/// If I = mathematical value and N = numerical integration value,
-/// then the algorithm will terminate when
-/// |I - N| &lt;= absolute_tolerance.
-/// </param>
-/// <param name="error_bound">
-/// If error_bound is not nullptr, then the returned value is upper bound 
-/// on the error in the calculation. 
-/// If I = mathematical value and N = returned value,
-/// then |I - N| &lt;= *error_bound;
-/// </param>
-/// <returns>
-/// If the calulation succeeds, then the numerical integral is returned.
-/// Otherwise ON_DBL_QNAN is returned.
-/// </returns>
-ON_DEPRECATED_MSG("This version is confusing. Don't use it.")
-ON_DECL
-double ON_Integrate(
-  double (*f)(ON__UINT_PTR context, int limit_direction, double s, double t),
-  ON__UINT_PTR f_context,
-  const class ON_Surface& surface,
-  double relative_tolerance,
-  double absolute_tolerance,
-  double* error_bound
-);
-#endif
-
 /// <summary>
 /// Calculates the definite integral of a smooth (C-infinity) 
 /// function of two variables using a Rhomberg integration technique
@@ -3209,7 +3065,7 @@ double ON_Integrate(
 /// estimating error bounds and convergence. If you choose to pass a 
 /// C2 function, you are likely to converge while getting less accurate
 /// results and incorrect error bound estimates.
-/// Using a C0 or C1 fucntion will ofter return nonsense.
+/// Using a C0 or C1 function will often return nonsense.
 /// </summary>
 /// <param name="surface">
 /// The integration is performed over the C-infinity bispans of the surface
@@ -3364,6 +3220,22 @@ double ON_Minimize(
   const double t0[],
   double terminate_value,
   double terminate_gradient,
+  double relative_tolerance,
+  double zero_tolerance,
+  unsigned maximum_iterations,
+  double t[],
+  bool* bConverged
+);
+
+ON_DEPRECATED_MSG("Use ON_Minimize(n,f,f_context,search_domain,t0,terminate_value,terminate_gradient,relative_tolerance,zero_tolerance,maximum_iterations,t,bConverged) instead.")
+ON_DECL
+double ON_Minimize(
+  unsigned n,
+  double (*f)(ON__UINT_PTR f_context, const double* t, double* grad),
+  ON__UINT_PTR f_context,
+  const ON_Interval search_domain[],
+  const double t0[],
+  double terminate_value,
   double relative_tolerance,
   double zero_tolerance,
   unsigned maximum_iterations,

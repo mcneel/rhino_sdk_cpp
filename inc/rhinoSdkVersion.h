@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -160,14 +160,14 @@ RHINO_VERSION_BRANCH
 
 // SDK is frozen when the definition of RHINO_SDK_WINDOWS_VERSION is a hardcoded number.
 
-// The Rhino Windows C++ SDK is currently "frozen" at Rhino 6.0 2017 August 14.
+// The Rhino Windows C++ SDK is currently "frozen" at Rhino 6.0 2017 August 15.
 //
 // NOTE WELL:
-//   It is intentional that the values of RHINO_SDK_WINDOWS_VERSION for Rhino 6, 7 and 8 are identical.
+//   It is intentional that the values of RHINO_SDK_WINDOWS_VERSION for Rhino 6, 7, 8 and 9 are identical.
 //
-//   The Rhino 7 and 8 SDK is an extended version of the Rhino 6 SDK.
-//   Rhino 7 and 8 load Rhino 6.* plug-ins.
-//   Thus, the Rhino 6, 7, and 8 have identical values for RHINO_SDK_WINDOWS_VERSION.
+//   The Rhino 7, 8 and 9 SDK is an extended version of the Rhino 6 SDK.
+//   Rhino 7, 8 and 9 load Rhino 6.* plug-ins.
+//   Thus, the Rhino 6, 7, 8 and 9 have identical values for RHINO_SDK_WINDOWS_VERSION.
 //   Use RHINO_SDK_SERVICE_RELEASE to determine which extension of the basic SDK
 //   is being used.
 //

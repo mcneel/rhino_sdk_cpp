@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -331,7 +330,7 @@ public:
   //   
   // Description:
   //   Get text associated with a combo box list item. First checks to see if list box 
-  //   contains a string, if it does then then the string is returned.  If no string
+  //   contains a string, if it does then the string is returned.  If no string
   //   or an empty string is found at iIndex then checks associated CRhinoUiComboBoxItemData
   //   pointer associated with iIndex. If a CRhinoUiComboBoxItemData* item is associated with
   //   iIndex then CRhinoUiComboBoxItemData::Text() is returned.

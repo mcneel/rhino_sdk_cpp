@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -178,7 +177,7 @@ public:
     Returns a list of selected layers.
   Parameters:
     layer_list [out] The array to hold the list of selected layers,
-    as as found in CRhinoDoc::m_layer_table.
+    as found in CRhinoDoc::m_layer_table.
   Returns:
     > 0  The number of items added to layer_list.
     0    If no items were selected
@@ -192,7 +191,7 @@ public:
     Sets the selected layers. Note, if any of the specified layer indices
     is a child of a layer who is not expanded, the layer will not be selected.
   Parameters:
-    layer_list [in] The array layer indices, as as found in CRhinoDoc::m_layer_table.
+    layer_list [in] The array layer indices, as found in CRhinoDoc::m_layer_table.
                     to select.
   See Also:
     SelectedLayers

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2023 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -137,6 +137,13 @@ public:
   COLORREF              m_WxColor;
   COLORREF              m_WyColor;
   COLORREF              m_WzColor;
+
+  float GridFade() const;
+  void SetGridFade(float fade);
+  float GridCornerRadius() const;
+  void SetGridCornerRadius(float radius);
+  float GridBoundaryThickness() const;
+  void SetGridBoundaryThickness(float thickness);
 
   enum class GroundPlaneUsages
   {
@@ -676,6 +683,9 @@ public:
   int  GetShadingMethod(void) const;
   void SetShadingMethod(int);
 
+  double GetSSAORadiusMultiplier(void) const;
+  void   SetSSAORadiusMultiplier(double);
+
   CRhinoDisplayPipeline*  NewDisplayPipeline() const;
   
   bool SaveProfile(const wchar_t* lpsSection, CRhinoProfileContext& ) const;
@@ -750,6 +760,21 @@ public:
   //     2 - High Dynamic Range hight precision (HDR_FP32)
   void SetDynamicRangeQuality(int);
   int  DynamicRangeQuality(void) const;
+
+  // Description:
+  //  When true (default), objects with m_display_order values other than
+  //  zero are drawn behind or in front of all other object. When false,
+  //  this display mode ignores per object draw order and draws everything
+  //  in the standard order.
+  // Returns:
+  //  True if this display mode honors per object draw order.
+  bool HonorDrawOrder(void) const;
+
+  // Description:
+  //  Set draw order support for this display mode.
+  // Parameters:
+  //  bHonor - [in] True to honor per object draw order, false to ignore it.
+  void SetHonorDrawOrder(bool bHonor);
 
 protected:
   virtual void Defaults();

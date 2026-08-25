@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -133,7 +133,9 @@ public:
     OneToModelLength,             // 1:#
     OneInchToModelLengthFeet,     // 1" = #'
     ModelLengthInchToOneFoot,     // #" = 1'
-    ModelLengthInchToOneFootInch  // #' = 1'-0"
+    ModelLengthInchToOneFootInch, // #' = 1'-0"
+    PageLengthToOneUnitSystem,    // # page unit system:1 model unit system
+    OneToModelLengthUnitSystem,   // 1 page unit system:# model unit system
   };
   static ScaleFormat ScaleFormatFromUnsigned(unsigned int scale_format_as_unsigned);
 

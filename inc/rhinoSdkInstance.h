@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -1058,9 +1058,9 @@ public:
     If true, pieces that are not visible will not be appended to the piece_list
     viewport_id - [in]
       If bSkipHiddenPieces is false, then viewport_id is ignored.
-      If bSkipHiddenPieces is true and and viewport_id is not nil,
+      If bSkipHiddenPieces is true and viewport_id is not nil,
       then layer and object per viewport visibility settings are used.
-      If bSkipHiddenPieces is true and and viewport_id is nil,
+      If bSkipHiddenPieces is true and viewport_id is nil,
       then layer and object global visibility settings are used.
     bExplodeNestedReferences - [in] If true, then nested instance
       references are recursively exploded into until actual geometry

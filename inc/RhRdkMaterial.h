@@ -203,7 +203,20 @@ public:
 		has changed since the last call. Deprecated in favor of ToOnMaterial() - exactly the same functionity. */
 	ON_DEPRECATED_MSG("Prefer ToOnMaterial for clarity") virtual const ON_Material& SimulatedMaterial(CRhRdkTexture::TextureGeneration tg=CRhRdkTexture::TextureGeneration::Allow, int iSimulatedTextureSize = -1, const CRhinoObject* pObject=nullptr) const;
 
-	virtual_su const ON_Material& ToOnMaterial(CRhRdkTexture::TextureGeneration tg = CRhRdkTexture::TextureGeneration::Allow, int iSimulatedTextureSize = -1, const CRhinoObject* pObject = nullptr) const;
+	/** \deprecated Unsafe under concurrent simulation. This overload returns a reference into the
+		material's internal simulation cache after the cache lock has been released, so the referenced
+		ON_Material (and its user data) can be mutated or freed by another thread that re-simulates the
+		same material - for example RhinoCycles' parallel mesh-instance path. See RH-97211.
+		Prefer ToOnMaterialPtr(), which hands back an immutable snapshot whose lifetime the caller owns.
+		Retained for binary compatibility - do not add new callers. */
+	ON_DEPRECATED_MSG("Unsafe under concurrent simulation - use ToOnMaterialPtr(). See RH-97211") virtual_su const ON_Material& ToOnMaterial(CRhRdkTexture::TextureGeneration tg = CRhRdkTexture::TextureGeneration::Allow, int iSimulatedTextureSize = -1, const CRhinoObject* pObject = nullptr) const;
+
+	/** Get the material as an immutable ON_Material snapshot. Calls SimulateMaterial() if something
+		relevant has changed since the last call. Thread-safe replacement for ToOnMaterial(): the snapshot
+		is produced under the simulation-cache lock and is never mutated or freed while a caller holds the
+		returned shared_ptr, so it may be read from any thread without further locking. Callers that need a
+		mutable copy should copy from the snapshot (e.g. ON_Material m = *pMat->ToOnMaterialPtr(...)). See RH-97211. */
+	virtual_su std::shared_ptr<const ON_Material> ToOnMaterialPtr(CRhRdkTexture::TextureGeneration tg = CRhRdkTexture::TextureGeneration::Allow, int iSimulatedTextureSize = -1, const CRhinoObject* pObject = nullptr) const;
 
 	static CRhRdkMaterial* FromOnMaterial(const ON_Material& material, const CRhinoDoc* pDocAssoc);
 

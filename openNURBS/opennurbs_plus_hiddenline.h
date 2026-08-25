@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -132,7 +132,7 @@ public:
 		Only allowed before calling Draw.
 		The clipping planes are append to the ON_HiddenLineDrawing::m_clipping_plane array.
 		For perspective views SetViewport() will add PerspectiveViewClipCount many clipping planes from the viewport,
-		and the the first clipping plane is the near plane of the view frustum.
+		and the first clipping plane is the near plane of the view frustum.
 	*/
 
 	bool AddClippingPlanes(const ON_SimpleArray<ON_PlaneEquation>& clip, 
@@ -247,6 +247,26 @@ public:
 	int AddObject(const ON_Geometry* geom, const ON_Xform* xform, ON_UUID uuid, ON__UINT_PTR m_id);
 	int AddObject(std::shared_ptr<const ON_Geometry> shr_geom_ptr, const ON_Xform* xform, ON_UUID uuid, ON__UINT_PTR m_id);
 
+	/*
+	Description:
+	    Add geometry with per-object occlusion and selective clipping settings.
+	    Equivalent to HiddenLineDrawingParameters::AddGeometryAndPlanes in RhinoCommon.
+	Parameters:
+	    geom / shr_geom_ptr - [in] geometry to be drawn. Returns -1 if the type is not supported.
+	    xform - [in] If not null, places geom in world coordinates. The transform is copied.
+	    uuid / id - [in] Copied into the ON_HLD_Object for caller cross-referencing.
+	    occluding_sections - [in] If true, section cuts of this object occlude other geometry.
+	    active_clip_ids - [in] Clip IDs (previously registered via AddClippingPlane) that are
+	                           active for this object. When non-empty, selective clipping is
+	                           enabled so only these planes clip this object.
+	Returns:
+	    Index into m_object of the new ON_HLD_Object, or -1 if the geometry type is not supported.
+	*/
+	int AddObjectAndPlanes(const ON_Geometry* geom, const ON_Xform* xform, ON_UUID uuid, ON__UINT_PTR id,
+	                       bool occluding_sections, const ON_SimpleArray<ON__UINT_PTR>& active_clip_ids);
+	int AddObjectAndPlanes(std::shared_ptr<const ON_Geometry> shr_geom_ptr, const ON_Xform* xform, ON_UUID uuid, ON__UINT_PTR id,
+	                       bool occluding_sections, const ON_SimpleArray<ON__UINT_PTR>& active_clip_ids);
+
 	// m_object is the array of objects that that have been added and will be used in the Draw() operation.
 	const ON_SimpleArray<const class ON_HLD_Object*>&	m_object;
 
@@ -257,7 +277,7 @@ public:
     obj   - an object that been added to the drawing
     active_clip_ids - list ( possibly empty) of active clip_ids for this object.
   Returns
-    true if the the list is a subset of those added with AddClippingPlane methods
+    true if the list is a subset of those added with AddClippingPlane methods
 */
   bool EnableSelectiveClipping(class ON_HLD_Object&  obj, const ON_SimpleArray< ON__UINT_PTR>& active_clip_ids);
 
@@ -283,7 +303,7 @@ public:
 	// Step V.  Draw objects  hidden line drawings
 	/*
 	Description:
-		Makes a hidden line drawing for the the objects in m_obj
+		Makes a hidden line drawing for the objects in m_obj
 	Parameters:
 		bAllowUseMP -[in]  If true multiprocessors may be used to speed up the calculation.
 		progress - [in]		If not null this class can be used to see how much progress has been made while the computing.
@@ -304,7 +324,7 @@ public:
 
 	/*
 	Description:
-		If OtherHLD and *this are hidden line drawings of different objects with the same context they can be be merged
+		If OtherHLD and *this are hidden line drawings of different objects with the same context they can be merged
 		into a single hidden line drawing.
 	Parameters:
 		OtherHLD - [in]

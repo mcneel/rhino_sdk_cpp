@@ -1297,6 +1297,19 @@ public:
 		\return \e true if the content is a reference, else \e false. */
 	virtual bool IsReference(void) const;
 
+	/** Query which worksession reference model the content, or its top-level ancestor, came from.
+		IsReference() answers whether the content is reference content; this answers which model it
+		belongs to, which a bool cannot. With two models attached, moving one model's content between
+		roles - as an in-place active model change does - is impossible without this.
+		\return the worksession reference model serial number, or zero if the content does not belong
+		 to a worksession reference model. Runtime only; it is not saved in a file. */
+	virtual_su unsigned int WorkSessionReferenceModelSerialNumber(void) const;
+
+	/** Set which worksession reference model the content came from. Must be called on top-level
+		content. Pass zero when the content stops being reference content.
+		\see SetIsReference(). */
+	virtual_su void SetWorkSessionReferenceModelSerialNumber(unsigned int sn);
+
 	/** \return \e true if the kind of this content matches the input. */
 	virtual bool IsKind(CRhRdkContent::Kinds kind) const;
 
@@ -1614,8 +1627,13 @@ public:
 	/** \internal For RDK internal use only. */
 	ON_wString DragTextEx(const UUID& uuidSource, int version, void*) const;
 
-	/** Obsolete. Not implemented. */
-	RDK_DEPRECATED virtual void SetIsReference(bool b);
+	/** Set whether the content is reference content. Must be called on top-level content.
+		A content that is reference content should also record which model it came from
+		- see SetWorkSessionReferenceModelSerialNumber() - unless it is reference content for
+		some other reason, such as a linked instance definition.
+		\note This was an unimplemented stub for years and did nothing when called. It now does what
+		 its name says. */
+	virtual void SetIsReference(bool b);
 
 	/** \internal For RDK internal use only. */
 	virtual void SetInstanceNameImpl(const wchar_t* wszName, bool bRenameEvents);

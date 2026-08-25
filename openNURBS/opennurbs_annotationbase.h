@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -96,6 +96,33 @@ public:
     bool bApplyDimStyleDimScale,
     bool bSingleStrokeFont,
     ON_ClassArray< ON_ClassArray< ON_SimpleArray< ON_Curve* > > >& text_contours
+  ) const;
+
+  /*
+  Description:
+    Like GetAnnotationBoundingBox() for the text glyph box, but returns the
+    eight corners of the box in world space without collapsing them into a
+    world axis-aligned box. The corners stay oriented to the text plane so a
+    caller can compute a tight bounding box for an arbitrary frame (for
+    example a plane-aligned bounding box) without it being oversized for
+    tilted or skewed frames.
+  Parameters:
+    vp - [in]
+      nullptr or viewport where annotation object is displayed
+    dimstyle - [in]
+      &this->DimensionStyle(const ON_DimStyle& parent_dimstyle)
+    dimscale - [in]
+      annotation scale to apply
+    corners - [out]
+      The eight oriented corners of the text glyph box in world coordinates.
+  Returns:
+    True if the text glyph box is non-empty and corners[] is set.
+  */
+  bool GetTextGlyphBoxCorners(
+    const ON_Viewport* vp,
+    const ON_DimStyle* dimstyle,
+    double dimscale,
+    ON_3dPoint corners[8]
   ) const;
 
 protected:

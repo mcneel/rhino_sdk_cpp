@@ -1,4 +1,4 @@
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -142,60 +142,20 @@
 #if defined(ON_COMPILER_MSC)
 #define ON_DEPRECATED  __declspec(deprecated)
 #define ON_DEPRECATED_MSG(s) [[deprecated(s)]]
-#if defined(OPENNURBS_IN_RHINO)
-#define ON_WIP_SDK
-#define ON_INTERNAL_SDK
-#else
-#define ON_WIP_SDK [[deprecated("Do not use! This function is a work in progress and will change.")]]
-#define ON_INTERNAL_SDK [[deprecated("Do not use! This function is internal.")]]
-#endif
-#elif defined(ON_COMPILER_CLANG)
+#elif defined(ON_COMPILER_CLANG) || defined(ON_COMPILER_GNU)
 #define ON_DEPRECATED  __attribute__((deprecated))
 #define ON_DEPRECATED_MSG(s) [[deprecated(s)]]
-#if defined(OPENNURBS_IN_RHINO)
-#define ON_WIP_SDK
-#define ON_INTERNAL_SDK
-#else
-#define ON_WIP_SDK [[deprecated("Do not use! This function is a work in progress and will change.")]]
-#define ON_INTERNAL_SDK [[deprecated("Do not use! This function is internal.")]]
-#endif
 #else
 #define ON_DEPRECATED
 #define ON_DEPRECATED_MSG(s)
-
-// Dale Lear 2024-March-14 
-// Why are ON_WIP_SDK and ON_INTERNAL_SDK defined here?
-// This seems exactly the opposite of what should happen.
-// I think these should be wrapped in a 
-// #if defined(OPENNURBS_IN_RHINO) ... #endif block
-// and that change needs extensive testing.
-// 
-// #if defined(OPENNURBS_IN_RHINO)
-#define ON_WIP_SDK
-#define ON_INTERNAL_SDK
-// #endif
-
 #endif
 
-#if defined(ON_WIP_SDK)
-// Functions with ON_WIP_DECL are works in progress. 
-// Classes with ON_WIP_CLASS are works in progress. 
-// Externals with ON_WIP_EXTERN_DECL are works in progress. 
-// These items can be seen and used in Rhino core code.
-// These items are not part of the public SDK.
-// These items can and will change or be removed at any time without notice.
-// Any C++ code using ON_WIP_* features is likely to fail catastrophically
-// at the most inconvenient time imaginable.
-#define ON_WIP_CLASS ON_CLASS
-#define ON_WIP_DECL ON_DECL
-#define ON_WIP_EXTERN_DECL ON_EXTERN_DECL
+#if defined(OPENNURBS_IN_RHINO)
+#define ON_WIP_SDK
+#define ON_INTERNAL_SDK
 #else
-// This header is not being parsed while building core Rhino modules and plug-ins.
-// Any 3rd party code linking with the public C++ Rhino SDK will be unable to link
-// with the work-in-progess items. Code could 
-#define ON_WIP_CLASS 
-#define ON_WIP_DECL 
-#define ON_WIP_EXTERN_DECL 
+#define ON_WIP_SDK ON_DEPRECATED_MSG("Do not use! This function is a work in progress and will change.")
+#define ON_INTERNAL_SDK ON_DEPRECATED_MSG("Do not use! This function is internal.")
 #endif
 
 #if defined(PI)
@@ -425,7 +385,7 @@ ON_END_EXTERNC
 
 #if defined(ON_CPLUSPLUS)
 
-class ON_WIP_CLASS ON_DBL
+class ON_CLASS ON_DBL
 {
 public:
 
@@ -2046,7 +2006,16 @@ public:
   enum class sort_algorithm : unsigned int
   {
     heap_sort  = 0,
-    quick_sort = 1
+    quick_sort = 1,
+
+    // Multi-threaded. Worth asking for on arrays of tens of thousands of
+    // elements and up; below that it silently sorts on the calling thread,
+    // because starting threads would cost more than it saves.
+    //
+    // Only ask for this when the comparison function is safe to call from
+    // several threads at once - it must not write to shared state. It is
+    // also not stable, but neither is quick_sort.
+    parallel_sort = 2
   };
 
   static sort_algorithm SortAlgorithm(int); // convert integer to sort_method enum
@@ -2224,6 +2193,23 @@ public:
                               // it the same as material_from_layer.
   };
   static object_material_source ObjectMaterialSource(int); // convert integer to object_color_source enum
+
+  //// per-item color source /////////////////////////////////////////////////////////
+  // Color source for a per-item color override on object attributes (for
+  // example, hatch boundary color or hatch pattern color). Selects whether
+  // the color is read from the layer, from the object's main attribute
+  // color, inherited from the parent, or read from a custom override color
+  // stored on the attribute itself.
+  enum class item_color_source : unsigned char
+  {
+    color_from_layer  = 0, // use color assigned to layer
+    color_from_object = 1, // use the object's main attribute color
+    color_from_parent = 3, // for objects with parents (like objects in instance references),
+                           // use parent's color. If no parent, treat as color_from_layer.
+    color_custom      = 4  // use the per-item custom override color stored on the attribute
+                           // (e.g. the color set by SetHatchBoundaryColor or SetHatchPatternColor)
+  };
+  static item_color_source ItemColorSource(int); // convert integer to item_color_source enum
 
   //// light style /////////////////////////////////////////////////////////////
   enum light_style
@@ -2645,6 +2631,13 @@ public:
     /// If tail direction is to the Right, alignment is Left
     /// </summary>
     Auto = 3,
+    /// <summary>
+    /// Stretch each line to fill the wrap rectangle width by distributing slack
+    /// across word gaps. Only meaningful when text wrapping is enabled and a
+    /// non-zero wrap width is set; with wrapping off, behaves as Left. The final
+    /// line of a paragraph (or any line ending in a hard break) is rendered Left.
+    /// </summary>
+    Justify = 4,
   };
 #pragma endregion
 
@@ -3359,7 +3352,7 @@ ON_DECL void on_wsplitpath(
 ON_END_EXTERNC
 
 #ifndef ON_FALLTHROUGH
-#if ((defined(_MSVC_LANG) && _MSVC_LANG >= 201703L) || __cplusplus >= 201703L)
+#if defined(ON_HAS_CXX17)
 #define ON_FALLTHROUGH [[fallthrough]]
 #elif defined(__clang__) && defined(__has_warning)
 #if __has_feature(cxx_attributes) && __has_warning("-Wimplicit-fallthrough")

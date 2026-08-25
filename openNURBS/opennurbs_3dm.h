@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -96,7 +96,7 @@
 
 
 /* The openNURBS toolkit allows users to write all openNURBS classed that are
-// derived from ON_Object using using TCODE_OPENNURBS_CLASS chunks.
+// derived from ON_Object using TCODE_OPENNURBS_CLASS chunks.
 // In the .3dm file these TCODE_OPENNURBS_CLASS chunks are always have the
 // following format.
 */
@@ -137,14 +137,8 @@
 #define TCODE_TEXTURE_MAPPING_TABLE     (TCODE_TABLE | 0x0025) /* texture mappings */
 #define TCODE_HISTORYRECORD_TABLE       (TCODE_TABLE | 0x0026) /* history records */
 #define TCODE_SECTION_STYLE_TABLE       (TCODE_TABLE | 0x0027) /* section style table (May 2025, V9) */
-
-#if defined(OPENNURBS_MARKUP_WIP)
 #define TCODE_MARKUP_TABLE              (TCODE_TABLE | 0x0028) /* markup table (Jan 2026, V9) */
-#endif // OPENNURBS_MARKUP_WIP
-
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
 #define TCODE_PAGEVIEWGROUP_TABLE       (TCODE_TABLE | 0x0029) /* pageview group table (Jan 2026, V9) */
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
 
 #if defined(OPENNURBS_TAG_WIP)
 #define TCODE_TAG_TABLE                 (TCODE_TABLE | 0x002A) /* tag table (Dec 2025, WIP) */
@@ -269,15 +263,11 @@
 /* records in section style table (May 2025, V9) */
 #define TCODE_SECTION_STYLE_RECORD        (TCODE_TABLEREC | TCODE_CRC | 0x007C)
 
-#if defined(OPENNURBS_MARKUP_WIP)
 /* records in markup table (Jan 2026, V9) */
 #define TCODE_MARKUP_RECORD               (TCODE_TABLEREC | TCODE_CRC | 0x007D)
-#endif // OPENNURBS_MARKUP_WIP
 
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
 /* records in pageview group table ((Jan 2026, V9) */
 #define TCODE_PAGEVIEWGROUP_RECORD        (TCODE_TABLEREC | TCODE_CRC | 0x007E)
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
 
 #if defined(OPENNURBS_TAG_WIP)
 /* records in tag table (Dec 2025, V9) */

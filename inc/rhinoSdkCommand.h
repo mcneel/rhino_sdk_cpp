@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -477,7 +477,7 @@ private:
 
 /*
 Description:
-  For adding nestable selection commands that work like the 
+  For adding nestable selection commands that work like the
   native Rhino SelCrv command, derive your command from 
   CRhinoSelCommand and override the virtual SelFilter
   function.

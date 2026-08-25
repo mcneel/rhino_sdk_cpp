@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -472,9 +471,6 @@ protected:
   virtual bool IniWriteProfileString(const wchar_t* lpszSection, const wchar_t* lpszEntry, const ON_wString& sValue, CRhinoProfileContext::context_location nProfile) const;
 protected:
   ON_wString m_wFileName;
-#if defined(ON_RUNTIME_APPLE) || defined(ON_RUNTIME_LINUX)
-  class CRhIniProfileContextPrivate* m_private;
-#endif
 };
 #if defined(_MSC_VER)
 #pragma warning( pop )

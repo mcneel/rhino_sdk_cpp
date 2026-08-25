@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -102,6 +102,24 @@ public:
                                      const ON_2dPoint& corner1,
                                      const ON_UnitSystem* corner_units = NULL);
 
+  // 30-Jul-2026 Andy le Bihan, https://mcneel.myjetbrains.com/youtrack/issue/RH-86670
+  // Description:
+  //  Create a detail view object that displays a named view, is displayed on this page,
+  //  and add it to the doc. Unlike AddDetailView, the detail is not zoomed to the extents
+  //  of the model; the named view's camera is used as-is.
+  // Parameters:
+  //  named_view: [in] the named view to restore in the new detail
+  //  corner0, corner1: [in] corners of the detail view in world coordinates
+  //  corner_units: [in] unit system corners are supplied in. If NULL, the document's page units are used
+  // Returns:
+  //  NULL on failure
+  // See Also:
+  //  CRhinoPageView::AddDetailView
+  class CRhinoDetailViewObject* AddDetailViewFromNamedView(const ON_3dmView& named_view,
+                                     const ON_2dPoint& corner0,
+                                     const ON_2dPoint& corner1,
+                                     const ON_UnitSystem* corner_units = NULL);
+
   /*
   Description:
     Get list of detail view objects that are displayed on this page
@@ -172,7 +190,6 @@ public:
   void SetLinetypeDrawScaleFactor(double scale);
   double GetLinetypeDrawScaleFactor() const;
 
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
   // pageview group interface
   int PageViewGroupCount() const;
   int PageViewGroupList(ON_SimpleArray<int>& group_list) const;
@@ -181,10 +198,18 @@ public:
   void AddToPageViewGroup(const ON_SimpleArray<int>& group_list);
   void RemoveFromPageViewGroup(int group_index);
   void RemoveFromAllPageViewGroups();
+
+  // Gets this page view's sort index within the page view group with the specified
+  // index. Returns ON_UNSET_INT_INDEX ("unsorted", i.e. use page-number order) if
+  // the page view is not in the group or has no explicit sort index in it.
+  int PageViewGroupSortIndex(int group_index) const;
+  // Sets this page view's sort index within the page view group with the specified
+  // index. A sort index of ON_UNSET_INT_INDEX means "unsorted" (use page-number order).
+  void SetPageViewGroupSortIndex(int group_index, int sort_index);
+
 // description
   ON_wString Description() const;
   void SetDescription(const wchar_t* description);
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
 
   // 21 June, 2010 - Lowell - Adding a function to update the page space dimensions that refer 
   // to geometry in the detail view that just got changed

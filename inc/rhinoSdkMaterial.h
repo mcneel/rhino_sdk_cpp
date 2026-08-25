@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -167,6 +167,11 @@ public:
   // Returns:
   //   Number of materials in the material table, including deleted
   //   materials.
+  //
+  // Remarks:
+  //   This count also spans slots emptied by a purge, so it can be
+  //   larger than the number of materials that are actually there.
+  //   See the PURGED TABLE SLOTS note in rhinoSdkDoc.h.
   int MaterialCount() const;
 
   // Description:
@@ -183,6 +188,20 @@ public:
   //   Reference to the material.  If material_index is out of range,
   //   the current material is returned. Note that this reference
   //   may become invalid after AddMaterial() is called.
+  //
+  // Remarks:
+  //   DefaultMaterial is returned for an in-range index whose slot was
+  //   emptied by a purge, which happens when a worksession reference
+  //   model is detached or a linked instance definition is purged.
+  //   This is deliberate - such slots are normal rather than a caller
+  //   error, and they are spanned by MaterialCount() - but the material
+  //   handed back is indistinguishable from a real default material by
+  //   every property except its index.
+  //
+  //   To tell a real material from an emptied slot, test the index you
+  //   asked for against the index you got back: the stand-in has a
+  //   negative index, so i != table[i].Index() means slot i is empty.
+  //   See the PURGED TABLE SLOTS note in rhinoSdkDoc.h.
   const CRhinoMaterial& operator[]( int material_index ) const;
 
   const CRhinoMaterial* Material(

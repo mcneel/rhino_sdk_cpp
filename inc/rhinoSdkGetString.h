@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -812,6 +812,14 @@ public:
 
   void SetOutputToCurrentLayer(bool bOutputToCurrentLayer);
 
+  /// <returns>
+  /// True if the control points of the rebuilt curves are displayed
+  /// during the dynamic preview.
+  /// </returns>
+  bool ShowControlPoints() const;
+
+  void SetShowControlPoints(bool bShowControlPoints);
+
   enum DebugOptions
   {
     DebugOff = 0,
@@ -874,6 +882,20 @@ private:
 
   void Internal_OptionsChanged();
   void Internal_KinkSplittingOptionsChanged();
+
+  /// <summary>
+  /// When kink splitting is enabled, the calculated output can require more points
+  /// than the point count settings specify. This function detects that case and
+  /// increases the point count settings to match the calculated output so that user
+  /// interfaces report the point count that was actually used.
+  /// The caller must have a current calculated output, which means the GetOptions()
+  /// callback must have been called at least once after the current options were set.
+  /// This function does not trigger a recalculation.
+  /// </summary>
+  /// <returns>
+  /// True if the point count settings were increased.
+  /// </returns>
+  bool Internal_IncreasePointCountForKinkSplitting();
   ON_SHA1_Hash m_rebuild_options_hash = ON_SHA1_Hash::EmptyContentHash;
   ON_SHA1_Hash m_document_management_options_hash = ON_SHA1_Hash::EmptyContentHash;
   unsigned int m_rhino_doc_sn = 0;
@@ -888,6 +910,10 @@ private:
   // Parameters that control object managment
   bool m_bDeleteInput = true;
   bool m_bOuputToCurrentLayer = true;
+
+  // Display of the rebuilt curve control points during dynamic preview.
+  // Off by default - RH-96735
+  bool m_bShowControlPoints = false;
 
   // properties of the current rebuilt curves
   mutable ON_2dex m_current_output_point_count_range = ON_2dex::Zero;

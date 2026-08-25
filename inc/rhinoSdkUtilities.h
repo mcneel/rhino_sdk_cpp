@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -646,7 +646,7 @@ Parameters:
   number_format - [in] (default=NULL) if not NULL, this
      string overrides the automatic format used by Rhino.
   unit_system - [in]
-     If unit_system != ON::LengthUnitSystem::None, then the name
+     If units.m_unit_system != ON::LengthUnitSystem::None, then the name
      of the units is append to string.
   units - [in]
     x is assumed to be in units.m_unit_system.  The settings
@@ -673,7 +673,7 @@ Example:
         CRhinoDoc* doc = CRhinoDoc::FromRuntimeSerialNumber(...);
         if ( doc )
         {
-          RhinoFormatNumber( length, doc->UnitSystem(), s2, true );
+          RhinoFormatNumber( length, doc->Properties().ModelUnitsAndTolerances(), s2, true );
         }
         else
         {
@@ -1100,7 +1100,7 @@ Parameters:
                                     If false, merged boundary edges will be smooth
   bPermitNonmanifoldSubD     - [in] - Permit non-manifold SubDs to be joined.
   bPreserveSymmetry          - [in] If true, and if all inputs share the same symmetry, the output will also be symmetrical wrt. that symmetry.
-                                    If If false, or true but no common symmetry exists, symmetry information is removed from all newly joined SubDs.
+                                    If false, or true but no common symmetry exists, symmetry information is removed from all newly joined SubDs.
   output_subds               - [out] Array of output SubDs.
 Returns:
   The number of SubDs added to the output array.
@@ -3143,6 +3143,30 @@ bool RhinoIntersectPlaneBrep(
 
 /*
 Description:
+  Plane - Geometry intersector.
+Parameters:
+  plane       - [in]  The plane.
+  geometry    - [in]  The Brep.
+  tolerance   - [in]  The fitting and near miss tolerance.
+  bJoinCurves - [in]  If true, join the resulting curves where possible. Set to true for backwards compatibility with previous RhinoIntersectPlaneBrep
+  pDoc        - [in]  The document. Can be null if geometry is not an instance definition reference. Used for getting the instance definition transformation if geometry is an instance definition reference.
+  curves      - [out] The output 3d curves. NOTE, the caller is responsible for destroying these curves.
+  points      - [out] If non-NULL, the 3d intersection points.
+Returns:
+  TRUE if successful.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoIntersectPlaneGeometry(
+  const ON_Plane& plane,
+  const ON_Geometry* pGeometry,
+  double tolerance,
+  bool bJoinCurves, // set to true for backwards compatibility with previous RhinoIntersectPlaneBrep
+  const CRhinoDoc* pDoc, // can be null if pGeometry is not an instance definition reference
+  ON_SimpleArray<ON_Curve*>& curves,
+  ON_3dPointArray& points);
+
+/*
+Description:
   Brep face - curve intersector. Gets 3d points of intersection
   and 3d overlap curves.  Returns FALSE if there is an error processing an
   overlap curve.  In that case, partial results will be returned.
@@ -3280,6 +3304,17 @@ ON_Brep* RhinoJoinBreps(
 );
 
 /*
+The RhinoBooleanUnion, RhinoBooleanIntersection and RhinoBooleanDifference overloads that
+follow return geometry only. They do not report which input produced which result, and an
+input no cutter reached is indistinguishable from one a cutter consumed entirely: both are
+absent.
+
+If you need that, use the overloads declared in rhino4/rhino3Utilities.h or
+Rhino.Geometry.BrepBoolean in RhinoCommon. Those are currently in the internal SDK only.
+RH-74782
+*/
+
+/*
 Description:
   Find the union of the Breps in InBreps. Separate into disjoint pieces.
 Parameters:
@@ -3352,8 +3387,7 @@ Parameters:
   tolerance     - [in]  Distance tolerance.
   bResult       - [out] True if any of the Breps had intersecting faces,
                         If false, and OutBreps.Count() is not empty,
-                        then some closed Breps were inside others,
-                        or bManifoldOnly == true and some were non-manifold.
+                        then some closed Breps were inside others.
   OutBreps      - [out] Resulting Breps.
   bManifoldOnly - [in]  If true, leave out any non-manifold input Breps.
   bRaisedTol    - [out] If non-null and Boolean fails at tolerance,
@@ -3361,9 +3395,9 @@ Parameters:
 Returns:
   false if error
 Remarks:
-  Think of this as an operation on InBreps0. Each Brep of InBreps1 may remove part of a Brep of
-  InBreps0.  If a member of InBreps0 does not intersect any member of InBreps1, then it is copied to
-  OutBreps.
+  Think of this as an operation on InBreps0. Each result is the part of a Brep of InBreps0 that
+  lies inside the Breps of InBreps1. A member of InBreps0 that does not intersect any member of
+  InBreps1 contributes no result, and if either set is empty there are no results at all.
  */
 RHINO_SDK_FUNCTION
 bool RhinoBooleanIntersection(
@@ -3385,8 +3419,7 @@ Parameters:
   tolerance             - [in]  Distance tolerance.
   bResult               - [out] True if any of the Breps had intersecting faces.
                                 If false, and OutBreps.Count() is not empty,
-                                then some closed Breps were inside others,
-                                or bManifoldOnly == true and some were non-manifold.
+                                then some closed Breps were inside others.
   OutBreps              - [out] Resulting Breps.
   NakedEdgePoints       - [out] If Boolean failed because the intersection hit a naked edge, a
                                 point will be added where the intersection hits the edge.
@@ -3401,9 +3434,9 @@ Parameters:
 Returns:
   false if error
 Remarks:
-  Think of this as an operation on InBreps0. Each Brep of InBreps1 may remove part of a Brep of
-  InBreps0. If a member of InBreps0 does not intersect any member of InBreps1, then it is copied to
-  OutBreps.
+  Think of this as an operation on InBreps0. Each result is the part of a Brep of InBreps0 that
+  lies inside the Breps of InBreps1. A member of InBreps0 that does not intersect any member of
+  InBreps1 contributes no result, and if either set is empty there are no results at all.
  */
 RHINO_SDK_FUNCTION
 bool RhinoBooleanIntersection(
@@ -3868,7 +3901,7 @@ Parameters:
   face       - [in] The Brep face to test.
   tolerance  - [in] 3d tolerance
   bOkToWrap  - [in] If true and if surface the face is built on is closed,
-                    the the test parameter is permitted to wrap across the
+                    the test parameter is permitted to wrap across the
                     surface seam.  If the (s,t)parameters are the result
                     of a closest point or intersection query, then you
                     generally want bOkToWrap = true.
@@ -4705,6 +4738,23 @@ Notes:
 RHINO_SDK_FUNCTION
 int Rhino_dup_cmp_surface(const ON_Surface* srfa, const ON_Surface* srfb);
 
+
+/*
+Description:
+Compare 2 breps to see if the geometry is the same.
+Parameters:
+Pointers to the breps to compare
+Returns:
+1 or -1 if the breps are different
+0 if they are the same
+Notes:
+This is a fast compare function that can be used for sorting
+*/
+RHINO_SDK_FUNCTION
+int Rhino_dup_cmp_brep(const ON_Brep* srfa, const ON_Brep* srfb);
+
+
+
 /*
 Description:
   Compare 2 SubDs to see if the geometry is the same.
@@ -5132,6 +5182,35 @@ int RhinoCurveBooleanUnion(
   const ON_SimpleArray<const ON_Curve*>& InCurves,
   double tolerance,
   ON_SimpleArray<ON_Curve*>& OutCurves
+);
+
+/*
+Description:
+  Calculates the boolean union of two or more closed, planar curves,
+  and reports which input curve ended up in which output curve.
+  Note, curves must be co-planar.
+Parameters:
+  InCurves          - [in]  The curves co-planar curves to union.
+  tolerance         - [in]  3d fitting and intersecting tolerance.
+  OutCurves         - [out] The results.
+                            NOTE: THE CALLER IS RESPONSIBLE FOR DESTROYING THESE CURVES.
+  InputToOutputMap  - [out] Filled with one entry per input curve. Entry [i] is the
+                            index, into OutCurves, of the outer boundary of the union
+                            result that input curve [i] contributed to, or -1 if the
+                            input curve was not matched to any output curve.
+Returns:
+  The number of curves added to OutCurves if successful.
+  0 if not successful.
+See Also:
+  RhinoCurveBooleanIntersection
+  RhinoCurveBooleanDifference
+*/
+RHINO_SDK_FUNCTION
+int RhinoCurveBooleanUnion(
+  const ON_SimpleArray<const ON_Curve*>& InCurves,
+  double tolerance,
+  ON_SimpleArray<ON_Curve*>& OutCurves,
+  ON_SimpleArray<int>& InputToOutputMap
 );
 
 /*
@@ -6166,7 +6245,7 @@ Parameters:
                       Use ON_Interval::NormalizedParameterAt to calculate these.
   radii       - [in]  An array of radii - one at each normalized curve parameter in rail_params.
   results     - [out] The results of the pipe creation. If rail is a line segment, rail_params contains two
-                      normalized curve parameters, radii contains two identical values, and and cap_mode is either
+                      normalized curve parameters, radii contains two identical values, and cap_mode is either
                       0 (None) or 1 (Flat), then an ON_Extrusion object will be returned. Otherwise, an ON_Brep
                       object will be returned. Note, it is possible for more than one ON_Brep to be returned
                       (when it is not possible to miter sharp corners, for example).
@@ -6214,7 +6293,7 @@ Parameters:
   radii1      - [in]  An array of radii for the second wall - one at each normalized curve parameter in rail_params.
   results     - [out] The results of the pipe creation. If rail is a line segment, rail_params contains two
                       normalized curve parameters, radii0 contains two identical values, radii1 contains two identical values,
-                      and and cap_mode is 1 (Flat), then a single ON_Extrusion object will be returned.
+                      and cap_mode is 1 (Flat), then a single ON_Extrusion object will be returned.
                       If cap_mode is 0 (None), then two ON_Extrusion objects will be returned. Otherwise, an ON_Brep
                       object will be returned. Note, it is possible for more than one ON_Brep to be returned
                       (if cap_mode = 0, or when it is not possible to miter sharp corners, for example).
@@ -7405,7 +7484,7 @@ Parameters:
   bExtend     - [in] If true, then when one input surface is longer than the other,
                      the fillet surface is extended to the input surface edges.
   split_type  - [in] The split type
-  tolerance   - [in] The tolerance. In in doubt, the the document's absolute tolerance.
+  tolerance   - [in] The tolerance. In in doubt, the document's absolute tolerance.
   OutFillets  - [out] The results of the fillet calculation. NOTE: Memory for the output
                       is allocated and is the responsibility of the caller.
   OutBreps0   - [out] The trim or split results of the Brep owned by pFace0. NOTE: Memory
@@ -7479,7 +7558,7 @@ Parameters:
   bExtend     - [in] If true, then when one input surface is longer than the other,
                      the fillet surface is extended to the input surface edges.
   split_type  - [in] The split type
-  tolerance   - [in] The tolerance. In in doubt, the the document's absolute tolerance.
+  tolerance   - [in] The tolerance. In in doubt, the document's absolute tolerance.
   OutFillets  - [out] The results of the fillet calculation. NOTE: Memory for the output
                       is allocated and is the responsibility of the caller.
   OutBreps0   - [out] The trim or split results of the Brep owned by pFace0. NOTE: Memory
@@ -7548,7 +7627,7 @@ Parameters:
   bExtend     - [in] If true, then when one input surface is longer than the other,
                      the fillet surface is extended to the input surface edges.
   split_type  - [in] The split type
-  tolerance   - [in] The tolerance. In in doubt, the the document's absolute tolerance.
+  tolerance   - [in] The tolerance. In in doubt, the document's absolute tolerance.
   OutFillets  - [out] The results of the fillet calculation. NOTE: Memory for the output
                       is allocated and is the responsibility of the caller.
   OutBreps0   - [out] The trim or split results of the Brep owned by pFace0. NOTE: Memory
@@ -7618,7 +7697,7 @@ Parameters:
                       [1] (-1 to 1) slides inner CV(s) from base (-1) to theoretical (1)
   nBezierSrfs - [in] If >0, this indicates the number of equally-spaced fillet surfaces
                      to be output in the rail direction, each surface Bézier in u.
-  tolerance   - [in] The tolerance. In in doubt, the the document's absolute tolerance.
+  tolerance   - [in] The tolerance. In in doubt, the document's absolute tolerance.
   OutFillets  - [out] The results of the fillet calculation. NOTE: Memory for the output
                       is allocated and is the responsibility of the caller.
   fitResults  - [out] array of doubles indicating fitting results:
@@ -7678,28 +7757,28 @@ Description: Continue making fillets/chamfers across multiple tangent faces.
   on the whole assembly of fillets and input surfaces.
 
 Parameters :
-  FaceA - [in] the first face to use constructing the chamfer
-  radius0 - [in] The radius to use for filleting
-  FaceB - [in] the second face to use constructing the chamfer
-  radius1 - [in] The radius to use for filleting on the second face (chamfer only!)
-  trim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  extend - [in] if True and if one input surface is longer than the other, the chamfer surface is extended to the input surface edges
-  tolerance - [in] Tolerance to use in fitting a solution
+  FaceA                 - [in] the first face to use constructing the chamfer
+  radius0               - [in] The radius to use for filleting
+  FaceB                 - [in] the second face to use constructing the chamfer
+  radius1               - [in] The radius to use for filleting on the second face (chamfer only!)
+  trim                  - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  extend                - [in] if True and if one input surface is longer than the other, the chamfer surface is extended to the input surface edges
+  tolerance             - [in] Tolerance to use in fitting a solution
   angleToleranceRadians - [in] Tolerance used to decide if faces are tantent continuous
-  method - [in] a number that indicates the method with which the initial fillet was created
-               0: fillets with rational arcs
-               1: fillets with non-rational arc approximation, uses degree and
-                  if degree = 3 - uses tan slider
-                  if degree = 4 - uses tan slider and inner slider
-                  if degree = 5 - uses tan slider and inner slider
-               2: G2 blend. Currently not supported, will always return false
-               3: chamfer
-  degree - [in] the degree of the non-rational arc approximation
-  tanSlider - [in] the tan slider
-  innerSlider - [in] the inner slider
-  Fillets - [inout] returns the resulting fillet/chamfer surfaces
-  resultsA - [out] if bTrim = true, returns the remains of FaceA trimmed to the chamfer
-  resultsB - [out] if bTrim = true, returns the remains of FaceB trimmed to the chamfer
+  method                - [in] a number that indicates the method with which the initial fillet was created
+                               0: fillets with rational arcs
+                               1: fillets with non-rational arc approximation, uses degree and
+                                  if degree = 3 - uses tan slider
+                                  if degree = 4 - uses tan slider and inner slider
+                                  if degree = 5 - uses tan slider and inner slider
+                               2: G2 blend. Currently not supported, will always return false
+                               3: chamfer
+  degree                - [in] the degree of the non-rational arc approximation
+  tanSlider             - [in] the tan slider
+  innerSlider           - [in] the inner slider
+  Fillets               - [inout] returns the resulting fillet/chamfer surfaces
+  resultsA              - [out] if bTrim = true, returns the remains of FaceA trimmed to the chamfer
+  resultsB              - [out] if bTrim = true, returns the remains of FaceB trimmed to the chamfer
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7716,19 +7795,19 @@ RHINO_SDK_FUNCTION bool RhinoContinueFilletsAcrossTangentFaces
 /*
 Description: Creates a surface chamfer
 Parameters :
-  FaceA - [in] the first face to use constructing the chamfer
-  uvA - [in] The parametric u,v selection point on FaceA close to the edge to chamfer
-  FaceB - [in] the second face to use constructing the chamfer
-  uvB - [in] The parametric u,v selection point on FaceB close to the edge to chamfer
-  radius0 - [in] The distance of the chamfer on FaceA
-  radius1 - [in] The distance of the chamfer on FaceB
-  tol - [in] Tolerance to use in fitting a solution
-  resultsA - [out] if bTrim = true, returns the remains of FaceA trimmed to the chamfer
-  resultsB - [out] if bTrim = true, returns the remains of FaceB trimmed to the chamfer
+  FaceA       - [in] the first face to use constructing the chamfer
+  uvA         - [in] The parametric u,v selection point on FaceA close to the edge to chamfer
+  FaceB       - [in] the second face to use constructing the chamfer
+  uvB         - [in] The parametric u,v selection point on FaceB close to the edge to chamfer
+  radius0     - [in] The distance of the chamfer on FaceA
+  radius1     - [in] The distance of the chamfer on FaceB
+  tol         - [in] Tolerance to use in fitting a solution
+  resultsA    - [out] if bTrim = true, returns the remains of FaceA trimmed to the chamfer
+  resultsB    - [out] if bTrim = true, returns the remains of FaceB trimmed to the chamfer
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the chamfer surface is extended to the input surface edges
-  Chamfers - [out] returns the resulting chamfer surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the chamfer surface is extended to the input surface edges
+  Chamfers    - [out] returns the resulting chamfer surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7741,18 +7820,18 @@ RHINO_SDK_FUNCTION bool RhinoCreateChamferSrf(const ON_BrepFace& FaceA, const ON
 /*
 Description: Creates a standard surface fillet using rational arc sections
 Parameters :
-  FaceA - [in] the first face to use constructing the fillet
-  uvA - [in] The parametric u,v selection point on FaceA close to the edge to fillet
-  FaceB - [in] the second face to use constructing the fillet
-  uvB - [in] The parametric u,v selection point on FaceB close to the edge to fillet
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  resultsA - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
-  resultsB - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
+  FaceA       - [in] the first face to use constructing the fillet
+  uvA         - [in] The parametric u,v selection point on FaceA close to the edge to fillet
+  FaceB       - [in] the second face to use constructing the fillet
+  uvB         - [in] The parametric u,v selection point on FaceB close to the edge to fillet
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  resultsA    - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
+  resultsB    - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7765,18 +7844,18 @@ RHINO_SDK_FUNCTION bool RhinoCreateRationalArcsFilletSrf(const ON_BrepFace& Face
 /*
 Description: Creates a surface fillet using Non-rational Quintic arc approximations as sections
 Parameters :
-  FaceA - [in] the first face to use constructing the fillet
-  uvA - [in] The parametric u,v selection point on FaceA close to the edge to fillet
-  FaceB - [in] the second face to use constructing the fillet
-  uvB - [in] The parametric u,v selection point on FaceB close to the edge to fillet
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  resultsA - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
-  resultsB - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
+  FaceA       - [in] the first face to use constructing the fillet
+  uvA         - [in] The parametric u,v selection point on FaceA close to the edge to fillet
+  FaceB       - [in] the second face to use constructing the fillet
+  uvB         - [in] The parametric u,v selection point on FaceB close to the edge to fillet
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  resultsA    - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
+  resultsB    - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7789,22 +7868,22 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuinticArcsFilletSrf(const ON_Brep
 /*
 Description: Creates a fillet using non-rational Quintic sections with a tangent and inner slider
 Parameters :
-  FaceA - [in] the first face to use constructing the fillet
-  uvA - [in] The parametric u,v selection point on FaceA close to the edge to fillet
-  FaceB - [in] the second face to use constructing the fillet
-  uvB - [in] The parametric u,v selection point on FaceB close to the edge to fillet
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  resultsA - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
-  resultsB - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
+  FaceA       - [in] the first face to use constructing the fillet
+  uvA         - [in] The parametric u,v selection point on FaceA close to the edge to fillet
+  FaceB       - [in] the second face to use constructing the fillet
+  uvB         - [in] The parametric u,v selection point on FaceB close to the edge to fillet
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  resultsA    - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
+  resultsB    - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  TanSlider - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
-    quadratic middle control point
+  TanSlider   - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
+                     quadratic middle control point
   InnerSlider - [in] A number between -0.95 and 0.95 indicating how far to push the inner control points toward or away from the theoretical
-    quadratic middle control point
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+                     quadratic middle control point
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7818,18 +7897,18 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuinticFilletSrf(const ON_BrepFace
 /*
 Description: Creates a surface fillet using Non-rational Quartic arc approximations as sections
 Parameters :
-  FaceA - [in] the first face to use constructing the fillet
-  uvA - [in] The parametric u,v selection point on FaceA close to the edge to fillet
-  FaceB - [in] the second face to use constructing the fillet
-  uvB - [in] The parametric u,v selection point on FaceB close to the edge to fillet
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  resultsA - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
-  resultsB - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
+  FaceA       - [in] the first face to use constructing the fillet
+  uvA         - [in] The parametric u,v selection point on FaceA close to the edge to fillet
+  FaceB       - [in] the second face to use constructing the fillet
+  uvB         - [in] The parametric u,v selection point on FaceB close to the edge to fillet
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  resultsA    - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
+  resultsB    - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7842,22 +7921,22 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuarticArcsFilletSrf(const ON_Brep
 /*
 Description: Creates a fillet using non-rational Quartic sections with a tangent and inner slider
 Parameters :
-  FaceA - [in] the first face to use constructing the fillet
-  uvA - [in] The parametric u,v selection point on FaceA close to the edge to fillet
-  FaceB - [in] the second face to use constructing the fillet
-  uvB - [in] The parametric u,v selection point on FaceB close to the edge to fillet
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  resultsA - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
-  resultsB - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
+  FaceA       - [in] the first face to use constructing the fillet
+  uvA         - [in] The parametric u,v selection point on FaceA close to the edge to fillet
+  FaceB       - [in] the second face to use constructing the fillet
+  uvB         - [in] The parametric u,v selection point on FaceB close to the edge to fillet
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  resultsA    - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
+  resultsB    - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  TanSlider - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
-    quadratic middle control point
+  TanSlider   - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
+                     quadratic middle control point
   InnerSlider - [in] A number between -0.95 and 0.95 indicating how far to push the inner control point toward or away from the theoretical
-    quadratic middle control point
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+                     quadratic middle control point
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7871,18 +7950,18 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuarticFilletSrf(const ON_BrepFace
 /*
 Description: Creates a surface fillet using Non-rational Cubic arc approximations as sections
 Parameters :
-  FaceA - [in] the first face to use constructing the fillet
-  uvA - [in] The parametric u,v selection point on FaceA close to the edge to fillet
-  FaceB - [in] the second face to use constructing the fillet
-  uvB - [in] The parametric u,v selection point on FaceB close to the edge to fillet
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  resultsA - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
-  resultsB - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
+  FaceA       - [in] the first face to use constructing the fillet
+  uvA         - [in] The parametric u,v selection point on FaceA close to the edge to fillet
+  FaceB       - [in] the second face to use constructing the fillet
+  uvB         - [in] The parametric u,v selection point on FaceB close to the edge to fillet
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  resultsA    - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
+  resultsB    - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7895,20 +7974,20 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalCubicArcsFilletSrf(const ON_BrepFa
 /*
 Description: Creates a fillet using non-rational Cubic sections with a tangent slider
 Parameters :
-  FaceA - [in] the first face to use constructing the fillet
-  uvA - [in] The parametric u,v selection point on FaceA close to the edge to fillet
-  FaceB - [in] the second face to use constructing the fillet
-  uvB - [in] The parametric u,v selection point on FaceB close to the edge to fillet
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  resultsA - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
-  resultsB - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
+  FaceA       - [in] the first face to use constructing the fillet
+  uvA         - [in] The parametric u,v selection point on FaceA close to the edge to fillet
+  FaceB       - [in] the second face to use constructing the fillet
+  uvB         - [in] The parametric u,v selection point on FaceB close to the edge to fillet
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  resultsA    - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
+  resultsB    - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  TanSlider - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
-    cubic middle control point
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  TanSlider   - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
+                     cubic middle control point
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7921,18 +8000,18 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalCubicFilletSrf(const ON_BrepFace& 
 /*
 Description: Creates a surface fillet using G2 chordal Quintic arc approximations as sections
 Parameters :
-  FaceA - [in] the first face to use constructing the fillet
-  uvA - [in] The parametric u,v selection point on FaceA close to the edge to fillet
-  FaceB - [in] the second face to use constructing the fillet
-  uvB - [in] The parametric u,v selection point on FaceB close to the edge to fillet
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  resultsA - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
-  resultsB - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
+  FaceA       - [in] the first face to use constructing the fillet
+  uvA         - [in] The parametric u,v selection point on FaceA close to the edge to fillet
+  FaceB       - [in] the second face to use constructing the fillet
+  uvB         - [in] The parametric u,v selection point on FaceB close to the edge to fillet
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  resultsA    - [out] if bTrim = true, returns the remains of FaceA trimmed to the fillet
+  resultsB    - [out] if bTrim = true, returns the remains of FaceB trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7945,16 +8024,16 @@ RHINO_SDK_FUNCTION bool RhinoCreateG2ChordalQuinticFilletSrf(const ON_BrepFace& 
 /*
 Description: Creates a standard surface-curve fillet using rational arc sections
 Parameters :
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Curve - [in] The curve to that the fillet edge should be
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Curve       - [in] The curve to that the fillet edge should be
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7966,16 +8045,16 @@ RHINO_SDK_FUNCTION bool RhinoCreateRationalArcsFilletSrfCrv(const ON_BrepFace& F
 /*
 Description: Creates a surface-curve fillet Non-rational Quintic arc approximations as sections
 Parameters :
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Curve - [in] The curve to that the fillet edge should be
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Curve       - [in] The curve to that the fillet edge should be
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -7987,20 +8066,20 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuinticArcsFilletSrfCrv(const ON_B
 /*
 Description: Creates a surface-curve fillet Quintic sections with a tangent and inner slider
 Parameters :
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Curve - [in] The curve to that the fillet edge should be
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Curve       - [in] The curve to that the fillet edge should be
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  TanSlider - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
-    quadratic middle control point
+  TanSlider   - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
+                     quadratic middle control point
   InnerSlider - [in] A number between -0.95 and 0.95 indicating how far to push the inner control point toward or away from the theoretical
-    quadratic middle control point
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+                     quadratic middle control point
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8013,16 +8092,16 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuinticFilletSrfCrv(const ON_BrepF
 /*
 Description: Creates a surface-curve fillet Non-rational Quartic arc approximations as sections
 Parameters :
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Curve - [in] The curve to that the fillet edge should be
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Curve       - [in] The curve to that the fillet edge should be
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8034,20 +8113,20 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuarticArcsFilletSrfCrv(const ON_B
 /*
 Description: Creates a surface-curve fillet Quartic sections with a tangent and inner slider
 Parameters :
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Curve - [in] The curve to that the fillet edge should be
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Curve       - [in] The curve to that the fillet edge should be
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  TanSlider - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
-    quadratic middle control point
+  TanSlider   - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
+                     quadratic middle control point
   InnerSlider - [in] A number between -0.95 and 0.95 indicating how far to push the inner control point toward or away from the theoretical
-    quadratic middle control point
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+                     quadratic middle control point
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8060,16 +8139,16 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuarticFilletSrfCrv(const ON_BrepF
 /*
 Description: Creates a surface-curve fillet Non-rational Cubic arc approximations as sections
 Parameters :
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Curve - [in] The curve to that the fillet edge should be
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Curve       - [in] The curve to that the fillet edge should be
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8082,18 +8161,18 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalCubicArcsFilletSrfCrv(const ON_Bre
 /*
 Description: Creates a surface-curve fillet using Cubic sections with a tangent and inner slider
 Parameters :
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Curve - [in] The curve to that the fillet edge should be
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Curve       - [in] The curve to that the fillet edge should be
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  TanSlider - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
-    quadratic middle control point
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  TanSlider   - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
+                     quadratic middle control point
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8106,16 +8185,16 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalCubicFilletSrfCrv(const ON_BrepFac
 /*
 Description: Creates a surface-curve fillet using quintic G2-continuous sections
 Parameters :
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Curve - [in] The curve to that the fillet edge should be
-  radius - [in] The radius of the fillet
-  tol - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Curve       - [in] The curve to that the fillet edge should be
+  radius      - [in] The radius of the fillet
+  tol         - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8129,16 +8208,16 @@ RHINO_SDK_FUNCTION bool RhinoCreateG2ChordalQuinticFilletSrfCrv(const ON_BrepFac
 /*
 Description: Creates a standard surface-to-rail fillet using rational arc sections
 Parameters :
-  RailFace - [in] the face that coincides with the rail curve
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Rail - [in] The curve that is in the RailFace
-  tolerance - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  RailFace    - [in] the face that coincides with the rail curve
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Rail        - [in] The curve that is in the RailFace
+  tolerance   - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8151,16 +8230,16 @@ RHINO_SDK_FUNCTION bool RhinoCreateRationalArcsFilletSrfToRail(const ON_BrepFace
 /*
 Description: Creates a surface-to-rail fillet Non-rational Quintic arc approximations as sections
 Parameters :
-  RailFace - [in] the face that coincides with the rail curve
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Rail - [in] The curve that is in the RailFace
-  tolerance - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  RailFace    - [in] the face that coincides with the rail curve
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Rail        - [in] The curve that is in the RailFace
+  tolerance   - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8172,20 +8251,20 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuinticArcsFilletSrfToRail(const O
 /*
 Description: Creates a surface-to-rail fillet Quintic sections with a tangent and inner slider
 Parameters :
-  RailFace - [in] the face that coincides with the rail curve
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Rail - [in] The curve that is in the RailFace
-  tolerance - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  RailFace    - [in] the face that coincides with the rail curve
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Rail        - [in] The curve that is in the RailFace
+  tolerance   - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  TanSlider - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
-    quadratic middle control point
+  TanSlider   - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
+                     quadratic middle control point
   InnerSlider - [in] A number between -0.95 and 0.95 indicating how far to push the inner control point toward or away from the theoretical
-    quadratic middle control point
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+                     quadratic middle control point
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8197,16 +8276,16 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuinticFilletSrfToRail(const ON_Br
 /*
 Description: Creates a surface-to-rail fillet Non-rational Quartic arc approximations as sections
 Parameters :
-  RailFace - [in] the face that coincides with the rail curve
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Rail - [in] The curve that is in the RailFace
-  tolerance - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  RailFace    - [in] the face that coincides with the rail curve
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Rail        - [in] The curve that is in the RailFace
+  tolerance   - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8218,20 +8297,20 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuarticArcsFilletSrfToRail(const O
 /*
 Description: Creates a surface-to-rail fillet Quartic sections with a tangent and inner slider
 Parameters :
-  RailFace - [in] the face that coincides with the rail curve
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Rail - [in] The curve that is in the RailFace
-  tolerance - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  RailFace    - [in] the face that coincides with the rail curve
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Rail        - [in] The curve that is in the RailFace
+  tolerance   - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  TanSlider - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
-    quadratic middle control point
+  TanSlider   - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
+                     quadratic middle control point
   InnerSlider - [in] A number between -0.95 and 0.95 indicating how far to push the inner control point toward or away from the theoretical
-    quadratic middle control point
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+                     quadratic middle control point
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8243,16 +8322,16 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalQuarticFilletSrfToRail(const ON_Br
 /*
 Description: Creates a surface-to-rail fillet Non-rational Cubic arc approximations as sections
 Parameters :
-  RailFace - [in] the face that coincides with the rail curve
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Rail - [in] The curve that is in the RailFace
-  tolerance - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  RailFace    - [in] the face that coincides with the rail curve
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Rail        - [in] The curve that is in the RailFace
+  tolerance   - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8264,18 +8343,18 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalCubicArcsFilletSrfToRail(const ON_
 /*
 Description: Creates a surface-to-rail fillet Cubic sections with a tangent slider
 Parameters :
-  RailFace - [in] the face that coincides with the rail curve
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Rail - [in] The curve that is in the RailFace
-  tolerance - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  RailFace    - [in] the face that coincides with the rail curve
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Rail        - [in] The curve that is in the RailFace
+  tolerance   - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  TanSlider - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
-    quadratic middle control point
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  TanSlider   - [in] A number between -0.95 and 0.95 indicating how far to push the tangent control points toward or away from the theoretical
+                     quadratic middle control point
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8287,16 +8366,16 @@ RHINO_SDK_FUNCTION bool RhinoCreateNonRationalCubicFilletSrfToRail(const ON_Brep
 /*
 Description: Creates a surface-to-rail fillet Non-rational Quintic G2-continuous sections
 Parameters :
-  RailFace - [in] the face that coincides with the rail curve
-  Face - [in] the face to use constructing the fillet
-  uv - [in] The parametric u,v selection point on Face close to the edge to fillet
-  Rail - [in] The curve that is in the RailFace
-  tolerance - [in] Tolerance to use in fitting a solution
-  results - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
+  RailFace    - [in] the face that coincides with the rail curve
+  Face        - [in] the face to use constructing the fillet
+  uv          - [in] The parametric u,v selection point on Face close to the edge to fillet
+  Rail        - [in] The curve that is in the RailFace
+  tolerance   - [in] Tolerance to use in fitting a solution
+  results     - [out] if bTrim = true, returns the remains of Face trimmed to the fillet
   rail_degree - [in] the degree of the rail curve
-  bTrim - [in] if True, trim the faces and retuen those results in resultsA and resultsB
-  bExtend - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
-  Fillets - [out] returns the resulting fillet surfaces
+  bTrim       - [in] if True, trim the faces and retuen those results in resultsA and resultsB
+  bExtend     - [in] if True and if one input surface is longer than the other, the fillet surface is extended to the input surface edges
+  Fillets     - [out] returns the resulting fillet surfaces
   Returns :
   True if successful.
   Remarks : You may want to use RhinoSplitFacesAtTangents and/or ON_Brep::SplitKinkyFaces prior to creating fillets
@@ -8607,6 +8686,81 @@ ON_Brep* RhinoBrepRemoveInnerLoops(
 
 /*
 Description:
+  Untrim the outer boundary of a Brep face, expanding the face back to its
+  underlying surface boundary. Inner loops (holes) are left in place.
+  The outer boundary is only untrimmed when all of its edges are naked (or any
+  shared edge has all of its trims on the same loop); otherwise the operation
+  fails to avoid corrupting adjacent faces. Does not print, add to a document,
+  or record undo.
+Parameters:
+  brep       - [in] the Brep to convert.
+  face_index - [in] index of the face whose outer boundary is untrimmed.
+Returns:
+  Pointer to a new Brep on success, nullptr if unsuccessful.
+*/
+RHINO_SDK_FUNCTION
+ON_Brep* RhinoBrepUntrimOuterLoop(
+  const ON_Brep& brep,
+  int face_index
+);
+
+/*
+Description:
+  Untrim a Brep face completely, expanding it back to its underlying surface:
+  the outer boundary is untrimmed and all inner loops (holes) are removed.
+  Does not print, add to a document, or record undo.
+Parameters:
+  brep       - [in] the Brep to convert.
+  face_index - [in] index of the face to untrim.
+  tolerance  - [in] tolerance.
+Returns:
+  Pointer to a new Brep on success, nullptr if unsuccessful.
+*/
+RHINO_SDK_FUNCTION
+ON_Brep* RhinoBrepUntrimFace(
+  const ON_Brep& brep,
+  int face_index,
+  double tolerance
+);
+
+/*
+Description:
+  Re-trim the selected edges of a single-face Brep, replacing each deleted edge
+  with new boundary geometry. This is the SDK equivalent of the ReplaceEdge
+  command. Does not print, add to a document, or record undo.
+Parameters:
+  brep              - [in] the single-face Brep to modify. If brep has more than
+                      one face the operation fails.
+  edge_indices      - [in] indices of the edges to replace.
+  edge_count        - [in] number of entries in edge_indices.
+  method            - [in] how the deleted edges are re-trimmed:
+                        0 = replace with a straight line across the gap,
+                        1 = extend the two adjacent edges until they meet,
+                        2 = replace with replacement_curve.
+  replacement_curve - [in] the curve used to re-trim when method is 2; ignored
+                      (may be nullptr) for methods 0 and 1.
+  tolerance         - [in] tolerance. When in doubt, use the document's model
+                      absolute tolerance.
+  modified_loop_indices - [out] optional. If not nullptr, receives the indices
+                      (into brep, the input) of the loops that were modified.
+                      This is what the ReplaceEdge command's KeepTrimObjects
+                      option uses to re-create the original loop curves.
+Returns:
+  Pointer to a new Brep on success, nullptr if unsuccessful.
+*/
+RHINO_SDK_FUNCTION
+ON_Brep* RhinoBrepReplaceEdges(
+  const ON_Brep& brep,
+  const int* edge_indices,
+  int edge_count,
+  int method,
+  const ON_Curve* replacement_curve,
+  double tolerance,
+  ON_SimpleArray<int>* modified_loop_indices = nullptr
+);
+
+/*
+Description:
   Create parabola from vertex and ends.
 Parameters:
   vertex - [in] parabola vertex
@@ -8820,7 +8974,7 @@ Remarks:
   is G1 at the seam then the function can construct point sequences that
   cross over the seam. In this case the surface parameter space points in Fixed2 and
   out are in the covering space of Srf.Domain, i.e they extend across the domain
-  boundaries of Srf.Domain(0) in the the sense of a natural periodic extension.
+  boundaries of Srf.Domain(0) in the sense of a natural periodic extension.
   (See ON_PeriodicDomain for more information).
   Also, the number of out points is approximately 2^(nlevel-1)*init_count*Fixed2.Count()
 */
@@ -9433,6 +9587,17 @@ bool RhinoRefitCrvCalculateMaxDeviation(
   double tolerance,             // tolerance to use, typically document tolerance
   // OUTPUT:
   ON_Line* deviation            // A line segment representing the maximum deviation, from the refit curve to the original curve
+);
+
+// Projects a curve onto a surface in the given direction, or pulls it to the
+// surface (closest-point) when dir is zero.  Returns the first resulting curve,
+// or null if the projection/pull produces no output.  Caller owns the returned object.
+RHINO_SDK_FUNCTION
+ON_Curve* RhinoProjectOrPullCurveToSurface(
+  const ON_Curve& curve, // curve that will be projected or pulled
+  const ON_Surface& surface, // untrimmed surface 
+  const ON_3dVector& dir, // direction of the projection or ON_3dVector::ZeroVector for pull (closest point)
+  double tolerance // 3d tolerance for projection/pull
 );
 
 RHINO_SDK_FUNCTION
@@ -10204,6 +10369,83 @@ private:
   class CRhVarSrfResultPrivate* m_private = nullptr;
 };
 
+/*
+Description:
+  Create input for a variational patch. Attempts to make a closed loop of curves that touch, either
+  at their ends, or one curve that touches another at its internal domain, by removing dangling sub-curves.
+  Curves that are tangent continuous will be returned as single polycurves.
+Parameters:
+  edges [in]                     - constraint edges. These curves can apply G0, G1 or G2 constraint.
+  edgeContinuities [in]          - constraint continuities. One continuity per constraint edge in the edges array.
+  internalCurves [in]            - constraint curves. These curves apply G0 constraint.
+  tolerance [in]                 - positional tolerance for joining adjacent edges.
+  angleToleranceRadians [in]     - angle tolernace for making tangent continuous polycurves
+  outSubEdges [out]              - edges that have dangling ends removed and may be converted to tangent continuous polycurves.
+  outSubCOntinuities [out]       - one continuity value per item in the outSubEdges array
+  outInternalCurves [out]        - converted internal curves
+  error [out]                    - if the function returns false, this error contains a descriptive error message.
+Returns:
+  The resulting patch or nullptr on failure
+ */
+
+RHINO_SDK_FUNCTION
+bool RhCreateVariationalInput(
+  // input
+  const ON_SimpleArray<const ON_Curve*>& edges,
+  const ON_SimpleArray<int>& edgeContinuities,
+  const ON_SimpleArray<const ON_Curve*>& internalCurves,
+  double tolerance, double angleToleranceRadians,
+  // output - users of this function are responsible for the curves returned in the arrays
+  // NOTE: there can be curves in these arrays if the return value is false.
+  ON_SimpleArray<ON_Curve*>& outSubEdges,
+  ON_SimpleArray<int>& outSubContinuities,
+  ON_SimpleArray<ON_Curve*>& outInternalCurves,
+  ON_wString& error
+);
+
+/*
+Description:
+  Checks the input for continuity requirements on constraint edges' shared corners.
+  Use the output from RhCreateVariationalInput.
+Parameters:
+  edges [in]                   - constraint edges. These curves can apply G0, G1 or G2 constraint.
+  edgeContinuities [in]        - constraint continuities. One continuity per constraint edge in the edges array.
+  tolerance [in]               - positional tolerance for G0.
+  angleToleranceRadians [in]   - angle tolernace for G1.
+  curvatureTolerance [in]      - relative curvature tolerance for G2.
+  curvatureZeroTolerance [in]  - curvature zero tolerance for G2.
+  untrimmed [in]               - set to true for an untrimmed patch. Untrimmed patch has more and stricter continuity requiremnts.
+  g0Warnings [out]             - corner position and text for positional discontinuities
+  g1Warnings [out]             - corner position and text for tangential discontinuities.
+  g2Warnings [out[             - corner position and text for curvature discontinuities
+*/
+RHINO_SDK_FUNCTION
+bool RhCheckVariationalInput
+(
+  // input
+  const ON_SimpleArray<const ON_Curve*>& edges,
+  const ON_SimpleArray<int>& edgeContinuities,
+  double tolerance, double angleToleranceRadians,
+  double curvatureTolerance, double curvatureZeroTolerance,
+  bool untrimmed,
+  // output
+  ON_SimpleArray<ON_TextDot*>* g0Warnings,
+  ON_SimpleArray<ON_TextDot*>* g1Warnings,
+  ON_SimpleArray<ON_TextDot*>* g2Warnings
+);
+
+/*
+Description:
+  Returns true if the input curves support matched parameterization for untrimmed patch.
+Parameters:
+  edges [in]                   - constraint edges.
+  tolerance [in]               - tolerance to check if edges meet at start/end
+Returns:
+  true if the input curves support matched parameterization
+*/
+
+RHINO_SDK_FUNCTION
+bool RhSupportsMatchedParameterization(const ON_SimpleArray<const ON_Curve*>& edges, double tolerance);
 
 /*
 Description:
@@ -10213,12 +10455,9 @@ Parameters:
   internalCurves [in]            - constraint curves. These curves apply G0 constraint.
   points [in]                    - constraint points. These points apply a positional constraint.
   settings [in]                  - settings for how to construct the surface
+  documentSerialNumber [in]      - serial number of a Rhino document. Set to zero if unknown.
   terminator [in]                - a terminator to stop processing
   progress [in]                  - progress reporter
-  tolerance [in]                 - positional tolerance
-  angleToleranceRadians [in]     - normal tolerance
-  curvatureTolerance [in]        - curvature tolerance
-  internalTolerance [in]         - tolerance for internal curves and points
   result [out]                   - the command result
 Returns:
   The resulting patch or nullptr on failure
@@ -10231,34 +10470,82 @@ ON_Brep* RhinoCreateVariationalPatch
   const ON_ClassArray<std::shared_ptr<CRhinoVarSrfConstraintCurve>>& internalCurves,
   const ON_ClassArray<std::shared_ptr<CRhinoVarSrfConstraintPoint>>& points,
   const CRhinoVarSrfSettings& settings,
+  unsigned int documentSerialNumber,
   ON_Terminator* terminator,
   ON_ProgressReporter* progress,
   CRhinoVarSrfResult& result
 );
 
+/*
+Description
+  Generate a multi-blend with approximate G2 internal continuity and proscribed border continuity.
+  The center and normal will be determined from the input curves.
 
+Parameters:
+  [in] edges            - array of input curves
+    if borderContinuity = 0, these curves can contain any type of wire curve
+    if borderContinuity > 0, these curves must contain ON_BrepEdge or ON_PolyEdgeCurve curves
+
+  [in] joinTolerance    - the tolerance used to check if the curves form a closed loop
+  [in] spanCount        - the number of surface span counts to use. More span counts give a denser surfaces.
+  [in] borderContinuity - the continuity to prescribe at the multi-blend border
+  [out] result          - the resulting surfaces. The user of this function is responsible for managing the memory of these surfaces.
+
+Returns:
+  True if successful
+*/
 
 RHINO_SDK_FUNCTION
-ON_Brep* RhinoCreateVariationalPatch
-(
-  ON_SimpleArray<const ON_Curve*>* edges,
-  ON_SimpleArray<const ON_Curve*>* internalCurves,
-  ON_3dPointArray* points,
-  ON_SimpleArray<int>* edgeContinuities,
-  int degreeU, int degreeV, int spanCountU, int spanCountV,
-  double stretching, double bending, double rocBending,
-  double uvRotation,
-  int maxRefinements,
-  int eDomain,
-  bool multiThreading,
-  const ON_Surface* initialSurface,
-  bool preserveEdges,
-  ON_Terminator* terminator,
-  ON_ProgressReporter* progress,
-  double tolerance, double angleToleranceRadians,
-  double curvatureTolerance, double curvatureZeroTolerance, double internalTolerance,
-  bool* g0internal, bool* g0, bool* g1, bool* g2,
-  ON_wString* warning, ON_wString* error);
+bool RhinoMakeMultiBlend(const ON_SimpleArray<const ON_Curve*>& edges, double joinTolerance, int spanCount, int borderContinuity, ON_SimpleArray<ON_NurbsSurface*>& result);
+
+
+/*
+Description
+  Generate a multi-blend with approximate G2 internal continuity and proscribed border continuity.
+  The normal at the prescribed center will be determined from input curves.
+
+Parameters:
+  [in] edges            - array of input curves
+    if borderContinuity = 0, these curves can contain any type of wire curve
+    if borderContinuity > 0, these curves must contain ON_BrepEdge or ON_PolyEdgeCurve curves
+
+  [in] center           - The center point of the multi-blend
+  [in] joinTolerance    - the tolerance used to check if the curves form a closed loop
+  [in] spanCount        - the number of surface span counts to use. More span counts give a denser surfaces.
+  [in] borderContinuity - the continuity to prescribe at the multi-blend border
+  [out] result          - the resulting surfaces. The user of this function is responsible for managing the memory of these surfaces.
+
+Returns:
+  True if successful
+*/
+
+RHINO_SDK_FUNCTION
+bool RhinoMakeMultiBlend(const ON_SimpleArray<const ON_Curve*>& edges, ON_3dPoint center, double joinTolerance, int spanCount, int borderContinuity, ON_SimpleArray<ON_NurbsSurface*>& result);
+
+
+/*
+Description
+  Generate a multi-blend with approximate G2 internal continuity and proscribed border continuity.
+
+Parameters:
+  [in] edges            - array of input curves
+    if borderContinuity = 0, these curves can contain any type of wire curve
+    if borderContinuity > 0, these curves must contain ON_BrepEdge or ON_PolyEdgeCurve curves
+
+  [in] center           - The center point of the multi-blend
+  [in] normal           - The normal at the center point of the multi-blend
+  [in] joinTolerance    - the tolerance used to check if the curves form a closed loop
+  [in] spanCount        - the number of surface span counts to use. More span counts give a denser surfaces.
+  [in] borderContinuity - the continuity to prescribe at the multi-blend border
+  [out] result          - the resulting surfaces. The user of this function is responsible for managing the memory of these surfaces.
+
+Returns:
+  True if successful
+*/
+
+RHINO_SDK_FUNCTION
+bool RhinoMakeMultiBlend(const ON_SimpleArray<const ON_Curve*>& edges, ON_3dPoint center, ON_3dVector normal, double joinTolerance, int spanCount, int borderContinuity, ON_SimpleArray<ON_NurbsSurface*>& result);
+
 
 
 /*
@@ -10450,3 +10737,26 @@ ON_Curve* RhinoCatenaryFromApex(
   double* parameter_out = nullptr,
   double* length_out = nullptr,
   double* max_deviation_out = nullptr);
+
+
+/*
+Description:
+  Merges adjacent cylindrical faces into a single face.
+Parameters:
+  brep            - [in/out] The brep to modify.
+  face_index1     - [in] first face index
+  face_index2     - [in] second face index
+  tolerance       - [in] 3d tolerance for determining when faces share the same underlying cylinder.
+                         If in doubt, use document tolerance.
+  angle_tolerance - [in] 3d angle tolerance for determining when cylinder axes are parallel.
+                         If in doubt, use current document angle tolerance.
+Returns:
+  true if faces were merged, false if no faces were merged.
+*/
+bool RhinoMergeCylindricalFaces(
+  ON_Brep& brep,
+  ON_COMPONENT_INDEX face_index1,
+  ON_COMPONENT_INDEX face_index2,
+  double tolerance,
+  double angle_tolerance
+);

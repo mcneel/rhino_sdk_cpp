@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -578,7 +578,7 @@ public:
     true if the span is a non-degenerate line.  This means:
     - dimension = 2 or 3
     - There are full multiplicity knots at each end of the span.
-    - The length of the the line segment from the span's initial 
+    - The length of the line segment from the span's initial 
       control point to the span's final control point is 
       >= min_length.
     - The distance from the line segment to the interior control points
@@ -934,6 +934,49 @@ public:
   /// Otherwise 0 is returned.
   /// </returns>
   int IndependentControlPointCount() const;
+
+  /// Get the indices of the spans where the specified 
+  /// control point is active.
+  /// Note that a NURBS curve with n control points has (n-degree) many spans.
+  /// If 0 &lt= span_index &lt; (n-degree), then 
+  /// CV(span_index), ..., CV(span_index+degree)
+  /// and 
+  /// {knot[span_index], ..., knot[span_index+2*degree-1]}
+  /// are the control points and knots that are active in that span. 
+  /// The domain of the span is 
+  /// [knot[span_index+degree-1], knot[span_index+degree]].
+  /// </summary>
+  /// <param name="control_point_index">
+  /// 0 &lt;= control_point_index &lt; control_point_count
+  /// </param>
+  /// <returns>
+  /// If the input is valid,
+  /// then the spans whose index satisfies 
+  /// ON_2dex.i &lt;= span_index &lt; ON_2dex.j
+  /// use the specified control point.
+  /// If the iput is not valid, then ON_2dex(0,0) is returned.
+  /// </returns>
+  const ON_2dex ControlPointSpans(
+    int control_point_index
+  ) const;
+
+  /// <summary>
+  /// Get the interval in the curve's domain where the specified
+  /// control point is active (helps determine the value of the curve).
+  /// The returned inteval will be contained in the curve's domain.
+  /// Put another way, if ControlPointSupport(i).Contains(t) is false,
+  /// then curve->PointAt(t) does not depend on the location of CV(i).
+  /// </summary>
+  /// <param name="control_point_index">
+  /// Index of the control point.
+  /// 0 &lt; = control_point_index &lt; CVCount().
+  /// </param>
+  /// <returns>
+  /// The parameter interval where the specified control point is active. 
+  /// </returns>
+  const ON_Interval ControlPointSupport(
+    int control_point_index
+  ) const;
 
   /*
   Description:

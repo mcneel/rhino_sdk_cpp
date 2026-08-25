@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -311,9 +311,33 @@ public:
     ON_TextLog* error_log = nullptr
     );
 
-  bool Read( 
+  bool Read(
     const wchar_t* filename,
     ON_TextLog* error_log = nullptr
+    );
+
+  /*
+  Description:
+    Open the file, create an ON_BinaryArchive, and read only the
+    start section, properties, and settings (the first three
+    required steps of IncrementalReadBegin), then close the file.
+    Use this when you need the document settings without reading
+    the rest of the model.
+  Parameters:
+    filename - [in]
+      Name of the .3dm file to read.
+  Returns:
+    True if the start section, properties, and settings were read.
+  See Also:
+    ONX_Model::Read
+    ONX_Model::IncrementalReadBegin
+  */
+  bool ReadSettings(
+    const char* filename
+    );
+
+  bool ReadSettings(
+    const wchar_t* filename
     );
 
   /*
@@ -703,7 +727,7 @@ public:
   model_component - [in]
     A copy of model_component is added to this model.
     The index, id, and name of the copied component are
-    set the the model values (Manifest() "Manifest" index, name, and id).
+    set the model values (Manifest() "Manifest" index, name, and id).
   
   bResolveIdAndNameConflicts - [in]
     If bResolveIdAndNameConflicts is false, then model_component.Id() must be non-nil 
@@ -968,7 +992,7 @@ public:
       If true, attributes should be nullptr or point to an instance created by operator new and on the heap.
       It will be deleted when the this ONX_Model and the last ON_ModelComponentReference are destroyed.
       If false, the expert caller is carefully managing the instance and memory to insure
-      attributes is a valid instance while this ONX_Model and and ON_ModelComponentReference 
+      attributes is a valid instance while this ONX_Model and ON_ModelComponentReference 
       are active.
 
     attributes - [in]

@@ -1,4 +1,4 @@
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -100,6 +100,7 @@
 
 #if !defined(ON_RUNTIME_APPLE_IOS)
 #define ON_RUNTIME_APPLE_MACOS
+#endif
 
 #if !defined(RHINO_CORE_COMPONENT)
 // Apple:
@@ -109,7 +110,6 @@
 //   uses the property sheet RhinoProjectPropertySheets/Rhino.Cpp.common.props
 //   Some build products in Windows are not "core components"
 #define RHINO_CORE_COMPONENT 1
-#endif
 #endif
 
 #if (defined(__LP64__) || defined(__ppc64__))
@@ -175,6 +175,14 @@
 #define ON_LITTLE_ENDIAN
 #else
 #define ON_BIG_ENDIAN
+#endif
+
+#if !defined(RHINO_CORE_COMPONENT)
+// Linux and WASM:
+//   Defines RHINO_CORE_COMPONENT here.
+//   If we publish a Linux or WASM C++ pubic SDK, this will need to be adjusted.
+// Instead, we should be using CMakeLists.txt to define RHINO_CORE_COMPONENT.
+#define RHINO_CORE_COMPONENT 1
 #endif
 
 #endif

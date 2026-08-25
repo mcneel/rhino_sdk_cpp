@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -174,7 +174,7 @@ Description:
   Brep edge information is stored in ON_BrepEdge classes.
   ON_Brep.m_E[] is an array of all the edges in the brep.
 
-  An ON_BrepEdge is derived from ON_CurveProxy so the the
+  An ON_BrepEdge is derived from ON_CurveProxy so the
   edge can supply easy to use evaluation tools via 
   the ON_Curve virtual member functions.
 
@@ -271,6 +271,12 @@ public:
     returns the number of faces added to the array.
   */
   int AdjacentFaces(ON_SimpleArray<const ON_BrepFace*>& faces) const;
+
+  /*
+  Puts the faces that this edge bounds in the faces array.
+  returns the number of faces added to the array.
+  */
+  int AdjacentFaces(ON_SimpleArray<ON_BrepFace*>& faces);
 
   /*
   Parameters:
@@ -439,7 +445,7 @@ public:
   // The first occurrence of m_edge_index in m_V[m_vi[0]].m_ei[]
   // is for the closed edge starting the vertex.  The second
   // occurrence of m_edge_index in m_V[m_vi[0]].m_ei[]
-  // is for the closed edge edge ending at the vertex.
+  // is for the closed edge ending at the vertex.
   // C.f. ON_Brep::Next/PrevEdge().
   int m_vi[2];
 
@@ -482,7 +488,7 @@ Description:
   Brep trim information is stored in ON_BrepTrim classes.
   ON_Brep.m_T[] is an array of all the trim in the brep.
 
-  An ON_BrepTrim is derived from ON_CurveProxy so the the
+  An ON_BrepTrim is derived from ON_CurveProxy so the
   trim can supply easy to use evaluation tools via 
   the ON_Curve virtual member functions.
 
@@ -1131,6 +1137,13 @@ public:
   */
   int AdjacentTrims(ON_SimpleArray<const ON_BrepTrim*>&) const;
 
+
+  /*
+  Puts the trims on each of the face's loops in the array.
+  Returns the number of trims added to the array.
+  */
+  int AdjacentTrims(ON_SimpleArray<ON_BrepTrim*>&);
+
   /*
     Puts the trim indices on each of the face's loops in the array.
     Returns the number of trim indicess added to the array.
@@ -1142,6 +1155,12 @@ public:
     Returns the number of trims added to the array.
   */
   int AdjacentEdges(ON_SimpleArray<const ON_BrepEdge*>&) const;
+
+  /*
+  Puts the edges on the face boundaries in the array.
+  Returns the number of trims added to the array.
+  */
+  int AdjacentEdges(ON_SimpleArray<ON_BrepEdge*>&);
 
   /*
     Puts the edges on the face boundaries in the array.
@@ -2965,7 +2984,7 @@ public:
         surface must be an ON_PlaneSurface.
     loop_type - [in] type of loop to add.  If loop_type is
         ON_BrepLoop::unknown, then the loop direction is tested
-        and the the new loops type will be set to 
+        and the new loops type will be set to 
         ON_BrepLoop::outer or ON_BrepLoop::inner.  If the loop_type
         is ON_BrepLoop::outer, then the direction of the new loop
         is tested and flipped if it is clockwise. If the loop_type
@@ -3385,7 +3404,7 @@ public:
     Set the loop parameter space bounding box (loop.m_pbox).
   Parameters:
     loop - [in]
-    bLazy - [in] if true and loop trim trim.m_pbox is valid, 
+    bLazy - [in] if true and trim.m_pbox is valid, 
        then that trim.m_pbox is not recalculated.
   Returns:
     true if loop ends up with a valid bounding box.
@@ -3400,7 +3419,7 @@ public:
     for every loop and trim in the face 
   Parameters:
     face - [in]
-    bLazy - [in] if true and trim trim.m_pbox is valid, 
+    bLazy - [in] if true and trim.m_pbox is valid, 
        then that trim.m_pbox is not recalculated.
   Returns:
     true if all the face's loop and trim parameter space bounding 
@@ -3414,7 +3433,7 @@ public:
     Set the loop and trim parameter space bounding boxes
     for every loop and trim in the brep.
   Parameters:
-    bLazy - [in] if true and trim trim.m_pbox is valid, 
+    bLazy - [in] if true and trim.m_pbox is valid, 
        then that trim.m_pbox is not recalculated.
   Returns:
     true if all the loop and trim parameter space bounding boxes
@@ -3775,7 +3794,7 @@ public:
   Parameters:
     face - [in] face whose surface should be changed
     tolerance - [in] tolerance for fitting 3d edge curves
-    bRebuildSharedEdges - [in] if false and and edge is
+    bRebuildSharedEdges - [in] if false and edge is
       used by this face and a neighbor, then the edge will
       be skipped.
     bRebuildVertices - [in] if true, vertex locations are
@@ -4071,7 +4090,7 @@ public:
   /*
   Description:
     Set  m_vertex_user.i, m_edge_user.i, m_face_user.i, m_loop_user.i,
-    and m_trim_user.i values values to distinguish connected components.
+    and m_trim_user.i values to distinguish connected components.
   Parameters:
   Returns:
     number of connected components
@@ -4127,7 +4146,7 @@ public:
   /*
   Description:
     Set  m_vertex_user.i, m_edge_user.i, m_face_user.i, m_loop_user.i,
-    and m_trim_user.i values values to distinguish connected components.
+    and m_trim_user.i values to distinguish connected components.
   Parameters:
     angle_tol - [in] to determine if an edge is tangent.  In radians.
   Returns:
@@ -4218,7 +4237,7 @@ public:
   //   Single face brep.
   // Remarks:
   //   The m_vertex_user.i, m_edge_user.i, m_face_user.i, m_loop_user.i,
-  //   and m_trim_user.i values of the returned brep are are set to the 
+  //   and m_trim_user.i values of the returned brep are set to the 
   //   indices of the objects they duplicate.
   // See Also:
   //   ON_Brep::DeleteFace, ON_Brep::ExtractFace
@@ -4228,7 +4247,7 @@ public:
     ) const;
 
   // Description:
-  //   Duplicate a a subset of a brep
+  //   Duplicate a subset of a brep
   // Parameters:
   //   face_count - [in] length of face_index[] array
   //   face_index - [in] array of face indices
@@ -4237,7 +4256,7 @@ public:
   //   A brep made by duplicating the faces listed in the face_index[] array.
   // Remarks:
   //   The m_vertex_user.i, m_edge_user.i, m_face_user.i, m_loop_user.i,
-  //   and m_trim_user.i values of the returned brep are are set to the 
+  //   and m_trim_user.i values of the returned brep are set to the 
   //   indices of the objects they duplicate.
   // See Also:
   //   ON_Brep::DuplicateFace
@@ -5009,7 +5028,7 @@ public:
 
   // topology
   // (all topology is deleted by ~ON_Brep().  Objects can be unreferenced.
-  // Use Compact() to to remove unreferenced geometry.
+  // Use Compact() to remove unreferenced geometry.
   ON_BrepVertexArray  m_V;   // vertices
   ON_BrepEdgeArray    m_E;   // edges
   ON_BrepTrimArray    m_T;   // trims
@@ -5053,7 +5072,7 @@ public:
 
 private:
   // In calculations where multiple threads are using a brep and calling functions
-  // that may modify content, the calling code can use use ON_SleepLockGuard guard(Mutex)
+  // that may modify content, the calling code can use ON_SleepLockGuard guard(Mutex)
   // or similar techniques to make the calculations thread safe.
   // Because Mutex is a public resource, it must be used with great care to
   // prevent lock contention.
@@ -6025,12 +6044,12 @@ public:
   0: Ignore this constraint.
   
   1: m_brep_trim_index identifies a brep trim.
-     The surface along the trim will will be constrained to
+     The surface along the trim will be constrained to
      m_curve_constraint. m_curve_constraint must be oriented
      to take the trim's m_bRev3d flag into account.
   
   2: m_brep_trim_index identifies a brep trim.
-     The surface along the trim will will be constrained to
+     The surface along the trim will be constrained to
      location of m_surface_constraint along the trim.
   
   3 - 6: Surface Singularity
@@ -6049,7 +6068,7 @@ public:
      ON_BendBrepFace will be closed in the parameter
      direction identified by the constraint value. The knot
      vector on the surface passed to ON_BendBrepFace
-     determines if the the closure is clamped or periodic.
+     determines if the closure is clamped or periodic.
      The values of m_brep_trim_index, m_curve_constraint
      and m_surface_constraint are ignored.
   7: Closed surface the first parameter direction. (west = east)
@@ -6073,7 +6092,7 @@ public:
      The specified side of the surface is constrained to
      match the same side of m_surface_constraint.
      The domain and parameterization of m_surface_constraint
-     must be set to agree with the the side of the surface 
+     must be set to agree with the side of the surface 
      that is being constrained. The values of 
      m_brep_trim_index and m_curve_constraint are
      ignored.

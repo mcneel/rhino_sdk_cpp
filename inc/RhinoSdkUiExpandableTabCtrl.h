@@ -1,4 +1,4 @@
-// Copyright (c) 1993-2016 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -281,7 +281,7 @@ public:
   //   To use these notification codes do add the message map macro to the parent
   //   of this control:
   //     ON_REGISTERED_MESSAGE( CRhinoUiExpandableTabCtrl::m_custom_win_msg_id, OnRegisteredMessage)
-  //   Add this to the decloration of the the parent window class:
+  //   Add this to the decloration of the parent window class:
   //     afx_msg LRESULT OnRegisteredMessage( WPARAM wParam, LPARAM lParam);
   //   Add this method to the class implementation
   //     LRESULT CMyDialog::OnRegisteredMessage( WPARAM wParam, LPARAM lParam)

@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -101,7 +100,7 @@ public:
   int AddItem( CRhinoUiOptionsListCtrlItem* pItem);
   //   
   // Description:
-  //   Call this method to control wether or not an item is displayed in the list control.
+  //   Call this method to control whether or not an item is displayed in the list control.
   //
   // Parameters:
   //   pItem [in] Item to display or hide
@@ -114,7 +113,7 @@ public:
   bool HideItem( CRhinoUiOptionsListCtrlItem* pItem, bool bHide = true);
   //   
   // Description:
-  //   Call this method to control wether or not an item is displayed in the list control.
+  //   Call this method to control whether or not an item is displayed in the list control.
   //
   // Parameters:
   //   iItem [in] Index of item to display or hide.
@@ -807,7 +806,7 @@ public:
   //   
   // Description:
   //   This method is called upon a successful call to PopulateItemComboBox() to notify the
-  //   list control that it has been populated and provide it with and opportunity set set
+  //   list control that it has been populated and provide it with and opportunity set
   //   the current selection.
   //
   // Parameters:
@@ -825,7 +824,7 @@ public:
   virtual bool OnComboBoxPopulated( CRhinoUiOptionsListCtrlComboBox& item);
   //   
   // Description:
-  //   This method is called when when the user changes the current selection in the list box
+  //   This method is called when the user changes the current selection in the list box
   //   of a combo box.  The default behavior is to send a registered windows message to the 
   //   parent of the list control to notify it of this event. 
   //
@@ -841,7 +840,7 @@ public:
   virtual void OnItemComboBoxSelChanged( CRhinoUiOptionsListCtrlComboBox& item);
   //   
   // Description:
-  //   This method is called when when the user clicks a radio button in a radio button column
+  //   This method is called when the user clicks a radio button in a radio button column
   //   list control item.  The default behavior is to send a registered windows message to the 
   //   parent of the list control to notify it of this event. 
   //
@@ -891,7 +890,7 @@ public:
   //
   //   To use these notification codes do add the message map macro to the parent of this control:
   //     ON_REGISTERED_MESSAGE( CRhinoUiOptionsListCtrl::m_custom_win_msg_id, OnRegisteredMessage)
-  //   Add this to the decloration of the the parent window class:
+  //   Add this to the decloration of the parent window class:
   //     afx_msg LRESULT OnRegisteredMessage( WPARAM wParam, LPARAM lParam);
   //   Add this method to the class implementation
   //     LRESULT CTestOptionsListDlg::OnRegisteredMessage( WPARAM wParam, LPARAM lParam)

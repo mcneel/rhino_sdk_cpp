@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -244,7 +244,7 @@ public:
   //   When an object is created, it does not belong to a document.
   //   CRhinoDoc::AddObject() or CRhinoDoc::ReplaceObject() are used
   //   to add new objects to a document.  After the object is added
-  //   to a document, it it managed by that document.  If the
+  //   to a document, it is managed by that document.  If the
   //   CRhinoObject::Document() returns NULL, then the object is
   //   not part of a document.
   unsigned int DocumentRuntimeSerialNumber() const;
@@ -311,7 +311,7 @@ public:
     Returns true if the object is used as part of an instance
     definition.   
   Returns:
-    true if object is is used as part of an instance
+    true if object is used as part of an instance
     definition.
   */
   bool IsInstanceDefinitionGeometry() const;
@@ -386,6 +386,44 @@ public:
     next time a file is read.
   */
   unsigned int WorksessionReferenceModelSerialNumber() const;
+
+  /*
+  Returns:
+    True if this object carries its own worksession reference model serial number, false if it
+    inherits one from its layer.
+  Remarks:
+    WorksessionReferenceModelSerialNumber() returns this object's own serial number when it has
+    one and its layer's when it does not, so the two cases are indistinguishable from the
+    outside. They matter when moving content between worksession models: an object that
+    inherits follows its layer automatically, and writing a serial number to it would pin it
+    and stop it following.
+  */
+  bool WorksessionReferenceModelSerialNumberIsExplicit() const;
+
+  /*
+  Description:
+    Move this object to a different worksession model.
+  Parameters:
+    worksession_ref_model_serial_number - [in]
+      0: the active model.
+      1: an unidentified worksession reference model.
+      2-1000: reserved, and rejected.
+      > 1000: a worksession reference model serial number.
+  Returns:
+    True if the serial number was set.
+  Remarks:
+    Changing a worksession's active model without rebuilding the document means moving content
+    between models rather than re-reading it, and the model an object belongs to is exactly
+    what changes. Only the worksession membership is altered; nothing else about the object is
+    touched, and the caller is responsible for whatever else that role change implies -
+    display, saving, and the tables the object refers to.
+
+    This is the object counterpart of
+    ON_ModelComponent::SetWorksessionReferenceModelSerialNumber.
+  */
+  bool SetWorksessionReferenceModelSerialNumber(
+    unsigned int worksession_ref_model_serial_number
+    );
   
   /*
   Returns:
@@ -601,7 +639,7 @@ public:
     bSelect - [in] (default=true)
     bSynchHighlight - [in] (default=true)
         If true, then the object is highlighted if it is selected
-        and not highlighted if is is not selected.
+        and not highlighted if is not selected.
     bPersistentSelect - [in] (default=true)
         Objects that are persistently selected stay selected when
         a command terminates.
@@ -635,7 +673,7 @@ public:
     bSelect - [in] (default=true)
     bSynchHighlight - [in] (default=true)
         If true, then the object is highlighted if it is selected
-        and not highlighted if is is not selected.
+        and not highlighted if is not selected.
     bPersistentSelect - [in] (default=true)
         Objects that are persistently selected stay selected when
         a command terminates.
@@ -678,7 +716,7 @@ public:
     bSelect - [in] (default=true)
     bSynchHighlight - [in] (default=true)
         If true, then the object is highlighted if it is selected
-        and not highlighted if is is not selected.
+        and not highlighted if is not selected.
     bPersistentSelect - [in] (default=false)
         Subobjects that are persistently selected stay selected when
         a command terminates.
@@ -1257,7 +1295,7 @@ public:
       calculated with a different mapping.
   Returns:
     True if the object's texture coordinates are set.
-    False if the the coordinates cannot be set (the object
+    False if the coordinates cannot be set (the object
     may not have texture coordinates, like a point, or
     it may not have render mesh, like a new CRhinoBrepObject,
     or the mapping calculation may fail.
@@ -1300,7 +1338,7 @@ public:
       calculated with a different mapping.
   Returns:
     True if the object's cached texture coordinates are set.
-    False if the the cached coordinates cannot be set (the object
+    False if the cached coordinates cannot be set (the object
     may not have texture coordinates, like a point, or
     it may not have render mesh, like a new CRhinoBrepObject,
     or the mapping calculation may fail.
@@ -1337,7 +1375,7 @@ public:
       mapping ref.
   Returns:
     True if the object's cached texture coordinates are set.
-    False if the the cached coordinates cannot be set (the object
+    False if the cached coordinates cannot be set (the object
     may not have texture coordinates, like a point, or
     it may not have render mesh, like a new CRhinoBrepObject,
     or the mapping calculation may fail.
@@ -1366,7 +1404,7 @@ public:
       found mappings will be cached.
   Returns:
     True if the object's cached texture coordinates are set.
-    False if the the cached coordinates cannot be set (the object
+    False if the cached coordinates cannot be set (the object
     may not have texture coordinates, like a point, or
     it may not have render mesh, like a new CRhinoBrepObject,
     or the mapping calculation may fail.
@@ -1675,7 +1713,7 @@ public:
     CRhinoObject::MeshCount
     CRhinoObject::IsMeshable
   */
-  ON_DEPRECATED_MSG("bDeleteMeshes = false is no longer supported - override this function if you are implementing CRhinoObject, but ignore the bDeleteMeshes parameter.  Call the function below.") 
+  //ON_DEPRECATED_MSG("bDeleteMeshes = false is no longer supported - override this function if you are implementing CRhinoObject, but ignore the bDeleteMeshes parameter.  Call the function below.") 
   virtual void DestroyMeshes( ON::mesh_type mesh_type, bool bDeleteMeshes );
 
   /*virtual*/ void DestroyMeshes(ON::mesh_type mesh_type);
@@ -2155,7 +2193,7 @@ private:
 public:
   /*
   Description:
-  If you are writing a command or plug-in and and need
+  If you are writing a command or plug-in and need
   a brep form of an object type that supports BrepForm, call Geometry()->BrepForm().
 
   The definition of CRhReferenceCountedBrep is not available
@@ -2254,7 +2292,7 @@ Parameters:
   selfillumination - [in]  If true, the image mapped to the picture frame plane always displays 
                             at full intensity and is not affected by light or shadow.  
                             The default is true.
-  embedbitmap      - [in]  If true, the function adds the the image to the bitmap table of the 
+  embedbitmap      - [in]  If true, the function adds the image to the bitmap table of the 
                             document to which the PictureFrame will be added. 
                             The default is false.
   addtodoc         - [in]  If false, the object will not be added to the document.  The material

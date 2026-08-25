@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2021 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -32,6 +32,29 @@ public:
   ON_Color PlotColor(const CRhinoDoc* doc, const ON_UUID& viewport_id ) const;
   double PlotWeight(const CRhinoDoc* = NULL ) const;
   double PlotWeight(const CRhinoDoc* doc, const ON_UUID& viewport_id ) const;
+
+  // Description:
+  //   Resolves the effective hatch boundary color for this object by
+  //   applying HatchBoundaryColorSource(print) to find where the color
+  //   comes from:
+  //     color_from_layer  - the layer's PerViewportColor (or
+  //                         PerViewportPlotColor when print==true)
+  //     color_from_object - the object's main attribute color m_color
+  //                         (or m_plot_color when print==true)
+  //     color_from_parent - currently treated the same as color_from_layer
+  //     color_custom      - the per-item override stored on the attribute
+  //                         (see ON_3dmObjectAttributes::HatchBoundaryColor).
+  //                         If that override is unset, the seed color is
+  //                         used instead.
+  // Parameters:
+  //   doc         - [in] document used to resolve the layer color. If null,
+  //                      the active document is used.
+  //   viewportId  - [in] viewport whose per-viewport overrides should be
+  //                      consulted when the source is layer/parent. Pass
+  //                      ON_nil_uuid for the base layer color.
+  //   print       - [in] false for the display variant, true for the
+  //                      print/plot variant.
+  ON_Color ComputedHatchBoundaryColor(const CRhinoDoc* doc, const ON_UUID& viewportId, bool print) const;
 
   // Description:
   //  Get section attributes

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -14,8 +14,6 @@
 
 #include "rhinoSdkGetPoint.h"
 
-// Todo - make this puppy work, and when done separate the Get-part and add to SDK
-// SDK header stuff, goes to rhinoSdkGetParabola.h
 /*-------------------------------------------------------------------
 CLASS
   CArgsRhinoGetParabola

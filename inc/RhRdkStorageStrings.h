@@ -185,6 +185,10 @@
 			#define SS_PEP_MULTIPLIER                       L"multiplier"
 			#define SS_PEP_MULTIPLIER_VALUE                 L"multiplier-value"
 
+			// Despeckle
+			#define SS_PEP_DESPECKLE                        L"despeckle"
+			#define SS_PEP_DESPECKLE_THRESHOLD              L"despeckle-threshold"
+
 			// Noise
 			#define SS_PEP_NOISE                            L"noise"
 			#define SS_PEP_NOISE_AMOUNT                     L"noise-amount"
@@ -392,7 +396,7 @@
 			#define SS_UD_DECAL_MIN_V                     ON_RDK_DECAL_MIN_V
 			#define SS_UD_DECAL_MAX_U                     ON_RDK_DECAL_MAX_U
 			#define SS_UD_DECAL_MAX_V                     ON_RDK_DECAL_MAX_V
-			#define SS_UD_DECAL_IS_TEMPORARY              ON_RDK_DECAL_IS_TEMPORARY
+			#define SS_UD_DECAL_IS_TEMPORARY              ON_RDK_DECAL_IS_TEMPORARY // Deprecated; do not use.
 			#define SS_UD_DECAL_IS_VISIBLE                ON_RDK_DECAL_IS_VISIBLE
 
 // Content meta-data

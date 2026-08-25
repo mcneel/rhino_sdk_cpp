@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -135,7 +135,7 @@ public:
   // matching id.
   ON_UUID m_section_appearance_id;
 
-  // Fields may be be added to this class during the V5 lifecycle.
+  // Fields may be added to this class during the V5 lifecycle.
   // If that happens, then m_class_version will be incremented.
   unsigned char m_class_version; // constructor sets m_class_version = 0;
 private:
@@ -262,7 +262,7 @@ public:
 
   double m_hair_scale;
 
-  // Fields may be be added to this class during the V5 lifecycle.
+  // Fields may be added to this class during the V5 lifecycle.
   // If that happens, then m_class_version will be incremented.
   unsigned char m_class_version; // constructor sets m_class_version = 0;
 private:
@@ -329,7 +329,7 @@ public:
     const class ON_Surface* surface
     );
   
-  // Fields may be be added to this class during the V5 lifecycle.
+  // Fields may be added to this class during the V5 lifecycle.
   // If that happens, then m_class_version will be incremented.
   const unsigned char m_class_version; // constructor sets m_class_version = 0;
 private:
@@ -430,7 +430,7 @@ public:
   ON__UINT64 m_section_planes_mark;
   ON_SimpleArray< const class ON_PlanarSection* > m_sections;
 
-  // Fields may be be added to this class during the V5 lifecycle.
+  // Fields may be added to this class during the V5 lifecycle.
   // If that happens, then m_class_version will be incremented.
   const unsigned char m_class_version; // constructor sets m_class_version = 0;
 private:

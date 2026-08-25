@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2024 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -188,6 +188,18 @@ public:
   // Returns:
   //  Returns true of the bitmap was found and successfully extracted.
   static bool Bitmap(UUID idFile, UUID idBitmap, bool menuBitmap, CRhinoDib& bitmap);
+
+  // Description:
+  //  Call this method to get the SVG string for the image with the specified id.
+  // Parameters:
+  //  idFile[in] Id of the file containing the image.
+  //  idImage[in] Id of the image (the same id returned by MacroBitmapID).
+  //  darkMode[in] Set to true to get the dark-mode SVG. When the image only has a
+  //    light SVG, its custom dark-mode attributes are applied to produce the result.
+  // Returns:
+  //  Returns the SVG string for the image, or an empty string if the image was not
+  //  found or has no SVG representation.
+  static ON_wString Svg(UUID idFile, UUID idImage, bool darkMode);
 
 private:
   CRhinoUiFile() = delete;

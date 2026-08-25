@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -117,9 +117,7 @@
 #include "opennurbs_texture_mapping.h" // texture coordinate evaluation
 #include "opennurbs_texture.h"        // texture definition
 #include "opennurbs_material.h"       // simple rendering material
-#if defined(OPENNURBS_MARKUP_WIP)
 #include "opennurbs_markup.h"         // markup entities
-#endif // OPENNURBS_MARKUP_WIP
 #include "opennurbs_sectionstyle.h"   // attributes for drawing sections
 #include "opennurbs_layer.h"          // layer definition
 #include "opennurbs_linetype.h"       // linetype definition
@@ -129,16 +127,14 @@
 #include "opennurbs_tag.h"            // tag name and index
 #endif // OPENNURBS_TAG_WIP
 
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
 #include "opennurbs_pageview_group.h" // page view group name and index
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
-
 #include "opennurbs_light.h"          // light
 #include "opennurbs_pointgeometry.h"  // single point
 #include "opennurbs_pointcloud.h"     // point set
 #include "opennurbs_curveproxy.h"     // proxy curve provides a way to use an existing curve
 #include "opennurbs_surfaceproxy.h"   // proxy surface provides a way to use another surface
 #include "opennurbs_mesh.h"           // mesh object
+#include "opennurbs_quickhull3d.h"    // 3d convex hull (Quickhull algorithm)
 
 #if defined(OPENNURBS_PLUS)
 //#include "opennurbs_plus_meshbooleans_impl.h" //mesh booleans functions are part of conditionally-compiled ON_Mesh now

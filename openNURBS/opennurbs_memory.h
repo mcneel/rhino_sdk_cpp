@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -158,7 +158,7 @@ void ON_MemoryManagerEnd(void);
 //   If sz is zero, then onfree(p) is called and
 //   nullptr is returned.
 //   If p is not nullptr, sz is positive, and there is not
-//   enough memory to to satisfy the allocation request,
+//   enough memory to satisfy the allocation request,
 //   the ON_memory_error_handler(0) is called and nullptr is returned.
 //   If p is not nullptr and is known to be invalid, then
 //   ON_memory_error_handler(1) is called.

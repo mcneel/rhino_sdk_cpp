@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -210,7 +210,7 @@ public:
   //   every time the view projection or construction plane
   //   changes.  The user can the mouse and nestable view 
   //   manipulation commands to change a view at any time.
-  //   The value value of change counter can be used to 
+  //   The value of change counter can be used to 
   //   detect these changes in code that is sensitive to
   //   the view projection.
   // Returns:

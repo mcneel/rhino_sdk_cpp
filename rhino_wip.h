@@ -150,19 +150,13 @@
 #if defined(RHINO_WIP_BUILD)
 #if !defined(RH_EXPERIMENTAL)
 // items that should be defined in WIP, but not in commercial build
-#define INCLUDE_RHINO_FLAIR
-#define INCLUDE_RHINO_FLAIR_UI
 //#define RH_CONSTRAINTS
-#define INCLUDE_ETO_DM_OPTIONS_PAGE
+//#define INCLUDE_ETO_DM_OPTIONS_PAGE
 #endif
 #endif
 
 #if defined(RHINO_BETA_BUILD)
 #if !defined(RH_EXPERIMENTAL)
-#define INCLUDE_RHINO_FLAIR
 #endif
 #endif
 
-#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
-#define INCLUDE_RHINO_SECTION_STYLE_TABLE
-#endif

@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -280,7 +279,7 @@ protected:
 //   To use this notification message do add the message map macro to the parent
 //   of this control:
 //     ON_REGISTERED_MESSAGE( CRhinoUiTabbedSheetCtrlMsg::m_custom_msg_id, OnTabbedSheetCtrlMsg)
-//   Add this to the decloration of the the parent window class:
+//   Add this to the decloration of the parent window class:
 //     afx_msg LRESULT OnTabbedSheetCtrlMsg( WPARAM wParam, LPARAM lParam);
 //   Add this method to the class implementation
 //     LRESULT CMyDialog::OnTabbedSheetCtrlMsg( WPARAM wParam, LPARAM lParam)

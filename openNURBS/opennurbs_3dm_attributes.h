@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -90,7 +90,6 @@ public:
   */
   bool IsInstanceDefinitionObject() const;
 
-#if defined(OPENNURBS_ACTIVE_IN_VIEWPORT_WIP)
   // Returns true if the object "exists" in a certain viewport
   bool IsActiveInViewport(const ON_UUID& viewportId) const;
 
@@ -113,7 +112,6 @@ public:
   bool AddActiveInViewportOverride(const ON_UUID& viewportId, bool active);
   // Removes the specified activity override to the specified viewport
   bool RemoveActiveInViewportOverride(const ON_UUID& viewportId, bool active);
-#endif
 
   /*
   Returns:
@@ -297,6 +295,8 @@ public:
   */
   bool EnableCustomRenderMeshParameters(bool bEnable);
 
+  bool GetEnableCustomRenderMeshParameters() const; 
+
   /*
   Returns:
     Null or a pointer to fragile mesh parameters.
@@ -404,10 +404,8 @@ public:
   ON::SectionAttributesSource SectionAttributesSource() const;
   void SetSectionAttributesSource(ON::SectionAttributesSource source);
 
-#if defined(OPENNURBS_SECTION_STYLE_TABLE_WIP)
   int SectionStyleIndex() const;
   void SetSectionStyleIndex(int index);
-#endif
   
   /*
   Description:
@@ -475,10 +473,14 @@ public:
   void SetHatchBoundaryColor(const ON_Color& color, bool print);
 
   // Description:
-  //   Hatch pattern color override. Default is unset color which means use
-  //   the standard attributes and layer colors to determine the pattern color
-  ON_Color HatchPatternColor(bool print) const;
-  void SetHatchPatternColor(const ON_Color& color, bool print);
+  //   Source for the hatch boundary color. Determines whether the boundary
+  //   color is read from the layer, from the object's main attribute color,
+  //   inherited from the parent, or read from the per-item override color
+  //   stored via SetHatchBoundaryColor (color_custom). The 'print' argument
+  //   selects between the display source and the print/plot source,
+  //   mirroring HatchBoundaryColor(bool print).
+  ON::item_color_source HatchBoundaryColorSource(bool print) const;
+  void SetHatchBoundaryColorSource(ON::item_color_source source, bool print);
 
   // Plot width of hatch boundary curves.
   //   values less than -1 (-10 is default): plot weight is determined by the
@@ -505,10 +507,8 @@ public:
   void SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Xform& wcs_to_ocs);
   void SetObjectFrame(const ON_COMPONENT_INDEX& ci, const ON_Plane& plane);
 
-#if defined(OPENNURBS_MARKUP_WIP)
   void SetMarkupId(const ON_UUID& markupId);
-  ON_UUID MarkupId() const;
-#endif
+  const ON_UUID& MarkupId() const;
 
 private:
   bool m_bVisible = true;

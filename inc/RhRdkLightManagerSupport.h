@@ -9,7 +9,7 @@
 // Support for "third party" lights in the light manager.  These functions are called by the light manager panel.  You can
 // override them to modify the behaviour of the light manager by providing additional lights, or vetoing the listing of
 // existing Rhino lights.  You can also modify the command behaviour, including the edit, on-off and intensity/color controls.
-class RHRDK_SDK CRhRdkLightManagerSupport : public CRhRdkExtension, public CRhinoEventWatcher, public CRhRdkEventWatcher
+class RHRDK_SDK CRhRdkLightManagerSupport : public CRhRdkExtension, public CRhinoEventWatcher
 {
 public:
 	CRhRdkLightManagerSupport();
@@ -76,16 +76,8 @@ protected:
 
 	virtual void LightTableEvent(CRhinoEventWatcher::light_event event, const CRhinoLightTable& light_table, int light_index, const ON_Light* old_settings) override;
 
-	virtual void OnRendererChanged(void) override
-	{
-		m_bIsActive_Valid = false;
-	}
-
 private:
 	bool m_bIsReplacing = false;
-	
-	mutable bool m_bIsActive = false;
-	mutable bool m_bIsActive_Valid = false;
 
 public:
 	//Solo helper functions

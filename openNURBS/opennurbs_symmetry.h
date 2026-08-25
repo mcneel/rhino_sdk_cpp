@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -95,7 +95,7 @@ public:
     Unset = 0,
 
     /// <summary>
-    /// The symmetry is associated with an object is is applied to.
+    /// The symmetry is associated with an object is applied to.
     /// If that object is transformed, the symmetry's planes and rotation axes
     /// are also transformed.
     /// </summary>
@@ -175,7 +175,7 @@ public:
     InsideRotateAndReflect = 11,
 
     /// <summary>
-    /// Outside the primary motif region and and on one of the fixed point planes
+    /// Outside the primary motif region and on one of the fixed point planes
     /// Applies to ReflectAndRotate symmetries.
     /// </summary>
     OutsideRotateAndReflect = 12
@@ -279,7 +279,7 @@ public:
     transformation - [in]
     fixed_plane - [in]
   Returns:
-    True if the the transformation and fixed_plane are valid and
+    True if the transformation and fixed_plane are valid and
     the transformation fixes points on the plane.
   Remarks:
     The value ON_Symmetry::ZeroTolerance is used for all "zero tolerances."
@@ -386,7 +386,6 @@ public:
     CyclicTransformation() = rotation.
     InversionTransformation() = identity.
   */
-  ////ON_WIP_SDK
   static const ON_Symmetry CreateRotateSymmetry(
     ON_Line rotation_axis,
     unsigned int rotation_count,
@@ -414,7 +413,6 @@ public:
     InversionTransformation() = reflection.
     CyclicTransformation() = rotation by (360/rotation_count) degrees.
   */
-  ////ON_WIP_SDK
   static const ON_Symmetry CreateReflectAndRotateSymmetry(
     ON_PlaneEquation reflection_plane, 
     ON_Line rotation_axis, 
@@ -1033,6 +1031,15 @@ public:
   /// <param name="rotation_axis">
   /// The rotation_axis plane determines the center and axis of rotation.
   /// </param>
+  /// </summary>
+  /// <param name="rotation_radius">
+  /// If there is a circle associated with the rotation, then
+  /// pass the radius. If the rotation symmetry turns out to
+  /// be cyclic for all of the control points, then the distance
+  /// from the rotation center to the start/end will be set
+  /// to this radius. Pass ON_DBL_QNAN if no radius exists
+  /// or you want to omit this step.
+  /// </param>
   /// <param name="test_tolerance">
   /// This tolerance is used to determine if the input control points are
   /// symmetric to within tolerance.
@@ -1046,6 +1053,7 @@ public:
   /// </returns>
   static bool MakeNurbsCurveRotationSymmetric(
     ON_Plane rotation_axis,
+    double rotation_radius,
     double test_tolerance,
     ON_NurbsCurve& nurbs_curve
   );

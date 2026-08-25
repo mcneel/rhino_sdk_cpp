@@ -12,8 +12,6 @@
 
 #pragma once
 
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
-
 class CRhinoPageView;
 
 /// <summary>
@@ -124,7 +122,10 @@ public:
   const class CRhinoDocTableReference& TableReference() const;
 
   /// <returns>
-  /// Number of page view groups in the table.
+  /// Number of page view groups in the table. This count spans slots emptied by
+  /// a purge - see the PURGED TABLE SLOTS note in rhinoSdkDoc.h - so it can be
+  /// larger than the number of page view groups that are actually there, and
+  /// operator[] returns nullptr for the difference.
   /// </returns>
   int PageViewGroupCount() const;
 
@@ -135,6 +136,12 @@ public:
   /// <returns>
   /// Pointer to the page view. If group_index is out of range, nullptr is returned.
   /// Note, this pointer may become invalid after CRhinoPageViewGroupTable::AddPageViewGroup is called.
+  /// nullptr is also returned for an in-range index whose slot was emptied by a
+  /// purge, which happens whenever a worksession reference model carrying a page
+  /// view group is detached. Such slots are normal, they are spanned by
+  /// PageViewGroupCount(), and they accumulate for the life of the document, so
+  /// any code that walks this table by index must expect nullptr and skip it.
+  /// See the PURGED TABLE SLOTS note in rhinoSdkDoc.h.
   /// </returns>
   const CRhinoPageViewGroup* operator[](int group_index) const;
 
@@ -586,5 +593,3 @@ private:
   ON__UINT_PTR m_sdk_reserved2 = 0;
   ON__UINT_PTR m_sdk_reserved3 = 0;
 };
-
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP

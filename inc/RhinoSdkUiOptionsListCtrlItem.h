@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -308,7 +307,7 @@ public:
   //   color is only used when drawing un-selected items.
   //
   // Returns:
-  //   Returns color to be used to to draw text of non-selected item values.  If color is CRhinoUiPaintManager::unset_color
+  //   Returns color to be used to draw text of non-selected item values.  If color is CRhinoUiPaintManager::unset_color
   //   then default color is assumed.
   //
   // See Also:
@@ -1373,7 +1372,7 @@ public:
   //   The default implementation of this method sends a CRhinoUiOptionsListCtrl::m_custom_win_msg_id
   //   custom windows message with a CRhinoUiOptionsListCtrl::nc_populate_combo_box notification code
   //   to the parent of the options list control this item is inserted in.  You can either override
-  //   this method prior to adding a item to the options list control or respond the the nc_populate_combo_box
+  //   this method prior to adding a item to the options list control or respond the nc_populate_combo_box
   //   in the window that owns the options list control.  See CRhinoUiOptionsListCtrl::notification_codes
   //   for details.
   //
@@ -1394,7 +1393,7 @@ public:
   //   The default implementation of this method sends a CRhinoUiOptionsListCtrl::m_custom_win_msg_id
   //   custom windows message with a CRhinoUiOptionsListCtrl::nc_on_populate_combo_box notification code
   //   to the parent of the options list control this item is inserted in.  You can either override
-  //   this method prior to adding a item to the options list control or respond the the nc_populate_combo_box
+  //   this method prior to adding a item to the options list control or respond the nc_populate_combo_box
   //   in the window that owns the options list control.  See CRhinoUiOptionsListCtrl::notification_codes
   //   for details.
   //
@@ -1414,7 +1413,7 @@ public:
   //   The default implementation of this method sends a CRhinoUiOptionsListCtrl::m_custom_win_msg_id
   //   custom windows message with a CRhinoUiOptionsListCtrl::nc_on_combo_box_sel_changed notification code
   //   to the parent of the options list control this item is inserted in.  You can either override
-  //   this method prior to adding a item to the options list control or respond the the nc_populate_combo_box
+  //   this method prior to adding a item to the options list control or respond the nc_populate_combo_box
   //   in the window that owns the options list control.  See CRhinoUiOptionsListCtrl::notification_codes
   //   for details.
   //
@@ -1429,7 +1428,7 @@ public:
   //   populated and initialized.
   //
   // Returns:
-  //   If this method returns true then the the list box of the combo box that has will
+  //   If this method returns true then the list box of the combo box that has will
   //   be shown; otherwise it will be hidden.
   //
   // See Also:
@@ -1594,7 +1593,7 @@ public:
   //   The default implementation of this method sends a CRhinoUiOptionsListCtrl::m_custom_win_msg_id
   //   custom windows message with a CRhinoUiOptionsListCtrl::nc_populate_combo_box notification code
   //   to the parent of the options list control this item is inserted in.  You can either override
-  //   this method prior to adding a item to the options list control or respond the the nc_populate_combo_box
+  //   this method prior to adding a item to the options list control or respond the nc_populate_combo_box
   //   in the window that owns the options list control.  See CRhinoUiOptionsListCtrl::notification_codes
   //   for details.
   //
@@ -1615,7 +1614,7 @@ public:
   //   The default implementation of this method sends a CRhinoUiOptionsListCtrl::m_custom_win_msg_id
   //   custom windows message with a CRhinoUiOptionsListCtrl::nc_on_populate_combo_box notification code
   //   to the parent of the options list control this item is inserted in.  You can either override
-  //   this method prior to adding a item to the options list control or respond the the nc_populate_combo_box
+  //   this method prior to adding a item to the options list control or respond the nc_populate_combo_box
   //   in the window that owns the options list control.  See CRhinoUiOptionsListCtrl::notification_codes
   //   for details.
   //
@@ -1635,7 +1634,7 @@ public:
   //   The default implementation of this method sends a CRhinoUiOptionsListCtrl::m_custom_win_msg_id
   //   custom windows message with a CRhinoUiOptionsListCtrl::nc_on_combo_box_sel_changed notification code
   //   to the parent of the options list control this item is inserted in.  You can either override
-  //   this method prior to adding a item to the options list control or respond the the nc_populate_combo_box
+  //   this method prior to adding a item to the options list control or respond the nc_populate_combo_box
   //   in the window that owns the options list control.  See CRhinoUiOptionsListCtrl::notification_codes
   //   for details.
   //
@@ -1887,7 +1886,7 @@ public:
   // Description:
   //   Call this method to control what linetypes get added to the combo box.  If this is set
   //   to true then the sorted and culled list displayed in the linetype dialog is used.  If this
-  //   set set to false then the entire linetype list is used.  SetIncludeReferenceLinetypes() and
+  //   set to false then the entire linetype list is used.  SetIncludeReferenceLinetypes() and
   //   SetIncludeDeletedLinetypes() are used in either case to filter the display of those linetypes.
   //
   // Parameters:
@@ -2037,7 +2036,7 @@ public:
   //   Call this method to allow or disallow adding of the default option to the width list
   //
   // Parameters:
-  //   b [in] If true then default option is added to the width list; otherwise is is not.
+  //   b [in] If true then default option is added to the width list; otherwise is not.
   //
   // Returns:
   //   Returns the previous value.
@@ -2064,7 +2063,7 @@ public:
   //   Call this method to allow or disallow adding of the "No Print" option to the end of the width list
   //
   // Parameters:
-  //   b [in] If true then "No Print" option is added to the end of the width list; otherwise is is not.
+  //   b [in] If true then "No Print" option is added to the end of the width list; otherwise is not.
   //
   // Returns:
   //   Returns the previous value.
@@ -2091,7 +2090,7 @@ public:
   //   Call this method to allow or disallow adding of the "Hairline" option to the width list
   //
   // Parameters:
-  //   b [in] If true then "Hairline" option is added to the width list; otherwise is is not.
+  //   b [in] If true then "Hairline" option is added to the width list; otherwise is not.
   //
   // Returns:
   //   Returns the previous value.
@@ -2203,7 +2202,7 @@ public:
   // Description:
   //   Set default font description.  This will be displayed when the item is
   //   not selected and become the default value for the font combo box the first
-  //   time is is displayed.
+  //   time is displayed.
   //
   // Parameters:
   //   lf[in] Description of default font
@@ -2544,7 +2543,7 @@ public:
   // Description:
   //   Call this method to control what layerers get added to the combo box.  If this is set
   //   to true then the sorted and culled list displayed in the layer dialog is used.  If this
-  //   set set to false then the entire layer list is used.  SetIncludeReferenceLayers() and
+  //   set to false then the entire layer list is used.  SetIncludeReferenceLayers() and
   //   SetIncludeDeletedLayers() are used in either case to filter the display of those layer
   //   types.
   //

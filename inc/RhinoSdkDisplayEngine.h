@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -594,10 +594,9 @@ public:
   //  Draw a bitmap
   // Parameters:
   //  dib: [in] the bitmap to draw
-  //  nX: [in] screen coordinate left location to draw top-left corner of dib
-  //  nY: [in] screen coordinate top location to draw top-left corner of dib
-  //  mask: [in] if set to a color, the dib is drawn using a color mask for transparency
-  virtual void DrawBitmap(const CRhinoDib& dib, int nX, int nY);
+  //  left: [in] screen coordinate left location to draw top-left corner of dib
+  //  top: [in] screen coordinate top location to draw top-left corner of dib
+  virtual void DrawBitmap(const CRhinoDib& dib, int left, int top);
   
   // Description:
   //  Flushes any and all buffers used by the engine.

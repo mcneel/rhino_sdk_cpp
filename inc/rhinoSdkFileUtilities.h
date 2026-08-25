@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -107,6 +107,18 @@ public:
   static bool FileExists(const char* sUTF8_FileName);
   static bool FileExists(const wchar_t* sFileName);
 
+  /*
+  Description:
+    Resolve a path to its canonical form, following symbolic links, aliases and
+    junctions, so that two different ways of naming the same file produce the same
+    string. Use this before comparing or hashing paths as identities.
+  Parameters:
+    sFileName [in] - Path to resolve. The file must exist.
+  Returns:
+    The canonical path, or sFileName unchanged if it cannot be resolved - so the
+    result is always usable, but is not guaranteed to be canonical.
+  */
+  static ON_wString RealPath(const wchar_t* sFileName);
 
   /*
   Description:
@@ -659,8 +671,32 @@ public:
   static BOOL32 GetRhinoApplicationDataLanguageFolder(ON_wString& result);
 
   /*
+  Description:
+    Get full path to the Rhino "Content" folder installed alongside Rhino,
+    e.g. "<InstallDir>\Content\".
+  Parameters:
+    result [out] - Path placed here.
+  Returns:
+    True if Rhino could figure out the path, false otherwise.
+  */
+  static bool GetRhinoContentFolder(ON_wString& result);
+
+  /*
+  Description:
+    Get full path to the Rhino "Content\XML" folder installed alongside Rhino,
+    e.g. "<InstallDir>\Content\XML\". Each subfolder of this folder is named for
+    a locale (e.g. "en-us", "cs-cz") and contains the per-language XML files
+    installed with Rhino.
+  Parameters:
+    result [out] - Path placed here.
+  Returns:
+    True if Rhino could figure out the path, false otherwise.
+  */
+  static bool GetRhinoContentXmlFolder(ON_wString& result);
+
+  /*
     Description:
-      Get full path to a Rhino 5.0 specific sub-folder under the per-user Roaming Profile folder. 
+      Get full path to a Rhino 5.0 specific sub-folder under the per-user Roaming Profile folder.
       This is the folder where user-specific data is stored.
       
       Windows NT4, 2000, XP: usually someplace like "C:\Documents and Settings\[USERNAME]\Application Data\McNeel\Rhinoceros\5.0\"

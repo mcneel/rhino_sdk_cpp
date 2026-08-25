@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -48,7 +48,7 @@ Description:
   Function that attempts to fix inconsistenties in the directions of meshfaces for a mesh.
 Parameters:
   origmesh      - Input.
-  pNewMesh      - Output.  If pNewMesh is not null the the return will be pNewMesh also.
+  pNewMesh      - Output.  If pNewMesh is not null the return will be pNewMesh also.
   bGetCountOnly - Input.  Default is false.  If set to true no mesh is modified and the return is null.
   pCount        - Output.  If pCount is not null and bGetCountOnly is true then pCount is the number of faces that would be modified.
 Returns:
@@ -272,6 +272,9 @@ class CRhMeshBooleanOptionsPrivate
 {
 public:
   ON_SimpleArray<unsigned>* m_firstNewlyAddedFace;
+  // RH-94152: borrowed. When non-null, the boolean fills it with one index set per output mesh,
+  // listing the input-mesh indices that contributed to it (see SourceMeshIndexMap below).
+  ON_ClassArray<ON_SimpleArray<int>>* m_inputMap = nullptr;
 };
 
 /// <summary>
@@ -294,6 +297,20 @@ public:
   /// </summary>
   /// <param name="list">The indices of the new faces, as addessed in the summary.</param>
   void RequestFirstNewlyAddedFacesList(ON_SimpleArray<unsigned>* list);
+
+  /// <summary>
+  /// Requests an input-to-output index map for the next boolean run (RH-94152). When set, the
+  /// boolean fills 'map' with one entry per output mesh (parallel to the OutMeshes result),
+  /// each listing the indices of the input meshes that contributed faces to that output. For
+  /// the two-set operations (Difference/Intersection/Split) the indices are flat-concatenated:
+  /// the first set occupies 0..n0-1 and the second set occupies n0..n0+n1-1. The pointer is
+  /// borrowed; the caller owns the storage.
+  /// </summary>
+  /// <param name="map">Receives the per-output index sets, or null to disable.</param>
+  void RequestSourceMeshIndexMap(ON_ClassArray<ON_SimpleArray<int>>* map);
+
+  /// <summary>Returns the index map requested via RequestSourceMeshIndexMap, or null.</summary>
+  ON_ClassArray<ON_SimpleArray<int>>* SourceMeshIndexMap() const;
 
 private:
   class CRhMeshBooleanOptionsPrivate* m_private = nullptr;
@@ -549,9 +566,38 @@ Returns:
   The a welded version of the MeshIn.  
 */
 RHINO_SDK_FUNCTION
-ON_Mesh* RhinoWeldMesh(const ON_Mesh& MeshIn, 
-                       double angle_tol, 
+ON_Mesh* RhinoWeldMesh(const ON_Mesh& MeshIn,
+                       double angle_tol,
                        ON_Mesh* pMeshOut = 0);
+
+/*
+Description:
+  Weld a mesh so that adjacent faces with a normal angle difference less than angle_tol
+  share one edge and have identical vertices along that edge. Vertex normals of combined
+  vertices are averaged.
+
+Parameters:
+  MeshIn    - [In]  Mesh to be welded
+  angle_tol - [In]  Tolerance to use on the normals when deciding if adjacent faces should be welded.
+  bPreserveSurfaceParameters - [In]  If true, vertex copies whose surface parameters differ are
+                      never merged into a single vertex - the edge between them is left unwelded
+                      instead of averaging or discarding one side's parameters. Vertex copies
+                      whose surface parameters already match are still merged normally.
+  pMeshOut  - [Out] If pMeshOut is not null then the return will be pMeshOut;
+
+Returns:
+  The a welded version of the MeshIn.
+
+Remarks:
+  pMeshOut has no default value on this overload so that calls such as
+  RhinoWeldMesh(mesh, angle_tol, 0) keep unambiguously resolving to the
+  three parameter overload above.
+*/
+RHINO_SDK_FUNCTION
+ON_Mesh* RhinoWeldMesh(const ON_Mesh& MeshIn,
+                       double angle_tol,
+                       bool bPreserveSurfaceParameters,
+                       ON_Mesh* pMeshOut);
 
 /*
 Description:
@@ -957,7 +1003,9 @@ Description:
 Parameters:
   mesh                 - Triangular mesh to be reduced
   iDesiredPolygonCount - Target polygon count
-  bAllowDistortion     - If true mesh appearance is not changed even if the target polygon count is not reached
+  bAllowDistortion     - If true, faces are removed until iDesiredPolygonCount is reached, distorting the shape as
+                         needed. If false, only flat (coplanar) regions are simplified, which leaves the shape
+                         unchanged and ignores iDesiredPolygonCount.
   iAccuracy            - Integer from 1 to 10 telling how accurate reduction algorithm to use. Greater number gives
                          more accurate results.
   bNormalizeMeshSize   - If true mesh is fitted to an axis aligned unit cube until reduction is complete
@@ -998,7 +1046,9 @@ public:
   // Target polygon count
   int m_iDesiredPolygonCount;
 
-  // If true mesh appearance is not changed even if the target polygon count is not reached
+  // If true, faces are removed until m_iDesiredPolygonCount is reached, distorting the shape as
+  // needed. If false, only flat (coplanar) regions are simplified, which leaves the shape
+  // unchanged and ignores m_iDesiredPolygonCount.
   bool m_bAllowDistortion;
 
   // Integer from 1 to 10 telling how accurate reduction algorithm to use. Greater number gives

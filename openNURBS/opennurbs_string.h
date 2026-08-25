@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -23,6 +23,11 @@ Parameters
     Use ON::sort_algorithm::heap_sort only after doing meaningful performance
     testing using optimized release builds that demonstrate
     ON::sort_algorithm::heap_sort is significantly better.
+    ON::sort_algorithm::parallel_sort sorts on several threads. It is worth
+    asking for on tens of thousands of elements and up, and below that it
+    quietly sorts on the calling thread. It calls compare() from several
+    threads at once, so only ask for it when compare() does not write to
+    shared state.
   index - [out]
     Pass in an array of count integers.  The returned
     index[] is a permutation of (0,1,..,count-1)
@@ -70,6 +75,11 @@ Parameters
     Use ON::sort_algorithm::heap_sort only after doing meaningful performance
     testing using optimized release builds that demonstrate
     ON::sort_algorithm::heap_sort is significantly better.
+    ON::sort_algorithm::parallel_sort sorts on several threads. It is worth
+    asking for on tens of thousands of elements and up, and below that it
+    quietly sorts on the calling thread. It calls compare() from several
+    threads at once, so only ask for it when compare() does not write to
+    shared state.
   index - [out]
     Pass in an array of count integers.  The returned
     index[] is a permutation of (0,1,..,count-1)
@@ -229,6 +239,27 @@ void ON_SortDoubleArrayDecreasing(
   double* a,
   size_t nel
   );
+
+/*
+Description:
+  Sort an array of floats in place.
+Parameters:
+  sort_algorithm - [in]
+    ON::sort_algorithm::quick_sort (best in general) or ON::sort_algorithm::heap_sort
+    Use ON::sort_algorithm::heap_sort only if you have done extensive testing with
+    optimized release builds and are confident heap sort is
+    significantly faster in your case.
+  a - [in / out]
+    The values in a[] are sorted so that a[i] <= a[i+1].
+  nel - [in]
+    length of array a[]
+*/
+ON_DECL
+void ON_SortFloatArray(
+  ON::sort_algorithm sort_algorithm,
+  float* a,
+  size_t nel
+);
 
 /*
 Description:
@@ -3841,9 +3872,9 @@ public:
     s - [in]
       string to parse.
       s[0] must be a sign or a digit. It can be the ordinary characters or superscripts.
-      If the first digit is an ordinary digit, the the numerator and denominator must all
+      If the first digit is an ordinary digit, the numerator and denominator must all
       be ordinary digits.
-      If the first digit is a superscript digit, the the numerator must be all superscript
+      If the first digit is a superscript digit, the numerator must be all superscript
       digits and the denominator be all subscript digits.
     len - [in]
       maximum number of characters to parse.

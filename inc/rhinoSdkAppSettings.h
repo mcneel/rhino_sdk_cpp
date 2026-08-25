@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2024 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -754,6 +754,12 @@ public:
   bool ShowLayoutDropShadow() const;
   void SetShowLayoutDropShadow(bool show);
 
+  // Windows only. Draw a border around every viewport (including maximized and
+  // the edges facing the docked panels), restoring the pre-9.x look. Default is
+  // false (only thin dividers are drawn between adjacent viewports).
+  bool ShowViewportBorder() const;
+  void SetShowViewportBorder(bool show);
+
   bool AlwaysShowGeneralObjectProperties() const;
   void SetAlwaysShowGeneralObjectProperties(bool always);
 private:
@@ -805,6 +811,18 @@ public:
   // a screen length value of zero is interpreted as using the entire screen
   double CrosshairScreenLength() const;
   void SetCrosshairScreenLength(double length);
+
+  // When false (and m_show_crosshairs is true), the mouse cursor is not
+  // drawn during a CRhinoGetPoint operation so only the crosshairs are shown.
+  // Default is false.
+  bool ShowCursorWhenCrosshairsVisible() const;
+  void SetShowCursorWhenCrosshairsVisible(bool show);
+
+  // When true, crosshairs are drawn horizontally and vertically on the screen
+  // (as if fixed to the camera) instead of running along the construction
+  // plane's x and y axes. Default is false.
+  bool CrosshairsAlignedToScreen() const;
+  void SetCrosshairsAlignedToScreen(bool alignToScreen);
 
 // TODO: should these be included?  Used in V 2.0
   bool m_show_viewport_title;       // viewport name in top left cornner
@@ -1279,6 +1297,14 @@ class RHINO_SDK_CLASS CRhinoAppModelAidSettings
 {
 public:
   CRhinoAppModelAidSettings();
+  CRhinoAppModelAidSettings(const CRhinoAppModelAidSettings& src);
+
+  ~CRhinoAppModelAidSettings();
+  
+  CRhinoAppModelAidSettings& operator=(const CRhinoAppModelAidSettings& src);
+
+  CRhinoAppModelAidSettings(CRhinoAppModelAidSettings&&);
+  CRhinoAppModelAidSettings& operator=(CRhinoAppModelAidSettings&&);
 
   bool operator==(const CRhinoAppModelAidSettings& src) const;
   bool operator!=(const CRhinoAppModelAidSettings& src) const;
@@ -1361,8 +1387,11 @@ public:
   // osnapping to mesh objects
   bool m_nearmidintperp_snap_to_meshes;
 
+  double UvIndicatorSize() const;
+  void SetUvIndicatorSize(double size);
+
 private:
-  ON__UINT_PTR m_private = 0;
+  std::unique_ptr<class CRhinoAppModelAidSettingsPrivate> m_private;
 };
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -1463,7 +1492,7 @@ public:
   // m_bits is used for 0x01: NamedViewsSetClippingPlanes (true by default)
   //					0x02: NamedViewsSetDisplayMode (true by default)
   //          0x04: AutoAdjustTargetDepth (true by default) 1 Feb 2011, Mikko
-  //          0x08: RotateViewAroundAutogumball (false by default) 14 Feb 2011, Mikko
+  //          0x08: RotateViewAroundAutogumball (true by default) 14 Feb 2011, Mikko
   //          0x10: Pan plan parallel views with Control+Shift+RMB
   //          0x20: RotateViewAroundObjectAtMouseCursor (false by default) 23 May 2023, Mikko
   //          0x40: RotateViewAroundSelectedObjects (false by default) 29 Jan 2025, Mikko
@@ -3587,6 +3616,7 @@ public:
 private:
   friend class CRhinoApp;
   friend class CRhLinuxApp;
+  friend class CRhCrossApp;
   class CRhAppSettingsData* m_private = nullptr;
 };
 ///////////////////////////////////////////////////////////////////////////////

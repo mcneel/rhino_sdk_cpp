@@ -235,10 +235,6 @@ protected:
   virtual void ContinueAnimate(CRhinoDoc* doc);
   void SetMouseCapture(CRhinoDoc* doc);
 
-public:
-  // I want to get rid of this before we ship
-  virtual void SetHoverEndCursor(HCURSOR cursor);
-
 private:
   void ShowTooltipAfter(UINT uElapse);
   void ClearTooltip();

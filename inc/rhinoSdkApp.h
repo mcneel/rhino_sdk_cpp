@@ -1,4 +1,4 @@
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -2260,6 +2260,24 @@ public:
   RHINO_SDK_FUNCTION
   bool AskUserForRhinoLicense(bool bStandalone, HWND parent);
 
+  /*
+  Description:
+    Validates a stand-alone Rhino license key for the specified Rhino account
+    email against the McNeel validation server, without asking the user for any
+    input. Shows the validation wizard's progress steps; server-reported
+    problems route to the wizard's normal interactive steps. On success, the
+    license is locked to this computer (standalone).
+    Used by the rhinoN://license protocol handler to install a license from a
+    web link.
+  Parameters:
+    licenseKey [in] - the Rhino license key to validate and install.
+    email      [in] - the Rhino account email to validate the key against.
+  Returns:
+    true if the license validated and was installed; otherwise false.
+  */
+  RHINO_SDK_FUNCTION
+  bool ValidateRhinoLicense(const wchar_t* licenseKey, const wchar_t* email);
+
   RHINO_SDK_FUNCTION
   bool RefreshRhinoLicense();
 
@@ -2296,6 +2314,14 @@ public:
   //
   CRhinoApp(class CRhApp&);
   virtual ~CRhinoApp();
+
+  /*
+  Description:
+    Forgets the URL passed to Rhino by the protocol handler, so it is not acted on twice.
+    Used by the licensing startup path: a rhinoN://license link is consumed before the
+    license check, and must not be dispatched again once the main window comes up.
+  */
+  void ClearProtocolHandlerUrl();
 
   /*
   Description:
@@ -2706,6 +2732,12 @@ protected:
   // Attaches to the CRhAppSettings::WindowPostions() settings
   CRhinoProfileContext* m_pc_window_positions = nullptr;
 private:
+  // eirannejad (RH-95221)
+  // Internal helper for RhinoAbout: hands off the about request to the
+  // active skin and returns true if it was dispatched. Each platform's
+  // CRhinoApp::RhinoAbout calls this first and only runs its native
+  // fallback when this returns false.
+  bool DispatchAboutToSkin(bool bForceRhinoAbout) const;
 
 #if defined(ON_RUNTIME_WIN)
   // https://mcneel.myjetbrains.com/youtrack/issue/RH-44082
@@ -2775,6 +2807,12 @@ public:
 #if defined (ON_RUNTIME_APPLE)
   HCURSOR m_arrow_cursor = nullptr;
 #endif
+
+  // Returns a fully transparent (invisible) cursor used to hide the mouse cursor
+  // during a CRhinoGetPoint operation when crosshairs are visible and the
+  // ShowCursorWhenCrosshairsVisible appearance setting is disabled.
+  HCURSOR BlankCursor() const;
+
 public:
   class CRhinoAppFonts* m_pAppFonts = nullptr;
 
@@ -2804,6 +2842,9 @@ public:
   BOOL32 OnOpenRecentFile(UINT nID);
 
 private: // All friends should be here
+  // Private overload used by the main frame to control caret activation behavior.
+  bool ActivateCommandWindowCaret( bool activating ) const;
+
   friend class CMainFrame;
   friend class CRhinoAppFonts;
   friend class CRhino3SplashWnd;

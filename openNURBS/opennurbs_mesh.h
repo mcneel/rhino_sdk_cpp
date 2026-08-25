@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -1143,7 +1143,7 @@ public:
   // or application defaults.
   //
   // When CustomSettings() is false, it indicates these mesh
-  // creation parameters were inherited from from model or 
+  // creation parameters were inherited from model or 
   // application defaults and any mesh created with these
   // parameters should be updated when these parameters
   // differ from the current model or application defaults.
@@ -1521,12 +1521,21 @@ public:
   void Destroy();
   void EmergencyDestroy();
   
-  bool Set( ON::curvature_style,
-            int,           // Kcount,
-            const ON_SurfaceCurvature*, // K[]
-            const ON_3fVector*, // N[] surface normals needed for normal sectional curvatures
-            double = 0.0   // if > 0, value is used for "infinity"
-            );
+  bool Set(
+    ON::curvature_style kappa_style,
+    int Kcount,
+    const ON_SurfaceCurvature* K, // K[]
+    const ON_3fVector* N,         // N[] surface normals needed for normal sectional curvatures
+    double infinity = 0.0         // if > 0, value is used for "infinity"
+    );
+
+  // Gets curvature statistics from analysis meshes,
+  // and calculate total stats.
+  static bool CreateFromMeshes(
+    ON_SimpleArray<const ON_Mesh*>& meshes,
+    ON::curvature_style kappa_style,
+    ON_MeshCurvatureStats& cs
+  );
 
   bool Write( ON_BinaryArchive& ) const;
   bool Read( ON_BinaryArchive& );
@@ -2673,7 +2682,7 @@ Returns:
       mesh face vertex indices.
       If "f" is an ON_MeshFace, then pass (const unsigned int*)f.vi.
   Returns:
-    If the input is valid, the returned ngon pointer is is the 
+    If the input is valid, the returned ngon pointer is the 
     face's triangle or quad.  All returned information is in the
     buffer[].
     null - invalid input.
@@ -3304,6 +3313,17 @@ private:
   void Destroy();
   void EmergencyDestroy();
 
+  // RH-88675: move src's computed contents - the four topology arrays, the
+  // m_memchunk scratch pool, and the m_b32IsValid state - onto this topology,
+  // leaving src empty and invalid. The ON_MeshTopologyVertex / ON_MeshTopologyEdge
+  // elements hold raw const int* members (m_topei, m_vi, m_topfi) that point
+  // into m_memchunk, so the arrays and the chunk pool MUST move together or those
+  // pointers dangle. Does not touch m_mesh (the owning-mesh backpointer); the
+  // caller fixes that up. Intended only for ON_Mesh carrying topology across a
+  // vertex-coincidence-preserving object move, on the single-threaded transform
+  // path.
+  void Internal_TransferContentsFrom(ON_MeshTopology& src);
+
   // efficient workspaces for
   struct memchunk
   {
@@ -3406,7 +3426,7 @@ public:
 
   // The m_mapping_crc is a CRC of a SHA1 hash of the parameters used in 
   // the calculation to set the current texture coordinates and/or vertex colors. 
-  // This CRC is used to detect when the the texture coordinates and/or false colors need to be updated.
+  // This CRC is used to detect when the texture coordinates and/or false colors need to be updated.
   // (Saving the SHA1 hash itself would be better, but changing m_mapping_crc to a SHA1 hash would break the SDK.)
   // 
   // When m_mapping_id = ON_nil_uuid and m_mapping_type = ON_TextureMapping::TYPE::no_mapping, 
@@ -3575,7 +3595,7 @@ public:
   bool IsUnset() const;
 
   /// <summary>
-  /// Get the color the the settings in this ON_SurfaceCurvatureColorMapping assign
+  /// Get the color the settings in this ON_SurfaceCurvatureColorMapping assign
   /// to a pair of principal surface curvatures.
   /// </summary>
   /// <param name="K">
@@ -3758,7 +3778,7 @@ public:
   bool IsUnset() const;
 
   /// <summary>
-  /// Get the color the the settings in this ON_SurfaceDraftAngleColorMapping assign
+  /// Get the color the settings in this ON_SurfaceDraftAngleColorMapping assign
   /// to a surface normal.
   /// </summary>
   /// <param name="surface_normal">
@@ -4233,6 +4253,29 @@ Returns:
 
   /*
   Description:
+    Intersects two groups of meshes with each other. Only events between a mesh of the first group and a mesh of
+    the second group are computed: intersections among meshes of the same group, and self-intersections within a
+    single mesh, are ignored.
+  Parameters:
+    meshesA - [in] The first mesh input list. nullptr entries are tolerated.
+    meshesB - [in] The second mesh input list. nullptr entries are tolerated.
+    See the parameter description in the function above for all other parameters.
+  Returns:
+    true if the computation finished successfully, false otherwise.
+  */
+  static bool IntersectTwoArrays(
+    const ON_SimpleArray<const ON_Mesh*>& meshesA,
+    const ON_SimpleArray<const ON_Mesh*>& meshesB,
+    double tolerance,
+    ON_SimpleArray<ON_Polyline*>* perforatingResults,
+    ON_SimpleArray<ON_Polyline*>* overlapResults,
+    ON_Mesh* overlapMeshResult,
+    ON_TextLog* log,
+    ON_Terminator* cancel,
+    ON_ProgressReporter* reporter);
+
+  /*
+  Description:
     Return information on intersections and overlaps for a group of meshes. This method uses the new code.
 
     anyTypeOfIntersection - [in] if provided, it will be set to true if any mesh perforates another or overlaps - or nullptr.
@@ -4488,6 +4531,92 @@ instance of ON_MeshIntersectionOptions.
     the caller must check it before dereferencing.
   */
   const class ON_RTree* MeshFaceTree( bool bCreateIfNoneExists ) const;
+
+  /*
+  Description:
+    Move the cached mesh face R-tree from src onto this mesh, transforming it by
+    xform, instead of rebuilding it. This is an optimization for the case where
+    this mesh is a copy of src that has just been moved by an affine transform
+    (e.g. a committed object Move): rather than letting this mesh rebuild its
+    face tree from scratch - O(n log n), the dominant cost of clipping-section
+    generation on a large moved mesh (RH-88674) - it takes src's existing tree
+    and updates its node rectangles in place (O(number of nodes); see
+    ON_RTree::Transform).
+  Parameters:
+    src - [in/out]
+      Mesh whose cached face tree is moved out (src is left without a face tree;
+      intended for use when src is about to be discarded).
+    xform - [in]
+      The affine transform that maps src's coordinates to this mesh's.
+  Returns:
+    True if src had a usable face tree and it was transformed and moved onto this
+    mesh. False (nothing changed on this mesh) if src has no cached tree, this
+    mesh already has one, or xform is not affine - in which case this mesh will
+    build its face tree normally when it is next needed.
+  Remarks:
+    Not thread safe: intended for the single-threaded object-transform path.
+  */
+  bool Internal_MoveAndTransformFaceTreeFrom( class ON_Mesh& src, const class ON_Xform& xform );
+
+  /*
+  Description:
+    RH-88675 wire edge-list cache. GetMeshEdgeList() is topology-derived and
+    expensive on large meshes (vertex location ids + a sort over every face
+    side). These helpers let the common display overload of GetMeshEdgeList()
+    serve the result from a per-mesh cache that lives in the mesh tree cache,
+    so it shares the tree cache's lifetime and invalidation.
+
+    The cached list is the *unfiltered* edge list (no hidden-edge removal); a
+    caller that wants hidden edges omitted applies that as a cheap per-call
+    post-process to its own copy.
+  */
+  // Thread-safe lookup of the cached wire edge list (guarded by an internal
+  // mutex). On a hit (a cached list whose flavor matches bLookForNgonInteriorEdges)
+  // it appends the list to edge_list, fills edge_type_partition, and returns true.
+  // On a miss it returns false; the caller then builds the unfiltered list and
+  // publishes it via Internal_SetCachedMeshWireEdges().
+  bool Internal_GetCachedMeshWireEdges(
+    bool bLookForNgonInteriorEdges,
+    ON_SimpleArray<ON_2dex>& edge_list,
+    unsigned int edge_type_partition[6]
+    ) const;
+
+  // Publishes the freshly built list (a no-op if another thread already cached
+  // this flavor). edge_list must be the unfiltered list (computed with
+  // bOmitHiddenEdges = false, starting at index 0).
+  void Internal_SetCachedMeshWireEdges(
+    bool bLookForNgonInteriorEdges,
+    const ON_SimpleArray<ON_2dex>& edge_list,
+    const unsigned int edge_type_partition[6]
+    ) const;
+
+  // Moves src's cached wire edge list onto this mesh. The list is vertex
+  // indices + partition counts, so it needs no transforming - it is invariant
+  // under any vertex-coincidence-preserving map. xform is used only to verify
+  // that condition (affine and non-degenerate); a singular or non-affine xform
+  // could merge or split vertices, so the transfer is skipped and this mesh
+  // rebuilds the list on demand. Used by the committed-move path alongside the
+  // face-tree transfer above. No-op if src has no cached list.
+  void Internal_MoveMeshWireEdgesFrom( class ON_Mesh& src, const class ON_Xform& xform );
+
+  // Frees just the cached wire edge list (leaves the face/mesh trees intact).
+  // Called when topology is invalidated.
+  void Internal_DestroyMeshWireEdgesCache();
+
+  // Carries src's computed ON_MeshTopology (m_top) onto this mesh instead of
+  // rebuilding it. After a committed object Move the moved mesh is a fresh
+  // duplicate with no topology (the copy ctor drops m_top), and the first
+  // consumer to need it - e.g. CRhinoPickContext::PickMesh on the next selection
+  // click - pays a full ON_MeshTopology::Create, which dominates select/unselect
+  // after a drag on a large mesh (RH-88675). The topology is pure connectivity
+  // (vertex-location partition + topological edges/faces, all indices), invariant
+  // under any vertex-coincidence-preserving map, so it needs no transforming;
+  // xform is used only to verify that condition (affine and non-degenerate).
+  // No-op if src has no valid topology, this mesh already has topology, or xform
+  // is not a suitable map - in which case this mesh rebuilds on demand. Used by
+  // the committed-move path alongside the face-tree and wire edge-list transfers.
+  // Not thread safe: intended for the single-threaded object-transform path.
+  void Internal_MoveMeshTopologyFrom( class ON_Mesh& src, const class ON_Xform& xform );
 #endif
 
   void DestroyTree( bool bDeleteTree = true );
@@ -6135,7 +6264,7 @@ Returns:
   Returns:
     number of lines appended to lines[] array.
   Remarks:
-    The InstersectMesh function will will create a meshtree, a mesh topology 
+    The InstersectMesh function will create a meshtree, a mesh topology 
     and face normals of this mesh and meshB. Note: if you create these in 
     multiple memory pools you run the risk of crashing or leaking memory if
     you are not careful.
@@ -6156,7 +6285,7 @@ Returns:
   Returns:
     number of polylines appended to x[] array.
   Remarks:
-    The IntersectMesh function will will create a meshtree, a mesh topology
+    The IntersectMesh function will create a meshtree, a mesh topology
     and face normals of this mesh and meshB. Note: if you create these in 
     multiple memory pools you run the risk of crashing or leaking memory if
     you are not careful.
@@ -7203,6 +7332,31 @@ Returns:
     );
 
   /*
+  Description:
+    Returns the n-gon map, creating and caching it when it is missing.
+    This is how to get an n-gon map from a const mesh. It is thread safe.
+  Parameters:
+    bCreateIfMissing - [in]
+      If true and the n-gon map does not exist, it is created and cached.
+  Returns:
+    null:
+      This mesh has no n-gons, or bCreateIfMissing is false and the n-gon
+      map does not exist, or it could not be created.
+    an array of length m_F.Count():
+      Element fi is the index in m_Ngon[] of the n-gon the face m_F[fi]
+      belongs to, or ON_UNSET_UINT_INDEX when m_F[fi] belongs to no n-gon.
+      A map whose length is not m_F.Count() is a missing map.
+  Remarks:
+    Modifying the mesh invalidates the n-gon map, so a caller holding the
+    returned pointer must not let the mesh be modified while it uses it.
+    After modifying m_Ngon[] or m_F[] it is good practice to call
+    RemoveNgonMap(). The map is created again when it is needed.
+  */
+  const unsigned int* NgonMap(
+    bool bCreateIfMissing
+    ) const;
+
+  /*
   Returns:
     true if the n-gon information is valid for adding an n-gon to this mesh.
   Parameters:
@@ -7480,6 +7634,8 @@ The map is an array of length m_F.Count(), ngon_map[]
   Description:
     Removes any existing n-gon map.
     Does not remove other n-gon information.
+    Good practice after modifying m_Ngon[] or m_F[]. The map is created again
+    when it is needed.
   */
   void RemoveNgonMap();
 
@@ -7590,7 +7746,7 @@ The map is an array of length m_F.Count(), ngon_map[]
   // m_packed_tex_domain[] are all valid and the texture
   // coordinates are based on surface evaluation parameters.
   // In this special situation, this boolean records the 
-  // correspondence between the the surface parameters, (u,v),
+  // correspondence between the surface parameters, (u,v),
   // and the packed texture coordinates, (s,t),
   //
   //   m_packed_tex_rotate = false:
@@ -7615,6 +7771,14 @@ The map is an array of length m_F.Count(), ngon_map[]
   //     u = m_srf_domain[0].ParameterAt(y);
   //     v = m_srf_domain[1].ParameterAt(1.0 - x);
   bool m_packed_tex_rotate;
+
+private:
+  // Serializes creating m_NgonMap[] in the const NgonMap(bool), the way
+  // m_top.m_b32IsValid serializes Topology(). Occupies padding that already
+  // existed between m_packed_tex_rotate (656) and m_K (664).
+  mutable ON_SleepLock m_ngon_map_lock;
+
+public:
 
   /*
   Returns:
@@ -8121,7 +8285,7 @@ public:
     triangles, quads and explicitly defined ngons.
   Remarks:
     If CurrentNgonIsMeshFace() is true after calling FirstNgon().
-    the the returned ngon references a triangle or
+    the returned ngon references a triangle or
     quad that is not part of an explicitly defined
     ngon in the mesh. If you need the information 
     to persist after any subsequent calls to the iterator
@@ -8138,7 +8302,7 @@ public:
     triangles, quads and explicitly defined ngons.
   Remarks:
     If CurrentNgonIsMeshFace() is true after calling NextNgon().
-    the the returned ngon references a triangle or
+    the returned ngon references a triangle or
     quad that is not part of an explicitly defined
     ngon in the mesh. If you need the information 
     to persist after any subsequent calls to the iterator
@@ -8156,7 +8320,7 @@ public:
     or NextNgon().
   Remarks:
     If CurrentNgonIsMeshFace() is true after calling CurrentNgon().
-    the the returned ngon references a triangle or
+    the returned ngon references a triangle or
     quad that is not part of an explicitly defined
     ngon in the mesh. If you need the information 
     to persist after any subsequent calls to the iterator

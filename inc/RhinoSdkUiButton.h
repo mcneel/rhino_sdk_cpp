@@ -1,7 +1,6 @@
-/* $NoKeywords: $ */
 /*
 //
-// Copyright (c) 1993-2007 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -126,7 +125,7 @@ public:
   void DrawButtonBitmap( CDC& dc, CRect r);
   //
   // Description:
-  //    Helper function for owner draw buttons. Call this method to determine wether or not
+  //    Helper function for owner draw buttons. Call this method to determine whether or not
   //    the button frame should be drawn.
   //
   // Returns:

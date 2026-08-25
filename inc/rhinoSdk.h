@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2024 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -338,9 +338,7 @@ typedef signed char BOOL32;
 #include "rhinoSdkMaterial.h"
 #include "rhinoSdkTexture.h"
 #include "rhinoSdkGroup.h"
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
 #include "rhinoSdkPageViewGroup.h"
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
 #if defined(OPENNURBS_TAG_WIP)
 #include "rhinoSdkTag.h"
 #endif // OPENNURBS_TAG_WIP
@@ -429,6 +427,7 @@ typedef signed char BOOL32;
 #include "rhinoSdkGetSpiral.h"
 #include "rhinoSdkViewport.h"
 #include "RhinoSdkDisplay.h"
+#include "RhinoSdkGpuCompute.h"
 #include "rhinoSdkView.h"
 #include "rhinoSdkGrips.h"
 #include "RhinoSdkRenderViewWnd.h"

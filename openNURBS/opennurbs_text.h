@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -102,6 +102,19 @@ public:
     ON::AnnotationType annotation_type,
     const ON_DimStyle* dimstyle
   );
+
+  // V9 run-native dimension text.
+  // The "dimension template" is the authored run array for a dimension: the
+  // user's runs (preserving run-only attributes such as super/subscript) with
+  // the literal "<>" measurement placeholder still present. ON_Dimension
+  // derives the displayed m__runs from this template by substituting the
+  // formatted measurement, so a per-redraw rebuild no longer flattens the text
+  // to a string and re-parses it (which silently dropped run-only attributes).
+  // The template is stored on the (non-published) private implementation.
+  bool HasDimensionTemplate() const;
+  const ON_TextRunArray* DimensionTemplate() const;
+  void SetDimensionTemplate(const ON_TextRunArray& template_runs);
+  void ClearDimensionTemplate();
 
   bool RunReplaceString(
     const wchar_t* repl_str,
@@ -478,6 +491,16 @@ public:
     ON_TextRunArray* runs,
     ON::TextVerticalAlignment v_align,
     ON::TextHorizontalAlignment h_align);
+
+  // Overload that knows the wrap rectangle width. Used when h_align is
+  // Justify: each non-final line is stretched to wrap_width by inflating
+  // word gaps. For L/C/R/Auto, wrap_width has no effect on layout; either
+  // overload produces identical results in those cases.
+  static bool MeasureTextRunArray(
+    ON_TextRunArray* runs,
+    ON::TextVerticalAlignment v_align,
+    ON::TextHorizontalAlignment h_align,
+    double wrap_width);
 
   /*
   Description:

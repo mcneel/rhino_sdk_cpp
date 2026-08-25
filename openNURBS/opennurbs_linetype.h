@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -291,18 +291,19 @@ public:
   */
   void SetAlwaysModelDistances(bool on);
 
-#if defined(OPENNURBS_LINETYPE_SHAPES_WIP)
   int LinetypeShapeCount() const;
   void SetShapeSpacing(double spacing);
   double ShapeSpacing() const;
-  void SetShapeSpan(const ON_Interval& span);
-  ON_Interval ShapeSpan() const;
+  void SetShapeGap(double gap);
+  double ShapeGap() const;
+  void SetShapeLocalOffset(const ON_2dVector& offset);
+  ON_2dVector ShapeLocalOffset() const;
   bool AddShape(const ON_Curve& shapeCurve, double offset);
   bool AddShape(const wchar_t* rtfText, const ON_DimStyle& dimStyle, const ON_Plane& plane, double offset);
   void RemoveAllShapes();
   int GetLinetypeShapes(ON_SimpleArray<const class ON_LinetypeShape*>& shapes) const;
+  ON_BoundingBox ShapeBounds() const;
 
-#endif
 private:
   mutable class ON_LinetypePrivate* m_private = nullptr;
   unsigned char m_is_set_bits = 0;
@@ -319,7 +320,6 @@ private:
   };
 };
 
-#if defined(OPENNURBS_LINETYPE_SHAPES_WIP)
 class ON_CLASS ON_LinetypeShape
 {
 public:
@@ -344,7 +344,6 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_LinetypeShape*>;
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<const ON_LinetypeShape*>;
 #endif
 
-#endif
 
 #if defined(ON_DLL_TEMPLATE)
 ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_Linetype*>;

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -406,7 +406,7 @@ public:
     d - [in] distance (> 0.0)
     P - [in] 
   Returns:
-    True if if the shortest distance from the point P
+    True if the shortest distance from the point P
     to the bounding box is greater than d. 
   */
   bool IsFartherThan( double d, const ON_3dPoint& P ) const;
@@ -464,7 +464,7 @@ public:
     d - [in] distance (> 0.0)
     other - [in] other bounding box
   Returns:
-    True if if the shortest distance from this bounding
+    True if the shortest distance from this bounding
     box to the other bounding box is greater than d. 
   */
   bool IsFartherThan( double d, const ON_BoundingBox& other ) const;
@@ -610,6 +610,30 @@ public:
   */
   bool IsDisjoint(
     const ON_BoundingBox& other_bbox
+    ) const;
+
+  /*
+  Description:
+    Test to see if "this" and other_bbox are disjoint (do not intersect),
+    allowing a tolerance for the comparison.
+  Parameters:
+    other_bbox - [in]
+    tolerance - [in] Distance tolerance for the comparison.
+      When tolerance > 0.0, the boxes are considered to intersect (not
+      disjoint) if the gap between them is <= tolerance. This is useful as a
+      coarse pre-check when the boxes may be separated by numerical noise but
+      the underlying geometry actually intersects within a working tolerance.
+      When tolerance = 0.0, the result matches IsDisjoint(other_bbox).
+      When tolerance < 0.0, the boxes must overlap by more than |tolerance|
+      to be considered not disjoint.
+  Returns:
+    True if "this" and other_bbox are disjoint.
+  Remarks:
+    If "this" or other_bbox is invalid, then true is returned.
+  */
+  bool IsDisjoint(
+    const ON_BoundingBox& other_bbox,
+    double tolerance
     ) const;
 
   /*

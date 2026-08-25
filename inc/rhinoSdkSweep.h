@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -214,6 +214,65 @@ bool Rh1RailSweepSegmented(
   int rebuild_mode = 0,                                   // 0 = no rebuild, 1 = rebuild through points, 2 = refit to tolerance
   int rebuild_points = 0,                                 // if 1 == rebuild_mode, the number of points, otherwise set to 0
   double refit_tolerance = 0.0                            // if 2 == rebuild_mode, the refit tolerance, otherwise set to 0.0
+);
+
+/*
+Description:
+  Sweep1 function that mimics what Rhino's Sweep1 command does.
+  Compared with Rhino1RailSweep / Rh1RailSweepSegmented, this version also:
+    - Matches shape curve directions and (for closed shapes) seam points
+      before sweeping, which prevents twisting,
+    - Detects when the inputs qualify for a "simple sweep" and creates
+      a simpler surface in this case,
+    - Lets the caller pick between the refit-rail and segmented sweep paths,
+    - Splits the resulting Breps at fully multiple knots, matching what the
+      command does before adding the surface to the document.
+Parameters:
+  output_surfaces        - [out] The results of the sweep.
+                                 NOTE: THE CALLER IS RESPONSIBLE FOR DESTROYING THESE OBJECTS.
+  pRailCurve             - [in] Rail curve. If the rail is a CRhinoPolyEdge that contains
+                                surface edges and frame_type == 2, frames will track the
+                                underlying surface (AlignWithSurface).
+  shapes                 - [in] Shape curves. Will be sorted along the rail. All shapes
+                                must be either all open or all closed; mixed input is rejected.
+  start_point            - [in] Optional start point. Pass ON_3dPoint::UnsetPoint to ignore.
+  end_point              - [in] Optional end point. Pass ON_3dPoint::UnsetPoint to ignore.
+  frame_type             - [in] 0 = freeform, 1 = roadlike, 2 = AlignWithSurface.
+                                AlignWithSurface requires pRailCurve to be a CRhinoPolyEdge
+                                containing surface edges; otherwise it falls back to roadlike.
+  roadlike_normal        - [in] Up direction for the roadlike (or AlignWithSurface fallback)
+                                frame style. Pass ON_3dVector::UnsetVector to ignore.
+  bClosed                - [in] Only matters if the rail is closed.
+  blend_type             - [in] 0 = local, 1 = global.
+  miter_type             - [in] 0 = none, 1 = trimmed, 2 = untrimmed miters.
+  tolerance              - [in] Sweep tolerance.
+  angle_tolerance        - [in] Angle tolerance, in radians.
+  rebuild_mode           - [in] 0 = no rebuild, 1 = rebuild through points, 2 = refit to tolerance.
+  rebuild_points         - [in] If rebuild_mode == 1, the number of points; otherwise 0.
+  refit_tolerance        - [in] If rebuild_mode == 2, the refit tolerance; otherwise 0.0.
+  bRefitRail             - [in] false = segmented sweep (matches the command default),
+                                true  = refit-rail sweep.
+Returns:
+  true if successful, false otherwise.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoSweepOneRail(
+  ON_SimpleArray<ON_Brep*>& output_surfaces,
+  const ON_Curve* pRailCurve,
+  const ON_SimpleArray<const ON_Curve*> shapes,
+  ON_3dPoint start_point = ON_3dPoint::UnsetPoint,
+  ON_3dPoint end_point = ON_3dPoint::UnsetPoint,
+  int frame_type = 0,
+  ON_3dVector roadlike_normal = ON_3dVector::UnsetVector,
+  bool bClosed = false,
+  int blend_type = 0,
+  int miter_type = 1,
+  double tolerance = 0.01,
+  double angle_tolerance = ON_DEGREES_TO_RADIANS,
+  int rebuild_mode = 0,
+  int rebuild_points = 0,
+  double refit_tolerance = 0.0,
+  bool bRefitRail = false
 );
 
 /*

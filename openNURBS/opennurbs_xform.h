@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -829,6 +829,36 @@ public:
     ON_3dPoint rotation_center
   );
 
+  /// <summary>
+  /// Create a rotation transformation from the sine and cosine
+  /// of an angle, a rotation axis, and a rotation center.
+  /// </summary>
+  /// <param name="sin_angle">
+  /// Sine of the rotation angle.
+  /// </param>
+  /// <param name="cos_angle">
+  /// Cosine of the rotation angle.
+  /// </param>
+  /// <param name="rotation_axis">
+  /// A nonzero vector.
+  /// </param>
+  /// <param name="rotation_center">
+  /// A point on the axis of rotation. If the axis is not a world
+  /// coordinate axis, better results will be obtained if you
+  /// choose a point in the region containing the points that
+  /// will be transformed.
+  /// </param>
+  /// <returns>
+  /// If the input is valid, a rotation transformation is returned.
+  /// Otherwise ON_Xform::Nan is returned.
+  /// </returns>
+  static const ON_Xform RotationTransformationFromSineAndCosine(
+    double sin_angle,
+    double cos_angle,
+    ON_3dVector rotation_axis,
+    ON_3dPoint rotation_center
+  );
+
 
   /*
   Description:
@@ -1111,7 +1141,7 @@ Details:
 	where R_*(angle) is  rotation of angle radians  about the corresponding *-world coordinate axis.
 	Returns false if this is not a rotation.
 Notes:
-  alpha and gamma are in the range (-pi, pi] while beta in in the range [0, pi]
+  alpha and gamma are in the range (-pi, pi] while beta in the range [0, pi]
 */
 	bool GetEulerZYZ(double& alpha, double& beta, double& gamma )const;
 

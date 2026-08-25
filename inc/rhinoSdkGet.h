@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2021 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -1148,7 +1148,7 @@ public:
     AcceptWindowsMessage is intended to be used by experts.
     Support is not available.  If Windows posts a message with
     matching id while GetPoint, etc., is waiting for input,
-    the the getter returns CRhinoGet::winmsg.  
+    the getter returns CRhinoGet::winmsg.  
     Call CRhinoGet::WndMsg() to get the message.
   */
   bool AcceptCustomWindowsMessage(UINT winmsg_id);
@@ -1360,6 +1360,7 @@ protected:
 
   void PreGet();
   virtual void SetCommandWndPrompt() const;
+  friend class CRhInGet;
 
   /*
   Parameters:

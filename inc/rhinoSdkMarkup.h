@@ -12,8 +12,6 @@
 
 #pragma once
 
-#if defined(OPENNURBS_MARKUP_WIP)
-
 class RHINO_SDK_CLASS CRhinoMarkup : public ON_Markup
 {
 public:
@@ -124,6 +122,10 @@ public:
   /*
   Returns:
     Number of markups in the table.
+  Remarks:
+    This count spans slots emptied by a purge - see the PURGED TABLE SLOTS
+    note in rhinoSdkDoc.h - so it can be larger than the number of markups
+    that are actually there, and operator[] returns nullptr for the difference.
   */
   int MarkupCount() const;
 
@@ -138,6 +140,13 @@ public:
     If successful, a pointer to the markup is returned.
     If not successful or if the index is out-of-range, nullptr is returned.
     Note, this pointer may become invalid after AddMarkup() is called.
+  Remarks:
+    nullptr is also returned for an in-range index whose slot was emptied by a
+    purge, which happens whenever a worksession reference model carrying a
+    markup is detached. Such slots are normal, they are spanned by
+    MarkupCount(), and they accumulate for the life of the document, so any
+    code that walks this table by index must expect nullptr and skip it. See
+    the PURGED TABLE SLOTS note in rhinoSdkDoc.h.
   */
   const CRhinoMarkup* operator[](int markup_index) const;
 
@@ -525,4 +534,3 @@ private:
   ON__UINT_PTR m_sdk_reserved3 = 0;
 };
 
-#endif

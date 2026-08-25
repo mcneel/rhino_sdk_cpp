@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -32,17 +32,6 @@ public:
   //   rather than the ON_PolyCurve class that is created
   //   by the base class.
   ON_Curve* DuplicateCurve() const override;
-
-  // this will duplicate the polyedge structure but - and this is important -
-  // will reference the same "real" curves and brep edges.
-  CRhinoPolyEdge* ShallowDuplicatePolyEdge() const;
-
-  // Make a truly deep copy. This will duplicate and if xform is not null 
-  // transform all curves and underlying BReps. The result will lose 
-  // all associations with existing rhino objects. Any duplicated geometry that
-  // needs to be freed by the caller of this function is returned in the 'referenced' array
-  ON_PolyEdgeCurve* DeepCopy(ON_SimpleArray<const ON_Geometry*>& referenced, 
-    const ON_Xform* xform = nullptr, bool reverse = false) const;
 
   /*
   Description:
@@ -322,7 +311,7 @@ public:
   // virtual ON_Curve::DuplicateCurve override
   //   This insures that the duplicate is a CRhinoPolyEdgeSegment
   //   class rather than a duplicate of the "real" curve
-  //   the the ON_CurveProxy base class referse to.
+  //   the ON_CurveProxy base class referse to.
   ON_Curve* DuplicateCurve() const override;
 
 public:

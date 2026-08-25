@@ -1,10 +1,10 @@
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete Rhino SDK copyright information see <http://www.rhino3d.com/developer>.
 //
 ////////////////////////////////////////////////////////////////
@@ -363,7 +363,7 @@ enum CRhinoDocStatus
   close_end,
 
   close_enter_destruct, // first line in CRhinoDoc::~CRhinoDoc() body
-  close_before_destroy, // 
+  close_before_destroy, //
   close_enter_destroy,  // first line of CRhinoDoc::Destroy() body
   close_exit_destroy,   // last line of CRhinoDoc::Destroy() body
   close_after_destroy,  // first line in CRhinoDoc::~CRhinoDoc() body
@@ -376,13 +376,13 @@ enum CRhinoDocStatus
 
 class RHINO_SDK_CLASS CRhinoCreateDocumentOptions
 {
-  // The CRhinoCreateDocumentOptions class is used to pass options to the 
+  // The CRhinoCreateDocumentOptions class is used to pass options to the
   // static CRhinoDoc::CreateDocument() function.
 
 public:
   CRhinoCreateDocumentOptions() = default;
   ~CRhinoCreateDocumentOptions() = default;
-  
+
   CRhinoCreateDocumentOptions(const CRhinoCreateDocumentOptions&) = default;
 
   // Compilers implicitly delete operator= due to const m_version field
@@ -462,13 +462,13 @@ private:
 
 class RHINO_SDK_CLASS CRhinoOpenDocumentOptions
 {
-  // The CRhinoOpenDocumentOptions class is used to pass options to the 
+  // The CRhinoOpenDocumentOptions class is used to pass options to the
   // static CRhinoDoc::OpenDocument() function.
 
 public:
   CRhinoOpenDocumentOptions();
   ~CRhinoOpenDocumentOptions();
-  
+
   CRhinoOpenDocumentOptions(const CRhinoOpenDocumentOptions& src);
   CRhinoOpenDocumentOptions& operator=(const CRhinoOpenDocumentOptions& src);
 
@@ -575,7 +575,7 @@ public:
   void SetCreateStealthWorksession(
     bool bCreateStealthWorksession
   );
-  
+
   const ON_ClassArray<ON_3dmView>& WorksessionInitialViews(void) const;
   void SetWorksessionInitialViews(const ON_ClassArray<ON_3dmView>& views);
 
@@ -619,7 +619,7 @@ private:
   ON_UUID m_file_read_plugin_id; // default = nil
   int m_file_read_plugin_file_type_index;
   //const ON_ArchivableDictionary* m_file_read_options;
-  
+
   class CRhinoOpenDocumentOptions_Private* m_private;
 
 #if defined (RHINO_MAC_APPLICATION)
@@ -718,15 +718,15 @@ public:
 
 
 private:
-  // The m_doc_sn field is private because nothing must ever pass 
-  // this value by reference. It must be the first member of 
+  // The m_doc_sn field is private because nothing must ever pass
+  // this value by reference. It must be the first member of
   // CRhinoDoc and is initialized before any other construction
   // code is called in CRhinoDoc::CRhinoDoc().
   //
   // Call CRhinoDoc.RuntimeSerialNumber() when you want this value.
   //
   // Call CRhinoDoc::FromRuntimeSerialNumber() when you need
-  // to convert a Rhino document runtime serial number into 
+  // to convert a Rhino document runtime serial number into
   // a CRhinoDoc pointer.
   const unsigned int m_rhino_doc_sn;
 
@@ -749,7 +749,7 @@ private:
 
 private:
   // When a file is being read into the document or written
-  // from the document, this serial number can be used to 
+  // from the document, this serial number can be used to
   // find file IO information.
   unsigned int m_rhino_doc_file_io_status_sn;
 
@@ -1576,7 +1576,7 @@ public:
 
   // Description:
   //   Find the first view in the view list that has the same viewport title.
-  //   Note the the title string is not guaranteed unique
+  //   Note the title string is not guaranteed unique
   // Parameters:
   //   title: [in] viewport title to search for
   //   view: [out] if a view is found it is copied into this
@@ -1595,7 +1595,7 @@ public:
   bool FindView(const wchar_t* title,
     ON_3dmView& view,
     CRhinoView::ViewTypeFilter view_types);
-    
+
   bool FindView(const wchar_t* title,
       ON_3dmView& view,
       CRhinoView::ViewTypeFilter view_types) const;
@@ -1882,7 +1882,7 @@ public:
 
   /*
   Description:
-    Core Rhino code uses this this function to read 3dm archives.
+    Core Rhino code uses this function to read 3dm archives.
   Remarks:
     Plug-ins cannot use this function because they cannot
     create CRhFileReadOptions classes. This is intentional.
@@ -1967,7 +1967,7 @@ public:
 
   /*
   Description:
-    Core Rhino code uses this this function to call file
+    Core Rhino code uses this function to call file
     reading plug-ins to read files.
   Remarks:
     Plug-ins cannot use this function because they cannot
@@ -2176,7 +2176,7 @@ public:
   virtual TextureReportResult TextureReport(TextureReportFilter initialFilter, bool bAllowAbort, bool bForceDisplayIfEmpty);
 
   virtual void GetEmbeddedFilesList(TextureReportFilter filter, ON_ClassArray<ON_wString>& sFiles) const;
-  
+
   class CRhWorkSession& WorkSession(void);
   const class CRhWorkSession& WorkSession(void) const;
 
@@ -2271,7 +2271,60 @@ public:
   //    zero if the input was not valid.
   //    Remarks :
   //    Use CRhinoView::FromRuntimeSerialNumber() to get a pointer to the view.
+  //    On Windows the new page view becomes the active view; on Mac the active
+  //    view does not change. Use the overload below for behavior that is the
+  //    same on both platforms.
   unsigned int CreateRhinoPageView(const wchar_t* title = nullptr);
+
+  // Description:
+  //   Create a new page view window of a given paper size, leaving whether it
+  //   becomes the active view to the platform default.
+  // Parameters:
+  //   title: [in] string that appears in the new page view's title window
+  //          If NULL, the name will be generated as "Page #" where this is the
+  //          largest page number.
+  //   pageWidthMillimeters: [in] paper width in millimeters. Values of zero or
+  //          less leave the paper size alone.
+  //   pageHeightMillimeters: [in] paper height in millimeters. Values of zero or
+  //          less leave the paper size alone.
+  // Returns:
+  //  The runtime serial number of a view or
+  //    zero if the input was not valid.
+  // Remarks :
+  //    On Windows the new page view becomes the active view; on Mac the active
+  //    view does not change. Use the overload below for behavior that is the
+  //    same on both platforms.
+  unsigned int CreateRhinoPageView(const wchar_t* title, double pageWidthMillimeters, double pageHeightMillimeters);
+
+  // Description:
+  //   Create a new page view window, choosing whether it becomes the active view.
+  // Parameters:
+  //   title: [in] string that appears in the new page view's title window
+  //          If NULL, the name will be generated as "Page #" where this is the
+  //          largest page number.
+  //   bMakeActive: [in] if true, the new page view becomes the active view. If
+  //          false, the view that was active before this call stays active.
+  //   pageWidthMillimeters: [in] paper width in millimeters. Values of zero or
+  //          less leave the paper size alone.
+  //   pageHeightMillimeters: [in] paper height in millimeters. Values of zero or
+  //          less leave the paper size alone.
+  //Returns:
+  //  The runtime serial number of a view or
+  //    zero if the input was not valid.
+  //    Remarks :
+  //    bMakeActive is honored as given on both platforms. The platform default
+  //    (Windows activates the new page view, Mac does not) belongs to the overloads
+  //    above, which have no bMakeActive; it is never consulted here. On Mac a page
+  //    view created with bMakeActive false still gets a window - only activating it
+  //    is skipped.
+  //    Use CRhinoView::FromRuntimeSerialNumber() to get a pointer to the view.
+  //    The paper size is applied while the view is created, before it is zoomed to
+  //    its extents and, on Mac, before its window is built.
+  //    On Mac, building a page view's window is main-thread work. If bMakeActive
+  //    is true and this is called from another thread, the page view is created
+  //    but may not have become the active view by the time this returns.
+  //    See RH-59201.
+  unsigned int CreateRhinoPageView(const wchar_t* title, bool bMakeActive, double pageWidthMillimeters = 0.0, double pageHeightMillimeters = 0.0);
 
 
   // Description:
@@ -2416,7 +2469,7 @@ private:
   class CRhUndoRecord* m_redo_record = nullptr;
   bool m_bUndoRecordingEnabled = false;   // true if recording will happen when commands run
   bool m_bUndoRecordingActive = false;    // true if a current events are being recorded into
-                                  // a new CRhUndoRecord.  Typically, this means a 
+                                  // a new CRhUndoRecord.  Typically, this means a
                                   // command is currently running and undo recording
                                   // is enabled.
   bool m_bUndoPurgeCheckRequired = false; // true if objects were deleted while undo
@@ -2490,7 +2543,7 @@ public:
     CRhinoDoc::IsDocumentLocked
   */
   bool LockDocument(LPCTSTR lpsFileName);
-  // Added to allow for calling a different dialog to query about 
+  // Added to allow for calling a different dialog to query about
   // opening files read-only and not changing LockDocument()
   // LockDocumentEx() will use the new dialog if called with bOldMode false rr59912
   bool LockDocumentEx(LPCTSTR lpsFileName, bool bOldMode);
@@ -2537,6 +2590,73 @@ public:
   int ReadFileVersion() const;
 
   /////////////////////////////////////////////////////////////////////////
+  //
+  // PURGED TABLE SLOTS - read this before walking any of the tables below by
+  // index.
+  //
+  // Purging a table removes components but does not close up the slots they
+  // occupied. This happens when a worksession reference model is detached, and
+  // when a linked instance definition is purged before being updated.
+  //
+  // The emptied slots stay in place and the surviving components keep the
+  // indices they already had, because table indices are persistent references
+  // - object attributes store m_layer_index, m_material_index and so on - so
+  // renumbering a table would silently repoint existing objects at the wrong
+  // component. Holes are therefore part of the design and not a fault.
+  //
+  // Three consequences, all of which have surprised callers:
+  //
+  // 1. The count spans the empty slots. LayerCount(), SectionStyleCount() and
+  //    their siblings report the size of the array, holes included, so a loop
+  //    from 0 to Count-1 will visit them.
+  //
+  // 2. The holes accumulate for the life of the document, one per purge. A
+  //    session that attaches and detaches worksession models repeatedly ends
+  //    up with a table that is mostly holes.
+  //
+  // 3. What operator[] hands back for a hole is not the same in every table:
+  //
+  //      CRhinoLayerTable          DefaultLayer
+  //      CRhinoLinetypeTable       the continuous line pattern
+  //      CRhinoMaterialTable       DefaultMaterial
+  //      CRhinoHatchPatternTable   the default hatch pattern
+  //      CRhinoSectionStyleTable   nullptr
+  //      CRhinoMarkupTable         nullptr
+  //      CRhinoPageViewGroupTable  nullptr
+  //
+  //    The first four bail out quietly on purpose - a hole is a normal state
+  //    rather than a caller's mistake, so these accessors do not raise - but
+  //    the stand-in they return is indistinguishable from a real component by
+  //    name, colour or any other property. Enumerating a purged layer table
+  //    hands back N copies of "Default" with nothing to say they are not there.
+  //
+  // TO TELL A REAL COMPONENT FROM AN EMPTY SLOT, compare the index you asked
+  // for with the index you got back:
+  //
+  //   for (int i = 0; i < doc.m_layer_table.LayerCount(); i++)
+  //   {
+  //     const CRhinoLayer& layer = doc.m_layer_table[i];
+  //     if (i != layer.Index())
+  //       continue; // slot i is empty and this is the table's stand-in
+  //     ...
+  //   }
+  //
+  // The test is exact: a stand-in is a system component whose index is -1, so
+  // it can never equal a slot index. For the tables that return nullptr, check
+  // the pointer instead. CRhinoDoc::AuditLayerTable does this, and so does
+  // CRhinoDocProperties::SetModelUnitsAndTolerances, which used to crash on a
+  // unit change after a detach because it did not.
+  //
+  // RhinoCommon wraps these tables and inherits the same behaviour: the
+  // stand-in tables hand back a component whose Index is -1, and the nullptr
+  // tables hand back an object that throws on every property access. The same
+  // index test applies there.
+  //
+  // See RH-97389 for the history and for the decision to document this rather
+  // than change it.
+  //
+
+  /////////////////////////////////////////////////////////////////////////
   // bitmaps used in textures, backgrounds, wallpapers, ...
   //
   CRhinoBitmapTable m_bitmap_table;
@@ -2563,42 +2683,36 @@ public:
 
   /////////////////////////////////////////////////////////////////////////
   //
-  // groups 
+  // groups
   //
   CRhinoGroupTable m_group_table;
 
   /////////////////////////////////////////////////////////////////////////
   //
-  // dimension styles used in annotation objects 
+  // dimension styles used in annotation objects
   //
   CRhinoDimStyleTable m_dimstyle_table;
-  
-#if defined(INCLUDE_RHINO_SECTION_STYLE_TABLE)
+
   /////////////////////////////////////////////////////////////////////////
   //
-  // section styles 
+  // section styles
   //
   class CRhinoSectionStyleTable& SectionStyleTable();
   const class CRhinoSectionStyleTable& SectionStyleTable() const;
-#endif
 
-#if defined(OPENNURBS_MARKUP_WIP)
   /////////////////////////////////////////////////////////////////////////
   //
   // markups
   //
   class CRhinoMarkupTable& MarkupTable();
   const class CRhinoMarkupTable& MarkupTable() const;
-#endif
 
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
   /////////////////////////////////////////////////////////////////////////
   //
   // pageview groups
   //
   class CRhinoPageViewGroupTable& PageViewGroupTable();
   const class CRhinoPageViewGroupTable& PageViewGroupTable() const;
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
 
 #if defined(OPENNURBS_TAG_WIP)
   /////////////////////////////////////////////////////////////////////////
@@ -2608,7 +2722,7 @@ public:
   class CRhinoTagTable& TagTable();
   const class CRhinoTagTable& TagTable() const;
 #endif
-  
+
 private:
   unsigned int m_reserved4; // for future use
 
@@ -2622,7 +2736,7 @@ public:
 
   /////////////////////////////////////////////////////////////////////////
   //
-  // hatch patterns used to fill hatch objects 
+  // hatch patterns used to fill hatch objects
   //
   CRhinoHatchPatternTable m_hatchpattern_table;
 
@@ -3121,7 +3235,7 @@ public:
   // Parameters:
   //   mesh - [in] A duplicate of this mesh is added to
   //      Rhino.
-  //   bRequireValidMesh - [in] If true, the mesh will not be 
+  //   bRequireValidMesh - [in] If true, the mesh will not be
   //      added to the Rhino document if it fails a validity check.
   //   pAttributes - [in] (optional) attributes.  If NULL,
   //      the current default attributes are used.
@@ -3184,7 +3298,7 @@ public:
   );
 
   // Description:
-  //   Add a geometry object to Rhino. 
+  //   Add a geometry object to Rhino.
   // Parameters:
   //   geo - [in] A duplicate of this geometry is added to
   //      Rhino.
@@ -3194,7 +3308,7 @@ public:
   //       a reference file.  Reference objects do not
   //       persist in archives.
   // Remarks:
-  //   This will try to cast the object to known 
+  //   This will try to cast the object to known
   //   types of geometry and add those.
   //   Note: a const pointer will be returned; use a more specialized
   //         implementation to get a non-const pointer.
@@ -4312,14 +4426,14 @@ public:
   //   snap_context - [in]
   //   snap_event - [out]  If SnapTo returns true, then the
   //       type and location of the snap is returned in snap_event.
-  //   construction_points - [in] optional array of points that 
+  //   construction_points - [in] optional array of points that
   //       will be snapped to independent of current point osnap
   //       settings.
   //   snap_points - [in] optional array of points that will be
   //       snapped to if point osnap is enabled.
   //   int_snap_points - [in] optional array of points that will be
   //       snapped to if int osnap is enabled. Used for snapping
-  //       to isocurve intersections when input is constrained to 
+  //       to isocurve intersections when input is constrained to
   //       a brep or brep face.
   // Returns:
   //   true if a snap occurred.
@@ -4346,6 +4460,123 @@ public:
   */
   int UnselectAll(
     BOOL32 bIgnorePersistentSelections = false
+  );
+
+  /*
+  Description:
+    Select objects.
+  Parameters:
+    objects - [in] list of objects to select/deselect
+    bSelect - [in] (default=true)
+    bSynchHighlight - [in] (default=true)
+        If true, then the object is highlighted if it is selected
+        and not highlighted if is is not selected.
+    bPersistentSelect - [in] (default=true)
+        Objects that are persistently selected stay selected when
+        a command terminates.
+    bIgnoreGripsState - [in]  If true, then objects with grips on
+        can be selected.  If false, then the value returned by
+        the object's virtual IsSelectableWithGripsOn() function
+        decides if the object can be selected when it has grips
+        turned on.
+    bIgnoreLayerLocking - [in] (default=false)  If true, then
+        objects on locked layers can be selected.  If false, the
+        objects on locked layers cannot be selected.
+    bIgnoreLayerVisibility - [in] (default=false)  If true, then
+        objects on hidden layers can be selectable.  If false, the
+        objects on hidden layers cannot be selected.
+  Returns:
+    Number of object that were selected/deselected.
+  See Also:
+    CRhinoObject::Select
+    CRhinoObject::IsSelected
+  */
+  int SelectObjects(
+    const ON_SimpleArray<const CRhinoObject*>& objects,
+    bool bSelect = true,
+    bool bSynchHighlight = true,
+    bool bPersistentSelect = true,
+    bool bIgnoreGripsState = false,
+    bool bIgnoreLayerLocking = true,
+    bool bIgnoreLayerVisibility = true
+  );
+
+  /*
+  Description:
+    Set object selection.
+  Parameters:
+    objects - [in] list of objects to select/deselect
+    bSynchHighlight - [in] (default=true)
+        If true, then the object is highlighted if it is selected
+        and not highlighted if is is not selected.
+    bPersistentSelect - [in] (default=true)
+        Objects that are persistently selected stay selected when
+        a command terminates.
+    bIgnoreGripsState - [in]  If true, then objects with grips on
+        can be selected.  If false, then the value returned by
+        the object's virtual IsSelectableWithGripsOn() function
+        decides if the object can be selected when it has grips
+        turned on.
+    bIgnoreLayerLocking - [in] (default=false)  If true, then
+        objects on locked layers can be selected.  If false, the
+        objects on locked layers cannot be selected.
+    bIgnoreLayerVisibility - [in] (default=false)  If true, then
+        objects on hidden layers can be selectable.  If false, the
+        objects on hidden layers cannot be selected.
+  Returns:
+    Number of object that were selected.
+  See Also:
+    CRhinoObject::Select
+    CRhinoObject::IsSelected
+  */
+  int SetSelectedObjects(
+    const ON_SimpleArray<const CRhinoObject*>& objects,
+    bool bSynchHighlight = true,
+    bool bPersistentSelect = true,
+    bool bIgnoreGripsState = false,
+    bool bIgnoreLayerLocking = true,
+    bool bIgnoreLayerVisibility = true
+  );
+
+  /*
+  Description:
+    Change object selection.
+  Parameters:
+    objects_to_unselect - [in] list of objects to unselect
+    objects_to_select - [in] list of objects to select
+    bSynchHighlight - [in] (default=true)
+        If true, then the object is highlighted if it is selected
+        and not highlighted if is is not selected.
+    bPersistentSelect - [in] (default=true)
+        Objects that are persistently selected stay selected when
+        a command terminates.
+    bIgnoreGripsState - [in]  If true, then objects with grips on
+        can be selected.  If false, then the value returned by
+        the object's virtual IsSelectableWithGripsOn() function
+        decides if the object can be selected when it has grips
+        turned on.
+    bIgnoreLayerLocking - [in] (default=false)  If true, then
+        objects on locked layers can be selected.  If false, the
+        objects on locked layers cannot be selected.
+    bIgnoreLayerVisibility - [in] (default=false)  If true, then
+        objects on hidden layers can be selectable.  If false, the
+        objects on hidden layers cannot be selected.
+    unselected_count - [out] (default=nullptr) Number of object that were unselected
+    selected_count - [out] (default=nullptr) Number of object that were selected
+  See Also:
+    CRhinoObject::Select
+    CRhinoObject::IsSelected
+  */
+  void ChangeObjectSelection(
+    const ON_SimpleArray<const CRhinoObject*>& objects_to_unselect,
+    const ON_SimpleArray<const CRhinoObject*>& objects_to_select,
+    bool bSynchHighlight = true,
+    bool bPersistentSelect = true,
+    bool bIgnoreGripsState = false,
+    bool bIgnoreLayerLocking = true,
+    bool bIgnoreLayerVisibility = true,
+    int* unselected_count = nullptr,
+    int* selected_count = nullptr
   );
 
   //////////
@@ -4539,7 +4770,7 @@ public:
     CRhinoUndoEventHandler* undo_event_handler
   );
 
-  // CRhinoDoc::EndUndoRecord() is OBSOLETE 
+  // CRhinoDoc::EndUndoRecord() is OBSOLETE
   //  Call EndUndoRecord(undo_record_sn)
   //  where undo_record_sn is the value returned
   //  by BeginUndoRecordEx(...)
@@ -4659,7 +4890,7 @@ public:
    */
   void RunScript_IOS(const wchar_t* s);
 #endif
-  
+
   /*
   Description:
     Run a Rhino command script.
@@ -4995,7 +5226,7 @@ public:
 
 public:
   class CRhDocSdkExtension* m__doc_sdk_extension;
-  
+
   const CRhDocSdkExtension& Extension(void) const;
   CRhDocSdkExtension& Extension(void);
 
@@ -5041,18 +5272,18 @@ private:
   //    CRhinoDoc::m_reference_model_geometry,
   //    CRhinoDoc::m_reference_model_idef_geometry,
   //    CRhinoDoc::m_light_table[], then that object
-  //  if and only if the object can be found by calling 
+  //  if and only if the object can be found by calling
   //  m_object_finder->LookupSerialNumber().
   //  An object is in any list, except CRhinoDoc::m_deleted_geometry,
   //  if and only if the object can be found by calling
-  //  m_object_finder->LookupId(). 
+  //  m_object_finder->LookupId().
   class CRhObjectFinder* m_object_finder;
 
 public:
   // This function is a debugging tool that validates the
   // CRhinoObject lists and m_object_finder.  If any errors
   // are detected, false is returned.  If no errors is detected,
-  // true is returned. Pass in a text_log if you want a 
+  // true is returned. Pass in a text_log if you want a
   // description of the errors.  Set max_error_count to the
   // number of errors you want to allow before checking
   // is halted.
@@ -5090,8 +5321,8 @@ private:
   // (m_invalid_object_status_bits & 0x80): AddObject validates new geometry
   unsigned char m_invalid_object_status_bits;
 
-  // When CRhinoDoc::AddObject is validating new geometry, 
-  // m_invalid_object_count stores the number of invalid objects 
+  // When CRhinoDoc::AddObject is validating new geometry,
+  // m_invalid_object_count stores the number of invalid objects
   // added in the current command. The value of m_invalid_object_count
   // is set to zero when a command starts and is checked when command ends.
   unsigned int m_invalid_object_count;
@@ -5153,7 +5384,7 @@ public:
   };
 
   //void PlaceObjectInCorrectList_(const CRhinoObject&, PlaceOperation);
-  
+
   void AddObjectToCorrectList(const CRhinoObject&);
   void RemoveObjectFromList(const CRhinoObject&);
   void HandleSelection(const CRhinoObject&);
@@ -5250,7 +5481,7 @@ private:
 
   // linked list of runtime editing grips
   // The CRhinoObject that owns the grips, manages them;
-  CRhinoGripObject* m_grip_list;
+  CRhinoGripObject* m_grip_list_DO_NOT_USE;
 
   // runtime settings
 
@@ -5267,7 +5498,7 @@ private:
 
 public:
   bool SaveModified(bool bUseBatchMode);
-    
+
   class CRhAnonymousUserTable* UserDataTable(void);
 
 public:
@@ -5359,7 +5590,7 @@ private:
   // being used.
   const class CRhinoFileWriteOptions* m_active_fwo = nullptr;
 
-  // Settings used for the most recent successful save as 
+  // Settings used for the most recent successful save as
   // a complete .3dm file that set the document title.
   CRhinoFileWriteOptions m_previous_complete_3dm_save_fwo;
 
@@ -5375,7 +5606,7 @@ public:
   class CRhViewBase* CreateRhinoView(const wchar_t* lpsViewTitle, const UUID& plug_in_id);
   class CRhViewBase* CreateLinkedFloatingRhinoView(const wchar_t* lpsViewTitle, const UUID& plug_in_id);
 #endif
-  
+
 #if defined (ON_RUNTIME_APPLE)
   // On macOS only
 public:
@@ -5599,7 +5830,7 @@ public:
   //   There are 5 mutually exclusive object states: normal, locked, hidden,
   //   instance, and deleted.  The "instance" objects are the objects used
   //   to define the geometry of an instance definition.  The instance
-  //   references (instance objects) are in the normal, locked, hidden 
+  //   references (instance objects) are in the normal, locked, hidden
   //   or deleted state.
   //
   enum object_state
@@ -5697,6 +5928,14 @@ public:
   */
   void IncludePhantoms(bool bIncludePhantoms = true);
 
+  // Description:
+  //   The default object iterator does not iterate through objects tagged as
+  //   markup objects. If you want the iterator to include markups,
+  //   then call IncludeMarkups(true).
+  // Parameters:
+  //   include - [in] true to include phantom objects
+  void IncludeMarkups(bool include = true);
+
   /*
     Description:
       If the selected filter is enabled, then the iterator will
@@ -5730,6 +5969,11 @@ public:
       CRhinoObjectIterator::EnableVisibleFilter
   */
   void EnableSelectedFilter(BOOL32 b = true, BOOL32 bCheckSubObjects = false);
+
+  //Uses an optimized selection iterator that is faster than the regular selection filter.  This iterator is only valid for the current selection set and will not update if the selection set changes.  If you want to use this iterator, you must call SetUseFastSelection(true) before calling First() or Next().
+  //You must also call EnableSelectedFilter = true.
+  //Do not use this while selection is changing.  It relies on the events being fired before the fast collection is ready.
+  void EnableFastSelection(bool bEnableFastSelection = true);
 
   /*
     Description:
@@ -5829,7 +6073,7 @@ public:
     The material filter can be used to limit the iteration to
     objects on a specific material.
   Parameters:
-    material_index - [in] index of material or ON_UNSET_INT_INDEX do 
+    material_index - [in] index of material or ON_UNSET_INT_INDEX do
        disable material filtering.
   Example:
     If you want to iterate through the list of objects
@@ -5858,7 +6102,7 @@ public:
     CRhinoObjectIterator::SetLayerFilter
     CRhinoObjectIterator::EnableSelectedFilter
     CRhinoObjectIterator::EnableVisibleFilter
-*/
+  */
   void SetMaterialFilter(int material_index);
 
   /*
@@ -5986,6 +6230,15 @@ public:
 
   /*
   Description:
+    If markups are enabled, this will only allow markups with a spcific id to
+    be returned.
+  Parameters:
+    markup_id - [in] the single id to filter on. ON_nil_uuid will disable the filter
+  */
+  void SetMarkupFilter(const ON_UUID& markup_id);
+
+  /*
+  Description:
     Returns the first object in list. The next call to
     CRhinoObjectIterator::Next will return the second
     object in the list.
@@ -6047,11 +6300,11 @@ private:
   object_category m_oc = CRhinoObjectIterator::object_category::active_objects; // category of objects being iterated
 
   mutable CRhinoDoc* m_pDoc = nullptr;
-  CRhinoObject* m_current_next = nullptr; // saves m_current->m_next because user may delete m_current
+  CRhinoObject* m_current_next_DO_NOT_USE = nullptr; // saves m_current->m_next because user may delete m_current
   int m_next_light_index = 0;
 
-  CRhinoObject* m_list[16]; //ALB reduced by one to allow for the runtime document pointer.
-  
+  CRhinoObject* m_list_DO_NOT_USE[16];
+
   int m_list_count = 0;
   int m_current_list = 0;
   bool m_bIncludeLights = false; // true if lights should be included.
@@ -6061,6 +6314,8 @@ private:
   bool m_bSelected = false; // true if iterator only returns selected objects
   bool m_bCheckSubObjects = false; // true if iterator returns partially selected objects
   bool m_bVisible = false; // true if iterator only returns visible objects
+  bool m_bIncludeMarkups = false;
+  bool m_bUseFastSelectionIterator = false; // true if the fast selection iterator should be used.  This is only valid if m_bSelected is true.
   unsigned int m_object_filter = 0;
   int m_layer_index_filter = -1;
   int m_material_index_filter = ON_UNSET_INT_INDEX;
@@ -6161,15 +6416,91 @@ enum class RhinoDocPurgeFilter : unsigned int
 
 /*
 Description:
+  Statistics that describe what RhinoPurgeDocument() purged.
+Remarks:
+  A count is recorded for every RhinoDocPurgeFilter value that was purged.
+See Also:
+  RhinoPurgeDocument
+*/
+class RHINO_SDK_CLASS CRhinoPurgeStatistics
+{
+public:
+  CRhinoPurgeStatistics();
+
+  /*
+  Description:
+    The number of table objects that were purged.
+  Parameters:
+    purge_filter [in] - The document table object types of interest.
+      Values can be or-ed ( | ) together, in which case the sum of the
+      counts of each type is returned.
+  Returns:
+    The number of table objects that were purged.
+  */
+  int PurgedCount(RhinoDocPurgeFilter purge_filter) const;
+
+  /*
+  Description:
+    The total number of table objects that were purged.
+  Returns:
+    The number of table objects that were purged.
+  */
+  int TotalPurgedCount() const;
+
+  /*
+  Description:
+    Sets the number of table objects that were purged.
+  Parameters:
+    purge_filter [in] - A single document table object type.
+    count [in] - The number of table objects that were purged.
+  */
+  void SetPurgedCount(RhinoDocPurgeFilter purge_filter, int count);
+
+  /*
+  Description:
+    Sets all counts to zero.
+  */
+  void Clear();
+
+private:
+  // One count for each bit of RhinoDocPurgeFilter, so that adding a new
+  // filter value does not change the size of this class.
+  enum : int { count_capacity = 32 };
+  int m_counts[count_capacity];
+};
+
+/*
+Description:
   Purges unused table objects from the Rhino document.
 Parameters:
   doc_runtime_serial_number [in] - the Rhino docuemnt's runtime serial number.
   purge_filter [in] - The document table objects to purge.
   bQuiet [in] - Set to true to suppress any output or progress messages.
+Returns:
+  The total number of table objects that were purged.
 */
 RHINO_SDK_FUNCTION
 int RhinoPurgeDocument(
-  unsigned int doc_runtime_serial_number, 
+  unsigned int doc_runtime_serial_number,
   RhinoDocPurgeFilter purge_filter,
   bool bQuiet
+);
+
+/*
+Description:
+  Purges unused table objects from the Rhino document.
+Parameters:
+  doc_runtime_serial_number [in] - the Rhino docuemnt's runtime serial number.
+  purge_filter [in] - The document table objects to purge.
+  bQuiet [in] - Set to true to suppress any output or progress messages.
+  stats [out] - The number of table objects that were purged, by type.
+Returns:
+  The total number of table objects that were purged.
+*/
+RHINO_SDK_FUNCTION
+int RhinoPurgeDocument(
+  unsigned int doc_runtime_serial_number,
+  RhinoDocPurgeFilter purge_filter,
+  bool bQuiet,
+  CRhinoPurgeStatistics& stats
 );

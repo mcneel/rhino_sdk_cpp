@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -208,7 +208,6 @@ class ON_CLASS Internal_SubDToNurbsExtraordinaryPoint {
   opennurbs_plus_brep_facegroups.cpp and opennurbs_plus_subd_mesh.cpp for dealing
   with SubD to NURBS conversions.
   */
-  ON_INTERNAL_SDK
   static const bool Internal_TryRemoveDoubleKnotsDegFour(const int dir,
                                                          ON_NurbsSurface* srf);
 };

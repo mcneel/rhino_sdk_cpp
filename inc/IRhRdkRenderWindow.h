@@ -459,7 +459,14 @@ public:
 		virtual unsigned int OpenGLTexture(void) const = 0;
 	};
 
-#ifdef ON_RUNTIME_WIN
+	// IDirect3DChannel::Direct3DTexture() returns RhD3D11TextureSRV, a type defined only in the internal,
+	// unshipped header display_direct3d/Utility_D3D.h. opennurbs defines ON_RUNTIME_WIN transitively on every
+	// Windows build, so guarding this block by ON_RUNTIME_WIN alone still exposes the internal type to
+	// third-party C++ SDK consumers and fails to compile ('Direct3DTexture': unknown override specifier).
+	// The channel is only ever obtained, implemented and used inside the RDK plug-in (where _RHRDK is defined
+	// and Utility_D3D.h is in scope); 3rd-party renderers use IOpenGLChannel / IMetalChannel instead. Guard by
+	// _RHRDK so the interface is compiled only where it is used and the internal type never reaches the SDK. RH-96520
+#if defined(ON_RUNTIME_WIN) && defined(_RHRDK)
 
 	class RHRDK_SDK IDirect3DChannel
 	{

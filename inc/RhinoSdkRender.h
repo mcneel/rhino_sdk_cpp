@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -174,7 +174,7 @@ public:
   Description:
     Called by Render() and RenderWindow() just after modal loop is exited.
   Returns:
-    If false is returned Render() and and RenderWindow() will cancel.
+    If false is returned Render() and RenderWindow() will cancel.
   */
   virtual BOOL32 RenderExitModalLoop();
   /*

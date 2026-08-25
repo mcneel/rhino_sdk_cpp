@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -740,6 +740,17 @@ public:
     double arrowlength,
     bool arrowflipped,
     bool from_the_back,
+    ON_Xform& arrow_xform_out) const;
+
+  // Knowing the arrowhead type lets this skip the chord adjustment for arrowheads
+  // that are centered on the arrow point, like ticks. The overload above assumes a
+  // trailing arrowhead.
+  void GetArrowXform(
+    int which_end,
+    double arrowlength,
+    bool arrowflipped,
+    bool from_the_back,
+    ON_Arrowhead::arrow_type arrowtype,
     ON_Xform& arrow_xform_out) const;
 
   //ON_DEPRECATED_MSG("Since v9.0")

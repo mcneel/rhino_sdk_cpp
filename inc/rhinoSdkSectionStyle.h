@@ -12,7 +12,6 @@
 
 #pragma once
 
-#if defined(INCLUDE_RHINO_SECTION_STYLE_TABLE)
 
 //////////////////////////////////////////////////////////////////////////
 //
@@ -131,6 +130,11 @@ public:
   /*
   Returns:
     Number of section styles in the table.
+  Remarks:
+    This count spans slots emptied by a purge - see the PURGED TABLE SLOTS
+    note in rhinoSdkDoc.h - so it can be larger than the number of section
+    styles that are actually there, and operator[] returns nullptr for the
+    difference.
   */
   int SectionStyleCount() const;
 
@@ -146,6 +150,15 @@ public:
     If successful, a pointer to the section style is returned.
     If not successful or if the index is out-of-range, nullptr is returned.
     Note, this pointer may become invalid after AddSectionStyle() is called.
+  Remarks:
+    nullptr is also returned for an in-range index whose slot was emptied by a
+    purge, which happens whenever a worksession reference model carrying a
+    section style is detached. Such slots are normal, they are spanned by
+    SectionStyleCount(), and they accumulate for the life of the document, so
+    any code that walks this table by index must expect nullptr and skip it.
+    See the PURGED TABLE SLOTS note in rhinoSdkDoc.h. Note that the layer,
+    linetype, material and hatch pattern tables answer the same situation with
+    a stand-in component rather than nullptr.
   */
   const CRhinoSectionStyle* operator[](int section_style_index) const;
 
@@ -542,4 +555,3 @@ private:
   ON__UINT_PTR m_sdk_reserved3 = 0;
 };
 
-#endif

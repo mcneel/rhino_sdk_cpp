@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -48,8 +48,26 @@ public:
   // See Also: UndoModify.
   bool IsModified() const;
 
+  /*
+  Returns:
+    Worksession reference model id.
+         0: linetype is not in a reference model.
+         1: linetype is in an unidentified worksession reference model.
+         2-1000: reserved for future use
+     >1000:
+       Serial number of the worksession reference model.
+  Remarks:
+    The reference model serial number is a runtime value.
+    It is not saved in files and it is generally different the
+    next time a file is read.
+  See Also:
+    CRhinoLayer::WorksessionReferenceModelSerialNumber
+    CRhinoDimStyle::WorksessionReferenceModelSerialNumber
+  */
+  unsigned int WorksessionReferenceModelSerialNumber() const;
+
   // Runtime index used to sort linetypes in linetype dialog
-  int m_sort_index = -1;   
+  int m_sort_index = -1;
 
   // Runtime index used when remapping linetypes for import/export
   int m_remap_index = -1;
@@ -69,7 +87,7 @@ public:
     linetype_pattern_id - [in/out]
       Store this value someplace on the object that cares about
       this linetype's pattern.  If this function returns true,
-      the the input and output values are the same.  If it
+      the input and output values are the same.  If it
       returns false, the returned value is different.
   Returns:
     true:
@@ -135,6 +153,11 @@ public:
   // Returns:
   //   Number of linetypes in the linetype table, including deleted
   //   linetypes.
+  //
+  // Remarks:
+  //   This count also spans slots emptied by a purge, so it can be
+  //   larger than the number of linetypes that are actually there.
+  //   See the PURGED TABLE SLOTS note in rhinoSdkDoc.h.
   int LinetypeCount() const;
 
   // Description:
@@ -150,6 +173,21 @@ public:
   //   Reference to the linetype.  If linetype_index is out of range,
   //   the current linetype is returned. Note that this reference
   //   may become invalid after AddLinetype() is called.
+  //
+  // Remarks:
+  //   The continuous line pattern is returned for an in-range index
+  //   whose slot was emptied by a purge, which happens when a
+  //   worksession reference model is detached or a linked instance
+  //   definition is purged. This is deliberate - such slots are normal
+  //   rather than a caller error, and they are spanned by
+  //   LinetypeCount() - but the pattern handed back is
+  //   indistinguishable from a real continuous linetype by every
+  //   property except its index.
+  //
+  //   To tell a real linetype from an emptied slot, test the index you
+  //   asked for against the index you got back: the stand-in has a
+  //   negative index, so i != table[i].Index() means slot i is empty.
+  //   See the PURGED TABLE SLOTS note in rhinoSdkDoc.h.
   const CRhinoLinetype& operator[](
     int // linetype_index
     ) const;
@@ -381,6 +419,29 @@ public:
      int linetype_index,
      bool bQuiet = false
      );
+
+  /*
+  Description:
+    Scale the width of a linetype that belongs to a worksession reference
+    model.
+  Parameters:
+    linetype_index - [in] index of the linetype to scale.
+    scale - [in] scale factor, normally ON::UnitScale(from, to).
+  Returns:
+    True if the linetype width was scaled.
+  Remarks:
+    ModifyLinetype refuses to change anything in a reference model and returns
+    false - the comment there dates to 2005 and reasons that the change could
+    not be saved. That reasoning does not apply to a unit conversion: nothing
+    is being persisted, the reference model is re-read from its file on the
+    next attach, and scaling exists precisely to keep the attached model
+    consistent with the active one. This does the one thing a unit change
+    needs and nothing else.
+    Widths measured in explicit units are left alone, matching the rest of the
+    unit-scaling code, which only scales a width when WidthUnits() is unset.
+    No undo record is added; undoing a unit change re-scales by the reciprocal.
+  */
+  bool ScaleReferenceLinetypeWidthForUnitChange(int linetype_index, double scale);
 
   // Description:
   //   If the linetype has been modified and the modification can be undone,

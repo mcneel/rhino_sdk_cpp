@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -223,9 +223,9 @@ Parameters:
   curve_domain - [in] if not NULL, the intersection is restricted to
       this subdomain of curve1
   surface_u_domain - [in] if not NULL, the intersection is restricted to
-      this subdomain of of the first surface parameter.
+      this subdomain of the first surface parameter.
   surface_v_domain - [in] if not NULL, the intersection is restricted to
-      this subdomain of of the second surface parameter.
+      this subdomain of the second surface parameter.
 Returns:
   Number of intersection events added to x[].  A return value of
   zero indicates no intersections were found.

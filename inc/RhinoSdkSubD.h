@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2015 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -466,8 +466,8 @@ public:
 
   /*
   Description:
-    Controls the appearance of all possible SubD displays
-    (this object's SubD(), the dynamic display SubD, and the
+    Controls the appearance of all changeable SubD displays
+    (this object's SubD(), the dynamic display SubD, but NOT
     the static display SubD()).
   Returns:
     True if some display appearance changed.
@@ -560,7 +560,8 @@ public:
   /*
   Description:
     For expert users who need to temporarily modify the display.
-    For example, when the SubD object is being dynamically edited.
+    For example, when the SubD object is being edited and we need
+    a stable basis for what to show.
 
    Remarks:
       NOTE WELL:
@@ -977,11 +978,14 @@ private:
   // ON_SubDMeshFragments and  OpenGL.
   // Raytraced viewports and the Render command call Cycles which is currently "legacy."
   ON_MeshRef m_render_mesh_ref;
-  ON_MeshRef m_analysis_mesh_ref; // for legacy V6 plugins that want an analysis mesh
-  ON_MeshRef m_preview_mesh_ref; // for legacy V6 plugins that want a preview mesh
+  // for legacy V6 plugins that want an analysis mesh
+  ON_MeshRef m_analysis_mesh_ref;
+  // for legacy V6 plugins that want a preview mesh
+  ON_MeshRef m_preview_mesh_ref;
 
-  // Manages all the information necessary for picking and display.
-  // 
+  // Manages all the information necessary for picking, snapping and static display.
+  // If available and up-to-date, will be used instead of m_subd_ref.
+  // Always stays in the display mode that the creator set it in.
   mutable CRhinoSubDDisplay m_subd_static_display;
 
   // Manages all the information necessary for dynamic display.

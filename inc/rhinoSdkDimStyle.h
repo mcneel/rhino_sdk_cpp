@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -588,6 +588,28 @@ public:
   //   true if successful. false if style_index is out of range.
   //
   bool ModifyDimStyle(const ON_DimStyle& style, int style_index, bool bQuiet = false);
+
+  /*
+  Description:
+    Scale the DimScale of a dimension style that belongs to a worksession
+    reference model.
+  Parameters:
+    style_index - [in] index of the dimension style to scale.
+    scale - [in] scale factor, normally ON::UnitScale(from, to).
+  Returns:
+    True if the dimension style was scaled.
+  Remarks:
+    ModifyDimStyle refuses to change anything in a reference model and returns
+    false, which is correct for editing but wrong for a unit conversion: the
+    goal of scaling a document on a unit change is that nothing changes
+    visually and only the numbers change, and that has to hold for attached
+    models too. This does the one thing a unit change needs and nothing else,
+    so it cannot be used to edit reference content.
+    No undo record is added. Undoing a unit change re-runs
+    CRhinoDocProperties::ScaleProperties with the reciprocal scale, which
+    scales these styles back.
+  */
+  bool ScaleReferenceDimStyleForUnitChange(int style_index, double scale);
 
   /*
   Description:

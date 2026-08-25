@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -34,7 +34,7 @@ public:
     Sets  switch for history recording.  
     If the master history recording switch is off, 
     then no history is recorded.  If the master history
-    recording switch is on, the the command's history
+    recording switch is on, the command's history
     recording setting determines if a command records
     history.
   Parameters:

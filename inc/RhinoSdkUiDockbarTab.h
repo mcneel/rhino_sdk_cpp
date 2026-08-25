@@ -1,8 +1,21 @@
+//
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
+// Rhinoceros is a registered trademark of Robert McNeel & Associates.
+//
+// THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
+// ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
+// MERCHANTABILITY ARE HEREBY DISCLAIMED.
+//				
+// For complete Rhino SDK copyright information see <http://www.rhino3d.com/developer>.
+//
+////////////////////////////////////////////////////////////////
+
 #pragma once
 
 //RDK panels
 RHINO_SDK_DATA extern UUID uuidPanelLightManager;
 RHINO_SDK_DATA extern UUID uuidPanelLibraries;
+RHINO_SDK_DATA extern UUID uuidPanelBlockContent;
 RHINO_SDK_DATA extern UUID uuidPanelFileExplorer;
 RHINO_SDK_DATA extern UUID uuidPanelGroundPlane;
 RHINO_SDK_DATA extern UUID uuidPanelRenderSettings;

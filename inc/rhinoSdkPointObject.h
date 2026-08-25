@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -434,7 +434,7 @@ public:
   Returns:
     Current transformation applied to the grip.
     If EnableTransformationWatching(true) has not been
-    called, the the returned transformation will always
+    called, the returned transformation will always
     be the translation from GripBasePoint() to
     GripLocation() and false will be returned.
     If EnableTransformationWatching(true) has been 

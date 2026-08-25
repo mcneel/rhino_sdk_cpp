@@ -1,6 +1,6 @@
 #pragma once
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -874,7 +874,7 @@ private:
 
   bool m_bIsValid;
   bool m_bSwap;//If true, then m_Mesh[0] is M1;
-  ON_XMesh* m_Mesh[2];//only m_Mesh[1] will have a a spacial decomposition. 
+  ON_XMesh* m_Mesh[2];//only m_Mesh[1] will have a spacial decomposition. 
   ON_XMeshVertexPool m_VPool;
   ON_XMeshEdgePool m_EPool;
   ON_XMeshFacePool m_FPool;

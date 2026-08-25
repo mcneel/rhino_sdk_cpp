@@ -69,11 +69,11 @@ public:
 	This interface is used in calls to CRhRdkPlugIn::ReportUsedContent() and CRhRdkPlugIn::ChangeContentInstanceId()
 
 	When importing a 3dm file or pasting, incoming contents are checked for usage and are only imported if
-	they are being used by objects, layers or plug-ins. RDK will query your plug-in to ask if contents are
-	being used by calling the ReportUsedContent() method. If your plug-in wants to make sure that contents
-	are imported and not discarded, it should override this method to report each used content instance id.
-	This is done by calling ReportUsedInstanceId() for each used content. During the content import, RDK
-	may need to change some of the content instance ids. If it does it will notify all plug-ins. Therefore
+	they are being used by objects, layers, the ground plane, plug-ins or decals. RDK will query your plug-in
+	to ask if contents are being used by calling the ReportUsedContent() method. If your plug-in wants to make
+	sure that contents are imported and not discarded, it should override this method to report each used content
+	instance id. This is done by calling ReportUsedInstanceId() for each used content. During the content import,
+	RDK may need to change some of the content instance ids. If it does it will notify all plug-ins. Therefore
 	your plug-in should also override the ChangeContentInstanceId() method to change the recorded instance
 	id of used content. Call GetInstanceIdChange() and update your record of the old instance id to be the
 	new one.
@@ -915,6 +915,13 @@ RHRDK_SDK CRhRdkBasicMaterial* RhRdkNewDisplayAttributeMaterial(const ON_Materia
 	\note This function is provided mainly for use by import plug-ins. It allows such plug-ins
 	 to add RDK materials with the addition of a single line of code. */
 RHRDK_SDK CRhRdkMaterial* RhRdkCreateImportedMaterial(CRhinoDoc& doc, ON_Material& mat, bool bReference);
+
+/** Create a PBR material from an ON_Material and attach it to a document. The ON_Material
+	is also set as an RDK material by setting its RDK material instance id and plug-in id.
+	The ON_Material is converted to PBR before the material is created.
+	\param bReference is \e true if the material is a reference material, else \e false.
+	\note This function is provided mainly for use by import plug-ins that need PBR materials. */
+RHRDK_SDK CRhRdkMaterial* RhRdkCreateImportedPBRMaterial(CRhinoDoc& doc, ON_Material& mat, bool bReference);
 
 /** Get an interface to an automatic UI. The caller shall delete the interface
 	when it is no longer required.

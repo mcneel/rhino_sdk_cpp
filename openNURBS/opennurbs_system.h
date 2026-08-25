@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -26,14 +26,6 @@
 // creates the opennurbs_public source deletes the following line.
 */
 #define OPENNURBS_PLUS
-
-#if defined(RHINO_CORE_COMPONENT)
-#if 1 == RHINO_CORE_COMPONENT
-// indicates opennurbs is being compiled as the DLL used by core Rhino
-// or being called by core Rhino. If you try to "hack" this define, then your code will crash.
-#define OPENNURBS_IN_RHINO
-#endif
-#endif
 
 #endif
 
@@ -64,6 +56,16 @@
 // opennurbs_public* library, then include opennurbs_public.h.
 //
 #error Both OPENNURBS_PUBLIC and OPENNURBS_PLUS are defined and exactly one must be defined.
+
+#endif
+
+#if defined(OPENNURBS_PLUS) && defined(RHINO_CORE_COMPONENT)
+
+#if 1 == RHINO_CORE_COMPONENT
+// indicates opennurbs is being compiled as the DLL used by core Rhino
+// or being called by core Rhino. If you try to "hack" this define, then your code will crash.
+#define OPENNURBS_IN_RHINO
+#endif
 
 #endif
 
@@ -681,7 +683,7 @@ typedef ON__UINT32 wchar_t;
 // Whenever possible use native OS tools for font and glyph support.
 // Things like names, outlines, metrics, UNICODE mapping will generally
 // work better align with user's experiences on that platform.
-// Freetype is basically a platform neutral font file file reading toolkit
+// Freetype is basically a platform neutral font file reading toolkit
 // and has all the limitations that arise from that approach to complex
 // information modern OSs manage in complicated ways.
 

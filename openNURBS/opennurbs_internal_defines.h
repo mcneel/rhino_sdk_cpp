@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -121,6 +121,8 @@ public:
   void SetChanged(void);
   void InvalidateCache(void);
 
+  static bool FastHasDecals(const ON_3dmObjectAttributes& attr);
+
 private:
   void Populate(void);
   int  FindDecalIndex(const ON_DECAL_CRC decal_crc) const;
@@ -140,22 +142,8 @@ template<class T> inline void hash_combine(size_t& seed, const T& v)
 	seed ^= hasher(v) + 0x9E3779B9 + (seed << 6) + (seed >> 2);
 }
 
-class UuidHasher // Hasher for using ON_UUID as key with std::map
-{
-public:
-	inline size_t operator()(const ON_UUID& uuid) const
-	{
-		size_t seed = 0;
-
-		const auto* d = reinterpret_cast<const ON__UINT32*>(&uuid);
-		::hash_combine(seed, d[0]);
-		::hash_combine(seed, d[1]);
-		::hash_combine(seed, d[2]);
-		::hash_combine(seed, d[3]);
-
-		return seed;
-	}
-};
+// Canonical ON_UUID hasher is ON_UuidHasher (opennurbs_uuid.h); aliased here.
+using UuidHasher = ON_UuidHasher;
 
 class ON_EnvironmentsImpl final : public ON_InternalXMLImpl
 {

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -397,3 +397,59 @@ private:
   void ClearUndoRecordsHelper();
   class CRhObjectGenealogy* m_og;
 };
+
+// 26-Jul-2026 Bill Cook, https://mcneel.myjetbrains.com/youtrack/issue/RH-64038
+// The HistoryPurge command's logic, moved here so it can be called by the SDK.
+
+/*
+Description:
+  Statistics that describe what RhinoPurgeObjectHistory() purged.
+See Also:
+  RhinoPurgeObjectHistory
+*/
+class RHINO_SDK_CLASS CRhinoPurgeHistoryStatistics
+{
+public:
+  // The number of objects that had a history record purged.
+  int m_purged_count = 0;
+
+  // The number of purged objects that were hidden or on a hidden layer.
+  // Only counted when purging every object in the document.
+  int m_hidden_count = 0;
+};
+
+/*
+Description:
+  Purges the history records of a list of objects.
+Parameters:
+  doc_runtime_serial_number [in] - The Rhino document's runtime serial number.
+  objects [in] - The objects whose history records are to be purged. Objects
+    that have no history record are skipped.
+  stats [out] - What was purged.
+Returns:
+  The number of objects that had a history record purged.
+*/
+RHINO_SDK_FUNCTION
+int RhinoPurgeObjectHistory(
+  unsigned int doc_runtime_serial_number,
+  const ON_SimpleArray<const CRhinoObject*>& objects,
+  CRhinoPurgeHistoryStatistics& stats
+);
+
+/*
+Description:
+  Purges the history records of every object in the Rhino document.
+Parameters:
+  doc_runtime_serial_number [in] - The Rhino document's runtime serial number.
+  stats [out] - What was purged.
+Returns:
+  The number of objects that had a history record purged.
+Remarks:
+  Objects that are deleted, and so on the undo stack, have their history
+  records purged but are not included in the returned count.
+*/
+RHINO_SDK_FUNCTION
+int RhinoPurgeDocumentHistory(
+  unsigned int doc_runtime_serial_number,
+  CRhinoPurgeHistoryStatistics& stats
+);

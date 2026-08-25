@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -142,6 +142,11 @@ public:
   // Returns:
   //   Number of patterns in the hatch pattern table, including deleted
   //   patterns.
+  //
+  // Remarks:
+  //   This count also spans slots emptied by a purge, so it can be
+  //   larger than the number of hatch patterns that are actually there.
+  //   See the PURGED TABLE SLOTS note in rhinoSdkDoc.h.
   int HatchPatternCount() const;
 
   // Description:
@@ -157,6 +162,20 @@ public:
   //   Reference to the pattern.  If pattern_index is out of range,
   //   the current pattern is returned. Note that this reference
   //   may become invalid after AddHatchPattern() is called.
+  //
+  // Remarks:
+  //   The default hatch pattern is returned for an in-range index whose
+  //   slot was emptied by a purge, which happens when a worksession
+  //   reference model is detached or a linked instance definition is
+  //   purged. This is required rather than merely tolerated: worksession
+  //   references and linked idefs to non-3dm files depend on this
+  //   function always returning a usable pattern and the same answer
+  //   every time.
+  //
+  //   To tell a real pattern from an emptied slot, test the index you
+  //   asked for against the index you got back: the stand-in has a
+  //   negative index, so i != table[i].Index() means slot i is empty.
+  //   See the PURGED TABLE SLOTS note in rhinoSdkDoc.h.
   const CRhinoHatchPattern& operator[]( int pattern_index) const;
 
   const CRhinoHatchPattern* HatchPattern(

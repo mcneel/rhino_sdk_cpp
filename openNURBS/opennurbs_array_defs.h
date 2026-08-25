@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -594,7 +594,7 @@ void ON_SimpleArray<T>::EmplaceBack(_Val&&... val)
     }
   }
 
-#if _HAS_CXX20
+#ifdef ON_HAS_CXX20
   std::construct_at(m_a + m_count++, std::forward<_Val>(val)...);
 #else
   ::new (static_cast<void*>(m_a + m_count++)) T(std::forward<_Val>(val)...);
@@ -623,7 +623,7 @@ void ON_SimpleArray<T>::Emplace(int i, _Val&&... val)
     }
     m_count++;
     Move(i + 1, i, m_count - 1 - i);
-#if _HAS_CXX20
+#ifdef ON_HAS_CXX20
     std::construct_at(m_a + i, std::forward<_Val>(val)...);
 #else
     ::new (static_cast<void*>(m_a + i)) T(std::forward<_Val>(val)...);
@@ -2028,7 +2028,7 @@ void ON_ClassArray<T>::EmplaceBack(_Val&&... val)
       return;
     }
   }
-#if _HAS_CXX20
+#ifdef ON_HAS_CXX20
   std::construct_at(m_a + m_count++, std::forward<_Val>(val)...);
 #else
   ::new (static_cast<void*>(m_a + m_count++)) T(std::forward<_Val>(val)...);
@@ -2057,7 +2057,7 @@ void ON_ClassArray<T>::Emplace(int i, _Val&&... val)
     }
     m_count++;
     Move(i + 1, i, m_count - 1 - i);
-#if _HAS_CXX20
+#ifdef ON_HAS_CXX20
     std::construct_at(m_a + i, std::forward<_Val>(val)...);
 #else
     ::new (static_cast<void*>(m_a + i)) T(std::forward<_Val>(val)...);

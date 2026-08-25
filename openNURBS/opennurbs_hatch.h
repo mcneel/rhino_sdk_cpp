@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -891,6 +891,16 @@ public:
     true if success
   */
   bool RemoveLoop( int index);
+
+  /*
+  Description:
+    Remove multiple loops in the hatch
+  Parameters:
+    loop_indices - [in] zero based indices of the loops to remove.
+  Returns:
+    true if success
+  */
+  bool RemoveLoops(ON_SimpleArray<int> loop_indices);
 
   /*
   Description:

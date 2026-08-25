@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -87,7 +87,7 @@ public:
   Returns:
     True: (default)
       If a complete, current version, 3dm file is successfully saved,
-      then then name of the file will be used to update the document's 
+      then name of the file will be used to update the document's 
       default file path and title and document will be marked as not
       modified.
     False:
@@ -153,12 +153,8 @@ public:
    kWriteFailedLightTable,
    kWriteFailedHatchPatternTable,
    kWriteFailedSectionStyleTable,
-#if defined(OPENNURBS_MARKUP_WIP)
    kWriteFailedMarkupTable,
-#endif // OPENNURBS_MARKUP_WIP
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
    kWriteFailedPageViewGroupTable,
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
    kWriteFailedInstanceDefinitionTable,
    kWriteFailedObjectTable,
    kWriteFailedHistoryRecordTable,
@@ -202,7 +198,7 @@ public:
 
   /*
   Returns:
-    True if the the file type is the current 3dm file version
+    True if the file type is the current 3dm file version
     and everything in the document will be saved.
   */
   bool FileTypeIsComplete3dm() const;
@@ -466,23 +462,8 @@ public:
   */
   bool SetIncludeNotes(
     bool bIncludeNotes
-  );
-
-  /*
-  Returns:
-  True if linked blocks should be saved in the file.
-  Remarks:
-  The default is false.
-  */
-  bool EmbedLinkedBlocks() const;
-
-  /*
-  Returns:
-  True if the value was set.
-  */
-  bool SetEmbedLinkedBlocks(
-    bool bEmbedLinkedBlocks
     );
+
 
   /*
   Returns:
@@ -498,6 +479,26 @@ public:
   */
   bool SetUseBatchMode(
     bool bUseBatchMode
+    );
+
+
+  /*
+  Returns:
+    True if file writing plug-ins may show user interface even though the
+    document being written is headless.
+  Remarks:
+    Added 2026-07-10 by wfcook for RH-95100
+    The default is false. File writing plug-ins skip all user interface when
+    writing a headless document.
+  */
+  bool AllowUserInterfaceWithHeadlessDocument() const;
+
+  /*
+  Returns:
+    True if the value was set.
+  */
+  bool SetAllowUserInterfaceWithHeadlessDocument(
+    bool bAllowUserInterfaceWithHeadlessDocument
     );
 
 
@@ -910,7 +911,7 @@ public:
   /*
   Returns:
     true:
-      You may not ask any questions while the the file is being read.
+      You may not ask any questions while the file is being read.
       Specifically, no dialogs and no "getter" prompts are permitted.
       This happens in a number of cases including situations where
       files are being "batch mode" processed and users will be grumpy
@@ -1010,7 +1011,7 @@ public:
 
       then the file object on file layer P::X ends up on 
       model layer X, the file objects on file layer Y end
-      up on on model layer X::Y and the file objects on file
+      up on model layer X::Y and the file objects on file
       layer Y::Z end up on model layer X::Z.
   Remarks:
     When a worksession reference model is being read, 0 is always returned.
@@ -1121,7 +1122,7 @@ public:
     in a .3dm file that was just read into the Rhino document
     item ids used in the runtime model.
 
-    When a file is read, sometimes is is necessary to change the
+    When a file is read, sometimes is necessary to change the
     id of an item in a file to a new id in the runtime model.
     This often happens when one file is being imported into 
     an existing document and an id found in the file is already 

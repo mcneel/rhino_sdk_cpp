@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -243,6 +243,14 @@ public:
   //   clock() values recorded every time DrawFrameBuffer is called
   static unsigned int CurrentFrameStart();
   static unsigned int PreviousFrameStart();
+
+  // Description:
+  //   Monotonically increasing serial number incremented each time a
+  //   DrawFrameBuffer or DrawNestedFrameBuffer is called. Unlike
+  //   CurrentFrameStart, this yields a distinct value for each nested
+  //   detail-view draw within a single DrawFrameBuffer. Use it
+  //   to make "do this only once per frame" decisions.
+  static unsigned int DrawFrameBufferSerialNumber();
 
   // Description:
   static void EnableFrameBufferCapture(bool bEnable=true);
@@ -732,10 +740,12 @@ public:
   void  PopModelTransform();
 
   void      PushObjectColor(const ON_Color& color) const;
+  void      PushObjectColor(const ON_Color& color, bool adjustForBlackWhiteSwitching) const;
   void      PopObjectColor() const;
   
   ON_Color  ObjectColor() const;
   ON_Color  SetObjectColor(const ON_Color& color);
+  ON_Color  SetObjectColor(const ON_Color& color, bool adjustForBlackWhiteSwitching);
   UINT      SetLinePattern(UINT);
   int       SetCurveThickness(int);
 
@@ -1446,8 +1456,6 @@ public:
   */
   void DrawBezierCage( const ON_BezierSurface& bezier_cage, int display_density = 1 );
 
-#pragma region V6 display
-public:
 
   // Description:
   //  Draw/fill a rounded rectangle in screen coordinates
@@ -1533,9 +1541,7 @@ public:
   // Continue to do this for all geometry types
   //void DrawMesh(const ON_Mesh& mesh, const class CRhMeshWireAttributes* wireSettings, const CDisplayPipelineMaterial* shadeSettings, CRhinoCacheHandle* cache);
   //void DrawBrep(const ON_Brep& brep, const class CRhBrepWireAttributes* wireSettings, const CDisplayPipelinMaterial* shadeSettings, CRhinoCacheHandle* cache);
-#pragma endregion
 
-#pragma region V7 WIP display
   void DrawHatch(const ON_Hatch& hatch, float strokeWidth,
     const ON_Color& gradientColor1, const ON_Color& gradientColor2,
     const ON_3dPoint& gradientPoint1, const ON_3dPoint& gradientPoint2, bool linearGradient,
@@ -1554,10 +1560,6 @@ public:
     const ON_3dPoint& gradientPoint1, const ON_3dPoint& gradientPoint2, ON_GradientType gradientType,
     float repeatFactor, CRhinoCacheHandle* cache);
 
-#pragma endregion
-
-
-public:
   // Description:
   //   Draws text flat to the screen at a screen coordinates location with specified color, font and height in pixels
   void DrawString( 
@@ -1682,6 +1684,21 @@ public:
   //  strokeWidth - [in] width of crosshair line
   //  screenLength - [in] pixel length of crosshair
   void DrawCrossHairs( const ON_Plane& plane, const ON_Color& color, float strokeWidth, float screenLength);
+  // Description:
+  //  Draw cross hairs that either run along the plane's x and y axes or
+  //  are aligned horizontally and vertically on the screen.
+  // Parameters:
+  //  plane - [in] the cross hairs are centered at the plane's origin. When
+  //               alignToScreen is false the hairs run along the plane's
+  //               x and y axes.
+  //  color - [in] color to use crosshairs
+  //  strokeWidth - [in] width of crosshair line
+  //  screenLength - [in] pixel length of crosshair. A value of zero draws
+  //               the crosshairs across the entire viewport.
+  //  alignToScreen - [in] when true, the crosshairs are drawn horizontally
+  //               and vertically on the screen (as if fixed to the camera)
+  //               instead of running along the plane's x and y axes.
+  void DrawCrossHairs( const ON_Plane& plane, const ON_Color& color, float strokeWidth, float screenLength, bool alignToScreen);
 
   /////////////////////////////////////////////////////////////////////  
   // 2D Pipeline Operations: 
@@ -1707,8 +1724,8 @@ public:
   //   Draw a filled 2D rectangle. The rectangle is in screen coordinates of the active viewport and may
   //   be drawn with a level of transparency.
   // Parameters:
-  //   left, top:     [in] 2D coordinate of the left/top corner of the rectangle. This point is is "Windows"
-  //                       coordinates where the top is is number of pixels from the top of the viewport
+  //   left, top:     [in] 2D coordinate of the left/top corner of the rectangle. This point is "Windows"
+  //                       coordinates where the top is number of pixels from the top of the viewport
   //   width, height: [in] distances from left, top that define the rectangle
   //   color:         [in] Fill color for rectangle
   //   transparency:  [in] 0=opaque,  255=completely transparent
@@ -1793,12 +1810,9 @@ public:
                        bool activeViewport);
 
 
-  virtual
-  bool InitFrameBuffer();          
-  
+  virtual bool InitFrameBuffer();          
 
-  virtual
-  bool CalcBoundingBox(ON_BoundingBox&);          
+  virtual bool CalcBoundingBox(ON_BoundingBox&);          
   
   ////////////////////////////////////
   //  Description:
@@ -1939,6 +1953,21 @@ public:
   void SetTiledFrameInfo(const ON_2iSize& fullSize, const ON_4iRect& currentTile);
 
   void DrawDocumentCustomRenderMeshes();
+
+  // Description:
+  //  If the pipeline is running on top of Direct3d 11, this function
+  //  will return the ID3D11Device* being used. nullptr will be returned
+  //  if the pipeline is running on some other GPU technology.
+  //  NOTE: AddRef is NOT called on this IUnknown instance
+  struct ID3D11Device* GetDirect3d11Device();
+  // Description:
+  //  If the pipeline is running on top of Direct3d 11, this function
+  //  will return the ID3D11DeviceContext* actively being used.
+  //  nullptr will be returned if the pipeline is running on some other
+  //  GPU technology.
+  //  NOTE: AddRef is NOT called on this IUnknown instance
+  struct ID3D11DeviceContext1* GetDirect3d11DeviceContext();
+
 protected:
   // Description:
   //  Sets the camera frustum that this pipeline uses.
@@ -2008,6 +2037,7 @@ protected:
   void  DrawSurfaceGrips();
   void  DrawCurveGrips();
   void  DrawPointCloudGrips();
+  void  DrawObjectGrips(int dpoIndex, bool bForceInFront);
   
   bool DrawSilhouette(const CRhinoObject*, ON_Color, float thickness, UINT pattern, class CRhMeshEdgeCache* cache);
 
@@ -2411,6 +2441,7 @@ public:
   bool TechPreProcessingObjects(void) const;
   bool TechPreProcessingVisibleMeshes(void) const;
   bool TechDrawingHiddenLines(void) const;
+  bool TechDrawingNonTechObjects(void) const;
 
   const ON_Mesh* GetGroundPlaneMesh(void) const;
   
@@ -2738,84 +2769,3 @@ public:
   
 };
 
-class RHINO_SDK_CLASS CRhinoComputeShader
-{
-public:
-  CRhinoComputeShader();
-  CRhinoComputeShader(const CRhinoComputeShader& other) = delete;
-  CRhinoComputeShader& operator=(const CRhinoComputeShader& other) = delete;
-  ~CRhinoComputeShader();
-
-  // Description:
-  //  Underlying technology this compute shader is using (or attempting to use)
-  CRhinoDisplayPipeline::DisplayTechnologies Technology() const;
-
-  // Description:
-  //  Compile a string into a compute shader binary. If technology is is
-  //  different for a CRhinoComputeShader instance from a previous call to
-  //  compute, all internal data will be rebuilt and the instance will attempt
-  //  to switch over to a different back end technology
-  // Parameters:
-  //  technology: The technology to use for all parts of this compute shader
-  //  source: The shader code
-  //  computeMainName: name of the main function in source to use as the
-  //                   compute entry point
-  //  shaderVersionMajor: version of shading language that source is written in
-  //  shaderVersionMinor: version of shading language that source is written in
-  //  debug: compile as debug or release
-  //  errorMessage: if provided and any errors or warnings are generated by the
-  //                compiler, then errorMessage will contain this message
-  // Returns:
-  //  true on a successful compile
-  bool Compile(CRhinoDisplayPipeline::DisplayTechnologies technology,
-    const char* source, const char* computeMainName,
-    int shaderVersionMajor, int shaderVersionMinor,
-    bool debug, ON_String* errorMessage);
-
-  // Returns:
-  //  True if the last call to compile was successful. Use this as a fast test
-  //  to avoid expensive calls to compile
-  bool IsCompiled() const;
-
-  // Description:
-  //  Has a constant buffer (uniform buffer) been set at a defined location
-  bool HasConstantBufferBeenSet(unsigned int location) const;
-
-  // Description:
-  //  Has a structured buffer been set at a defined location. Structured
-  //  buffers are arrays of data passed from the CPU to the GPU and meant
-  //  as read-only data in compute shaders. Structured buffers are not meant
-  //  to ever be read back to the CPU from the GPU
-  bool HasStructuredBufferBeenSet(unsigned int location) const;
-
-  // Description:
-  //  Has a read-write structured buffer been set at a defined location. These
-  //  buffers are often not initialized with CPU data and can be written to
-  //  inside of shaders. These buffers can also be copied back to the CPU after
-  //  a successful ExecuteDispath call
-  bool HasRWStructuredBuferBeenSet(unsigned int location) const;
-
-  bool SetConstantBuffer(unsigned int location, void* data, unsigned int dataSize);
-
-  bool SetStructuredBuffer(unsigned int location, const ON_SimpleArray<int>& data);
-  bool SetStructuredBuffer(unsigned int location, const ON_SimpleArray<ON_3dex>& data);
-  bool SetStructuredBuffer(unsigned int location, const ON_SimpleArray<ON_3fPoint>& data);
-  bool SetRWStructuredBuffer(unsigned int location, unsigned int elementCount, unsigned int elementSize);
-
-  // Description:
-  //  Run the compute shader.
-  bool ExecuteDispatch(unsigned int x, unsigned int y, unsigned int z);
-
-  // Description:
-  //  Read data back from a RW buffer after a successful call to ExecuteDispatch
-  // Parameters:
-  //  location: the RW buffer to read from
-  //  data: the data to memcpy buffer data into
-  //  dataSize: the size of data
-  // Returns:
-  //  true on success
-  bool ReadRWStructuredBuffer(unsigned int location, void* data, unsigned int dataSize);
-
-private:
-  class CRhComputeShaderPrivate* m_private = nullptr;
-};

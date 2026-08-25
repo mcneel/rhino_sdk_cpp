@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -116,6 +116,9 @@ enum GUMBALL_POPUP_MENU_ITEM
 
   // Gumball merge faces after extrude
   gb_extrude_merge_faces = 65536,
+
+  // Gumball alignment setting
+  gb_menu_align_to_control_polygon = 131072,
 
   gb_menu_everything       = 0xFFFFFFFF
 };

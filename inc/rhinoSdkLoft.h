@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -203,7 +203,15 @@ public:
 
   bool SplitAtTangents();
   void SetSplitAtTangents(bool split);
-   
+
+  // 4 August 2026 (RH-89962) wfcook
+  bool Solid() const;
+  void SetSolid(bool solid);
+
+  // 4 August 2026 (RH-89962) wfcook
+  double Tolerance() const;
+  void SetTolerance(double tol);
+
 private:
   ON_3dPoint m_startpoint = ON_unset_point;
   ON_3dPoint m_endpoint = ON_unset_point;
@@ -214,7 +222,8 @@ private:
   bool m_bUseStartTangent = false;
   bool m_bUseEndTangent = false;
   bool m_bClosed = false;
-  unsigned char m_reserved1 = 0;
+  // 4 August 2026 (RH-89962) wfcook - m_bSolid replaces the former m_reserved1.
+  bool m_bSolid = false;
   unsigned short m_reserved2 = 0;
   enum LoftType m_loft_type = LoftType::Normal;
   enum LoftSimplify m_simplify_method = LoftSimplify::None;
@@ -228,7 +237,8 @@ private:
   unsigned char m_reserved4 = 0;
   unsigned short m_reserved5 = 0;
   unsigned int m_reserved6 = 0;
-  ON__UINT_PTR m_reserved7 = 0;
+  // 4 August 2026 (RH-89962) wfcook - m_tolerance replaces the former m_reserved7.
+  double m_tolerance = ON_UNSET_VALUE;
 };
 
 // Function to make a loft surface through curves.
@@ -262,6 +272,37 @@ bool RhinoSdkLoftSurface(
 RHINO_SDK_FUNCTION
 bool RhinoSdkLoft(
   CArgsRhinoLoft& args,
+  ON_SimpleArray<ON_Brep*>& breps,
+  CRhinoHistory* history = nullptr
+);
+
+/*
+Description:
+  Make a loft surface through curves, optionally capping closed planar
+  openings in the result so the loft produces a closed solid.
+Parameters:
+  args      - [in] the loft arguments.
+  bSolid    - [in] if true, and if the lofted result has closed, planar openings,
+                   then the openings are capped and the results are joined into a
+                   single closed Brep. If the result cannot be capped, then the
+                   uncapped loft is returned and this function still succeeds.
+                   Ignored when args.Closed() is true.
+  tolerance - [in] absolute tolerance used for capping and joining. Pass
+                   ON_UNSET_VALUE to use args.RefitTolerance().
+  breps     - [out] the results. When bSolid is true and capping succeeded, this
+                   contains a single closed Brep.
+  history   - [in] ignored. Here for symmetry with the overload above, which also
+                   currently ignores it.
+Returns:
+  True if any results were created, false otherwise.
+Remarks:
+  Added for https://mcneel.myjetbrains.com/youtrack/issue/RH-89962
+*/
+RHINO_SDK_FUNCTION
+bool RhinoSdkLoft(
+  CArgsRhinoLoft& args,
+  bool bSolid,
+  double tolerance,
   ON_SimpleArray<ON_Brep*>& breps,
   CRhinoHistory* history = nullptr
 );

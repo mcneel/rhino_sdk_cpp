@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -458,7 +458,7 @@ protected:
   // 16 October 2012 by John Morse changed this from a BOOL32 to a ON__UINT32
   // and changed it to a flags field, this was done to add additional options
   // without breaking the SDK.  Call the ScriptMode() of function to get the
-  // determine if in scripting mode or call SetScriptMode() set set the value.
+  // determine if in scripting mode or call SetScriptMode() set the value.
   //BOOL32                         m_bScriptMode;
   ON__UINT32                   m_Flags;
   ON_ClassArray<CRhinoFileType>m_extensions;

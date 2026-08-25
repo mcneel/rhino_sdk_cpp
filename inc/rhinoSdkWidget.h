@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -94,6 +94,16 @@ public:
                           const ON_Texture& tex, const ON_UUID& obj_id, double transparency) = 0;
 };
 
+class RHINO_SDK_CLASS IRhWidgetDrawCacheEx3 : public IRhWidgetDrawCacheEx2
+{
+public:
+  virtual ~IRhWidgetDrawCacheEx3() { }
+
+  // Add a texture to display on the top or bottom cap of a capped cylindrical widget.
+  virtual void AddTextureCap(const ON_Cylinder& cylinder, bool bTop,
+                             const ON_Texture& tex, const ON_UUID& obj_id, double transparency) = 0;
+};
+
 /*
 Description:
 
@@ -152,7 +162,10 @@ public:
   };
 
   // [SDK_UNFREEZE] The texture should really be passed to the Add*ToDrawCache() methods.
-  void SetTexturesForDrawCache(const std::vector<ON_Texture>& tex, double transparency);
+  void SetTexturesForDrawCache(const std::vector<ON_Texture>& tex);
+
+  double TextureTransparency(void) const;
+  void SetTextureTransparency(double trans);
 
   // Direction for AddPlaneToDrawCache. Draws 'normal' arrow(s).
   enum eDrawNormal { dn_none, dn_forward, dn_backward, dn_both };
@@ -351,6 +364,8 @@ public:
   int  MovedGripIndex(void) const;
   void SetMovedGripIndex(const int index);
   void SelectGrip(int index);
+  double TextureTransparency(void) const;
+  void SetTextureTransparency(double d) const; // Transparency is mutable.
 
 private:
   CRhinoWidget(const CRhinoWidget&); // Not implemented.

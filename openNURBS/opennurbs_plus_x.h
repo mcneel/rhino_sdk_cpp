@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -373,7 +373,7 @@ public:
   //  m_overlap_type will be public.)
   // When the event is ccx_overlap or csx_overlap, m_overlap_type
   // specifies the behavior of distance between curveA and
-  // curveB/surfaceB in the overlap region of the the event.
+  // curveB/surfaceB in the overlap region of the event.
   // 0: unset
   // 1: The distance from curveA to curveB/surfaceB is constant
   //    from the starting point to the ending point of the 
@@ -909,7 +909,7 @@ public:
   ON_Curve* m_curve3d; // 3d surface B parameter space curve
 
   // If m_type = ssx_transverse_point or ssx_tangent_point,
-  // the the points are returned here
+  // the points are returned here
   ON_3dPoint m_pointA;  // 2d surfaceA parameter space point with z = 0
   ON_3dPoint m_pointB;  // 2d surfaceB parameter space point with z = 0
   ON_3dPoint m_point3d; // 3d intersection point

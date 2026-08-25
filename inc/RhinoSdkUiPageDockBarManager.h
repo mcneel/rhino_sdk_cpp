@@ -1,4 +1,4 @@
-// Copyright (c) 1993-2016 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -179,7 +179,7 @@ public:
   //   Get the tab control item associated with a particular UUID.
   //
   // Parameters:
-  //   uuid [in] UUID of of item to get.
+  //   uuid [in] UUID of item to get.
   //
   // Returns:
   //   Return valid pointer if a record with the specified UUID is found or NULL if not.

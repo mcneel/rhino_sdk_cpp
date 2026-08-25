@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -122,7 +122,7 @@ public:
 
 	/** Called for each frame. Starting at 0.0.
 	\param doc is the current document.
-	\param dPos is is the current frame. Starting at 0.0.
+	\param dPos is the current frame. Starting at 0.0.
 	\param start is a buffer to the data of the starting position.
 	\param stop is a buffer to the data of the ending position.
 	\return \e true if successful, otherwise \e false. */
@@ -153,7 +153,7 @@ public:
 	\param obj is the current object.
 	\param xformObject is a transformation matrix. The matrix is set to identity the first time an object is associated with a snapshot.
 	After that the matrix is updated when the object is transformed (scale, rotate etc.).
-	\param dPos is is the current frame. Starting at 0.0.
+	\param dPos is the current frame. Starting at 0.0.
 	\param start is a buffer to the data of the starting position.
 	\param stop is a buffer to the data of the ending position.
 	\return \e true if successful, otherwise \e false. */

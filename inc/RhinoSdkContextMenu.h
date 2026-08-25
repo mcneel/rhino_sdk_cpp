@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -431,7 +431,7 @@ public:
 	//   Return enabled state for this ojbject
   // Parameters:
   //   bEnable [in] If true ShouldExtendContextMenu() will get called when Rhino
-  //                is about to display a context menu otherwise it it will not
+  //                is about to display a context menu otherwise it will not
   // Returns:
   //   Returns previously enabled state
   bool Enable( bool bEnable = true);

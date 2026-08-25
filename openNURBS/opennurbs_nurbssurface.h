@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -205,7 +205,7 @@ public:
                 2 = north east,
                 3 = north west
     point - [in] point to collapse to.  If point is ON_3dPoint::UnsetPoint,
-                the the current location of the start of the side
+                the current location of the start of the side
                 is used.
   Returns:
     True if successful.
@@ -308,7 +308,7 @@ public:
     be created if the 3d surface where flattened into a rectangle.
   Parameters:
     width - [out]  (corresponds to the first surface parameter)
-    height - [out] (corresponds to the first surface parameter)
+    height - [out] (corresponds to the second surface parameter)
   Remarks:
     overrides virtual ON_Surface::GetSurfaceSize
   Returns:
@@ -362,6 +362,45 @@ public:
         int // dir // clamped end knots and euclidean location of start
         ) const override;   // CV = euclidean location of end CV, or surface is
                    // periodic.)
+
+  /* Description:
+       Test a surface direction to see if it can be closed. This is done by
+       testing all isocurves at Greville abscissae with ON_Curve::IsClosable.
+    Parameters:
+      dir - [in] the direction to close
+      tolerance - [in] maximum allowable distance between start and end.
+                       if start - end gap is greater than tolerance, returns false
+      min_abs_size - [in] if greater than 0.0 and none of the interior sampled
+                       points are at least min_abs_size from start, returns false.
+      min_rel_size - [in] if greater than 1.0 and chord length is less than
+                       min_rel_size*gap, returns false.
+    Returns:
+      true if start and end points are close enough based on above conditions.
+    Note:
+      periodic or non-clamped surfaces are not closable.
+    See also:
+      ON_Curve::IsClosable
+  */
+  bool IsClosable(
+    int dir,
+    double tolerance,
+    double min_abs_size = 0.0,
+    double min_rel_size = 10.0
+  ) const;
+
+  /*
+    Description:
+      make the surface closed if it can be closed within the given tolerance.
+    Parameters:
+      dir - [in] the direction to close
+      tolerance - [in] maximum allowable distance between start and end.
+                       if start - end gap is greater than tolerance, returns false
+
+    Returns:
+      true if surface was closed.
+
+  */
+  bool MakeClosed(int dir, double tolerance);
 
   bool IsPeriodic( // true if NURBS surface is periodic (degree > 1,
         int // dir // periodic knot vector, last degree many CVs 
@@ -583,7 +622,7 @@ public:
           int dir = 1;
           ON_NurbsSurface* south_side = 0;
           ON_NurbsSurface* north_side = 0;
-          srf.Split( dir, srf.Domain(dir).Mid() south_side, north_side );
+          srf.Split( dir, srf.Domain(dir).Mid(), south_side, north_side );
 
   */
   bool Split(
@@ -789,6 +828,53 @@ public:
     int j
   ) const;
 
+  /// <summary>
+  /// Get the indices of the spans where the specified 
+  /// control point is active.
+  /// </summary>
+  /// <param name="dir">
+  /// 0: first surface paramter 
+  /// 1: second surface parameter
+  /// </param>
+  /// <param name="control_point_index">
+  /// 0 &lt;= control_point_index &lt; control_point_count
+  /// </param>
+  /// <returns>
+  /// If the input is valid,
+  /// then the spans in the specified parameter direction whose index satisfies 
+  /// ON_2dex.i &lt;= span_index &lt; ON_2dex.j
+  /// use the specified control points.
+  /// If the iput is not valid, then ON_2dex(0,0) is returned.
+  /// </returns>
+  const ON_2dex ControlPointSpans(
+    int dir,
+    int control_point_index
+  ) const;
+
+
+  /// <summary>
+  /// Get the interval in the surface's domain where the specified
+  /// control point is active (helps determine the value of the surface).
+  /// Put another way, if 
+  /// ControlPointSupport(0,i).Contains(u) or ControlPointSupport(1,j).Contains(v)
+  /// is false, then surface->PointAt(u,v) does not depend on the location of CV(i,j).
+  /// </summary>
+  /// <param name="dir">
+  /// 0: first surface paramter 
+  /// 1: second surface parameter
+  /// </param>
+  /// <param name="control_point_index">
+  /// If dir = 0, then this is the first index of the surface control point.
+  /// If dir = 1, then this is the second index of the surface control point.
+  /// 0 &lt;= control_point_index &lt; CVCount(dir).
+  /// </param>
+  /// <returns>
+  /// The parameter interval where the specified control point is active.
+  /// </returns>
+  const ON_Interval ControlPointSupport(
+    int dir,
+    int control_point_index
+  ) const;
 
   /*
   Description:

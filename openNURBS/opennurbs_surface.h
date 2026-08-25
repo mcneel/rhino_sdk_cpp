@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -1076,7 +1076,7 @@ public:
 		fit_tolerance - [in] tolerance
 
 	Returns:
-		A curve in the the surface's parameter space or nullptr if unsuccessful.
+		A curve in the surface's parameter space or nullptr if unsuccessful.
   
 	*/ 
 	ON_Curve* GetSurfaceParameterFromNurbFormParameter(
@@ -1621,7 +1621,7 @@ public:
   Parameters:
     surface - [in]
       If surface is not null, then it is used to set the surface properties.
-      If surface is null, then all surface properties are set to to zero.
+      If surface is null, then all surface properties are set to zero.
   Remarks:
     Does not modify the value of m_tag.
   */

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -197,7 +197,7 @@ public:
   bool IsPointIn( const ON_3dPoint& P ) const;
 
 
-  // Below, "C" is the portion of the curve contained in this this
+  // Below, "C" is the portion of the curve contained in this
   // curve leaf box.
   ON_Line m_L; // chord from start of C to end of C
   ON_Line m_M; // smallest chord that contains m_L and such that
@@ -990,7 +990,7 @@ public:
     P - [in] 
     other - [in] 
   Returns:
-    True if if the shortest distance from the point P
+    True if the shortest distance from the point P
     to the portion of the curve covered by this node
     is greater than d.
   Remarks:
@@ -1478,7 +1478,7 @@ public:
     P - [in] 
     other - [in]
   Returns:
-    True if if the shortest distance from this node to the other
+    True if the shortest distance from this node to the other
     object is greater than d.  Put another way, true if returned
     if for every point Q on the portion of the surface covered 
     by this node and for every point P on the other object
@@ -2741,7 +2741,7 @@ Parameters:
     If true, the FPU control settings are checked
     to see if they have the expected values.
   bCall_ON_Error - [in]
-    If true and and exception has occurred or
+    If true and exception has occurred or
     the control settings have been changed,
     then ON_Error() is called.
 Returns:
@@ -2949,7 +2949,7 @@ ON_DECL void ON_SetSendLogMessageToCloudProc(ON_SSLMTC_PROC);
 //the only way down is out of the domain, it will stop and consider itself
 //successful.  Failure means that the iteration count limit was hit
 //and there was no convergence.  In that case, the result will be no
-//larger that that of the seed, and may be of use.
+//larger that of the seed, and may be of use.
 
 class ON_CLASS ON_SimpleMinimizer
 

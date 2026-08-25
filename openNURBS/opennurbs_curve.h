@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -81,7 +81,7 @@ public:
 /// should are a "kink." It also provides functions for determining
 /// if there is a kink at a specific curve parameter.
 /// </summary>
-class ON_WIP_CLASS ON_CurveKinkDefinition
+class ON_CLASS ON_CurveKinkDefinition
 {
 public:
   ON_CurveKinkDefinition() = default;
@@ -1763,6 +1763,50 @@ public:
     double& this_separation_parameter,
     double& nurbs_separation_parameter
     ) const;
+
+  /// <summary>
+  /// Rebuild this curve (the "source" curve) so it takes on the degree, knot
+  /// vector, and control point count of a template curve. When rebuilding many
+  /// curves against the same template, use the ON_TemplatedCurveRebuilder class so
+  /// the template is analyzed only once.
+  /// </summary>
+  /// <param name="template_curve">
+  /// The curve whose degree, knots, and control point count the result matches.
+  /// </param>
+  /// <param name="bFlipSourceDirection">
+  /// If true and this curve is open, its direction is flipped (reversed) before
+  /// sampling. Set this when this curve runs opposite the template.
+  /// </param>
+  /// <param name="bPreserveEndTangents">
+  /// If true and the result is open with at least 4 control points, the interior
+  /// end control points are adjusted so the result's end tangents match this
+  /// curve's.
+  /// </param>
+  /// <param name="bMakeSubDFriendly">
+  /// If true, the result is converted to a SubD friendly curve.
+  /// </param>
+  /// <param name="destination_nurbs_curve">
+  /// If not nullptr, the result is returned here. Otherwise the result is
+  /// returned in a new ON_NurbsCurve and the caller is responsible for deleting
+  /// it at the appropriate time.
+  /// </param>
+  /// <param name="maximum_deviation">
+  /// If not nullptr, a line from this curve to the rebuilt curve at the point of
+  /// maximum separation is returned here (from is on this curve, to is on the
+  /// rebuilt curve), or ON_Line::NanLine if it cannot be computed.
+  /// </param>
+  /// <returns>
+  /// The rebuilt curve, or nullptr if the template curve is unusable or the
+  /// rebuild fails.
+  /// </returns>
+  class ON_NurbsCurve* RebuildToMatchTemplateCurve(
+    const ON_Curve& template_curve,
+    bool bFlipSourceDirection,
+    bool bPreserveEndTangents,
+    bool bMakeSubDFriendly,
+    class ON_NurbsCurve* destination_nurbs_curve,
+    class ON_Line* maximum_deviation
+    ) const;
 #endif
 
   /*
@@ -1774,7 +1818,7 @@ public:
   Returns 
     true if the span is a non-degenerate line.  This means:
     - dimension = 2 or 3
-    - The length of the the line segment from the span's initial 
+    - The length of the line segment from the span's initial 
       point to the span's control point is >= min_length.
     - The maximum distance from the line segment to the span
     is <= tolerance and the span increases monotonically

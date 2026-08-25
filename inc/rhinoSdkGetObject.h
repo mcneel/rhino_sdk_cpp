@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -938,7 +938,7 @@ Remarks:
   // When pieces of instance references are selected, the
   // CRhinoObjRef contains reference counted proxy geometry. 
   // You need to keep either the CRhinoGetObject class or the
-  // CRhinoObjRef in in scope until you have finished using 
+  // CRhinoObjRef in scope until you have finished using 
   // the geometry it references.  After the destruction of 
   // the CRhinoGetObject class and the last CRhinoObjRef,
   // the proxy geometry is deleted.  At that point any
@@ -1021,6 +1021,17 @@ Remarks:
     and no support is available.
   */
   const CRhinoObjRefArray& PickList() const;
+
+  /*
+  Description:
+    Append a pre-resolved pick to this getter's pick list.
+  Parameters:
+    pick - [in] objref to append. Picks with a null Object() are
+      rejected.
+  Returns:
+    True if the pick was appended.
+  */
+  bool AppendPickedObject(const CRhinoObjRef& pick);
 
   // Added 30 June, 2010
   bool InactiveDetailPick() const;

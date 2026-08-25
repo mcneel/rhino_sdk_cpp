@@ -110,7 +110,7 @@ If you are starting on Windows first, complete the "Creating the OSX Bundle" ste
 ### Prerequisites
 
 * Visual Studio 2026 with the **Desktop development with C++** workload, including the **MFC** component and a recent **Windows 10/11 SDK**.  The Rhino C++ SDK is MFC-based.
-* Rhino 9 installed.  The Windows import libraries (`RhinoCore.lib`, `opennurbs.lib` and `rdk.lib`) live in this submodule's `lib` folder, alongside the macOS frameworks, so you do not need to reference anything under `Program Files`.  **Note:** adding the Windows `.lib` files to `lib` is still to be done - until they are present the link step will fail.
+* Rhino 9 installed.  The Windows import libraries (`RhinoCore.lib`, `opennurbs.lib` and `rdk.lib`) live in this submodule's `lib` folder, alongside the macOS frameworks, so you do not need to reference anything under `Program Files`.
 
 ### Creating the Windows project
 

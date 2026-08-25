@@ -80,6 +80,7 @@ public:
 
 	/** Call this to force the entire model through the queue. */
 	virtual void CreateWorld(bool bFlushWhenFinished = true);	
+	/*virtual*/ void RefreshMaterials(void);
 	
 	//These functions will be called on the main thread when the document is being updated.
 	//You will probably want to flag your renderer to stop when BeginUpdates is called, and restart when EndUpdates is called.

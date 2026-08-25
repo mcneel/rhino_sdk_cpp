@@ -1,4 +1,4 @@
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -1336,7 +1336,7 @@ private:
 
   // -- "Ortho" snap --
   // When m_bPermitOrtho is true and RhinoApp().AppSettings().Ortho()
-  // is true, the the point is constrained to be on a line that passes
+  // is true, the point is constrained to be on a line that passes
   // throught m_base_point and is parallel to m_plane.xaxis or m_plane.yaxis.
   // (m_plane is set to be the active construction plane unless there
   // is another plane that has been set.)

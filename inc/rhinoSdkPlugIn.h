@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -738,7 +738,7 @@ protected:
 
   bool IsValid(ON_TextLog* text_log = nullptr) const override;
 
-  // This is is should only be set by Rhino Common when creating a runtime
+  // This is should only be set by Rhino Common when creating a runtime
   // plug-in, DO NOT set this.
   bool m_is_rhino_common_plug_in;
 
@@ -1618,7 +1618,7 @@ public:
 public:
   // This value will never be display in any user interface.
   // When your plug-in's ValidateProductKey member is called, it is
-  // passed a a product, or CD, key that was entered into the Zoo
+  // passed a product, or CD, key that was entered into the Zoo
   // administrator console. Your ValidateProductKey will validate
   // the product key and decode it into a product license. This is
   // where you can store this license. This value will be passed

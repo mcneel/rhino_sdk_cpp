@@ -443,6 +443,7 @@ RHRDK_SDK extern UUID uuidPostEffect_DepthOfField;
 RHRDK_SDK extern UUID uuidPostEffect_Multiplier;
 RHRDK_SDK extern UUID uuidPostEffect_Noise;
 RHRDK_SDK extern UUID uuidPostEffect_GaussianBlur;
+RHRDK_SDK extern UUID uuidPostEffect_Despeckle;
 RHRDK_SDK extern UUID uuidPostEffect_WireframePointsRGBA;
 RHRDK_SDK extern UUID uuidPostEffect_WireframeCurvesRGBA;
 RHRDK_SDK extern UUID uuidPostEffect_WireframeIsocurvesRGBA;

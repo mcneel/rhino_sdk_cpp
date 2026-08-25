@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2017 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -428,6 +428,11 @@ public:
   // Returns:
   //   Number of layers in the layer table, including deleted
   //   layers.
+  //
+  // Remarks:
+  //   This count also spans slots emptied by a purge, so it can be
+  //   larger than the number of layers that are actually there.
+  //   See the PURGED TABLE SLOTS note in rhinoSdkDoc.h.
   int LayerCount() const;
 
   // Description:
@@ -443,6 +448,23 @@ public:
   //   Reference to the layer.  If layer_index is out of range,
   //   the current layer is returned. Note that this reference
   //   may become invalid after AddLayer() is called.
+  //
+  // Remarks:
+  //   DefaultLayer is returned for an in-range index whose slot was
+  //   emptied by a purge, which happens when a worksession reference
+  //   model is detached or a linked instance definition is purged.
+  //   This is deliberate - such slots are normal rather than a caller
+  //   error, and they are spanned by LayerCount() - but the layer
+  //   handed back is indistinguishable from a real layer named
+  //   "Default" by every property except its index. Enumerating a
+  //   table that has been purged several times therefore reports
+  //   several layers that are not there.
+  //
+  //   To tell a real layer from an emptied slot, test the index you
+  //   asked for against the index you got back: DefaultLayer has
+  //   index -1, so i != table[i].Index() means slot i is empty.
+  //   CRhinoDoc::AuditLayerTable does exactly this. See the PURGED
+  //   TABLE SLOTS note in rhinoSdkDoc.h.
   const CRhinoLayer& operator[](
     int // layer_index
     ) const;

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -1002,8 +1002,6 @@ public:
     /// </summary>
     LineSpaceScale = 116,
 
-// our .NET enum parser isn't smart enough to work with preprocessor defs
-//#if defined(OPENNURBS_CLIPPING_IN_DIMSTYLE_WIP)
     /// <summary></summary>
     ClippingArrowType1 = 117,
     /// <summary></summary>
@@ -1012,10 +1010,6 @@ public:
     ClippingArrowSize = 119,
     /// <summary>Every enum UINT value that identifies a valid dimension style property is less than the UINT value of Count.</summary>
     Count = 120
-//#else
-//    /// <summary>Every enum UINT value that identifies a valid dimension style property is less than the UINT value of Count.</summary>
-//    Count = 117
-//#endif
   };
   
 #pragma endregion
@@ -2319,14 +2313,12 @@ public:
   double LineSpaceScale() const;
   void SetLineSpaceScale(double scale);
 
-#if defined(OPENNURBS_CLIPPING_IN_DIMSTYLE_WIP)
   ON_ClippingArrowhead::arrow_type ClippingArrowType1() const;
   void SetClippingArrowType1(ON_ClippingArrowhead::arrow_type);
   ON_ClippingArrowhead::arrow_type ClippingArrowType2() const;
   void SetClippingArrowType2(ON_ClippingArrowhead::arrow_type);
   double ClippingArrowSize() const;
   void SetClippingArrowSize(double s);
-#endif
   
   // For converting to and from V5 Dimstyles
   static int V5ArrowType(ON_Arrowhead::arrow_type v6type);

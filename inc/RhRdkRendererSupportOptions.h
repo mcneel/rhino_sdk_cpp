@@ -39,10 +39,10 @@ public:
 	virtual bool CombineEditors(void) const;
 	virtual void SetCombineEditors(bool b);
 
-	// Libraries and File Explorer
+	// Libraries, Block Content and File Explorer
 	enum eInitialLocation
 	{
-		render_content,
+		render_content, // For Block Content this means the block content root folder.
 		last_opened_folder,
 		custom_folder
 	};
@@ -104,6 +104,27 @@ public:
 	void             FileExplorer_SetInitialLocationCustomFolder(const wchar_t* wszPath);
 	ON_wString       FileExplorer_LastNavigatedFolder(void) const;
 	void             FileExplorer_SetLastNavigatedFolder(const wchar_t* wszPath);
+
+	// Block Content - added August 2026 for RH-97344. The Block Content panel is a sibling of the
+	// Libraries panel that only shows blocks, so it needs its own copy of the same settings.
+	bool             BlockContent_UseDefaultLocation(void) const;
+	void             BlockContent_SetUseDefaultLocation(bool bUseDefault);
+	ON_wString       BlockContent_CustomPath(void) const;
+	void             BlockContent_SetCustomPath(const wchar_t* wszPath);
+	bool             BlockContent_ShowBlockContent(void) const;
+	void             BlockContent_SetShowBlockContent(bool b);
+	bool             BlockContent_ShowDocuments(void) const;
+	void             BlockContent_SetShowDocuments(bool b);
+	bool             BlockContent_ShowCustom(void) const;
+	void             BlockContent_SetShowCustom(bool b);
+	ON_wString       BlockContent_CustomPathList(void) const; // Semicolon delimited.
+	void             BlockContent_SetCustomPathList(const wchar_t* wszPath);
+	eInitialLocation BlockContent_InitialLocation(void) const;
+	void             BlockContent_SetInitialLocation(eInitialLocation l);
+	ON_wString       BlockContent_InitialLocationCustomFolder(void) const;
+	void             BlockContent_SetInitialLocationCustomFolder(const wchar_t* wszPath);
+	ON_wString       BlockContent_LastNavigatedFolder(void) const;
+	void             BlockContent_SetLastNavigatedFolder(const wchar_t* wszPath);
 
 	// Internal use only
 #if defined RHINO_SDK_MFC && defined ON_RUNTIME_WIN

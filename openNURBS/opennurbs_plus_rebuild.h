@@ -22,7 +22,7 @@
 /// contains the paramters that determine NURBS curve properties
 /// (degree, point count, ...) and other fitting contstraints.
 /// </summary>
-class ON_WIP_CLASS ON_NurbsCurveFitParameters
+class ON_CLASS ON_NurbsCurveFitParameters
 {
 public:
   ON_NurbsCurveFitParameters() = default;
@@ -826,6 +826,99 @@ private:
 };
 
 /// <summary>
+/// ON_TemplatedCurveRebuilder rebuilds a curve (the "source" curve) so that it
+/// takes on the degree, knot vector, and control point count of a "template"
+/// NURBS curve.
+///
+/// The template curve is analyzed once with SetTemplateCurve(); the rebuilder
+/// can then be applied to many source curves with RebuildCurve().
+/// </summary>
+class ON_CLASS ON_TemplatedCurveRebuilder
+{
+public:
+  ON_TemplatedCurveRebuilder() = default;
+  ~ON_TemplatedCurveRebuilder() = default;
+  ON_TemplatedCurveRebuilder(const ON_TemplatedCurveRebuilder&) = default;
+  ON_TemplatedCurveRebuilder& operator=(const ON_TemplatedCurveRebuilder&) = default;
+
+  /// <summary>
+  /// Analyze the template curve. Computes and stores the template's NURBS form
+  /// (clamped for open/simple-closed templates), its Greville abscissae, its
+  /// closed/periodic state, and the control point range to interpolate.
+  /// </summary>
+  /// <param name="template_curve">
+  /// The curve whose degree, knots, and control point count the rebuilt source
+  /// curves will match.
+  /// </param>
+  /// <returns>
+  /// True if the template curve is usable. If false is returned, the rebuilder
+  /// is left unset.
+  /// </returns>
+  bool SetTemplateCurve(const ON_Curve& template_curve);
+
+  /// <returns>
+  /// True if SetTemplateCurve() has succeeded and the rebuilder is ready to
+  /// use.
+  /// </returns>
+  bool IsSet() const;
+
+  /// <returns>
+  /// The template curve's stored NURBS form, or an empty curve when the
+  /// rebuilder is not set.
+  /// </returns>
+  const ON_NurbsCurve& TemplateCurve() const;
+
+  /// <summary>
+  /// Rebuild one source curve so it matches the template curve's degree, knot
+  /// vector, and control point count.
+  /// </summary>
+  /// <param name="source_curve">
+  /// The curve to rebuild.
+  /// </param>
+  /// <param name="bFlipSourceDirection">
+  /// If true and the source curve is open, its direction is flipped (reversed)
+  /// before sampling. Set this when the source runs opposite the template.
+  /// </param>
+  /// <param name="bPreserveEndTangents">
+  /// If true and the rebuilt curve is open with at least 4 control points, the
+  /// interior end control points are adjusted so the rebuilt curve's end
+  /// tangents match the source's.
+  /// </param>
+  /// <param name="bMakeSubDFriendly">
+  /// If true, the rebuilt curve is converted to a SubD friendly curve.
+  /// </param>
+  /// <param name="destination">
+  /// The rebuilt curve is returned here.
+  /// </param>
+  /// <returns>
+  /// True if a valid curve was created.
+  /// </returns>
+  bool RebuildCurve(
+    const ON_Curve& source_curve,
+    bool bFlipSourceDirection,
+    bool bPreserveEndTangents,
+    bool bMakeSubDFriendly,
+    ON_NurbsCurve& destination
+  ) const;
+
+private:
+  bool m_bIsSet = false;
+
+  // 0 = open, 1 = closed but not periodic, 2 = periodic
+  int m_template_curve_is_closed = 0;
+
+  // Control point interpolation range [m_template_curve_cv0,
+  // m_template_curve_cv1] (inclusive) into the template's knot/Greville
+  // structure.
+  int m_template_curve_cv0 = 0;
+  int m_template_curve_cv1 = 0;
+
+  ON_NurbsCurve m_template_nurbs_curve;
+  ON_SimpleArray<double> m_template_greville_abcissa;
+};
+
+#ifdef OPENNURBS_IN_RHINO
+/// <summary>
 /// The NURBS curve fit tool creates a NURBS curve that approximates
 /// an existing curve. The aproximation is calculated as a minimization
 /// of an objective function that measures the deviation between 
@@ -835,7 +928,7 @@ private:
 /// be interesting to a few nerds and everybody else can safely ignore
 /// it and get on with their lives.
 /// </summary>
-class ON_WIP_CLASS ON_NurbsCurveFitObjectiveValue
+class ON_CLASS ON_NurbsCurveFitObjectiveValue
 {
 public:
   static const ON_NurbsCurveFitObjectiveValue Nan;
@@ -942,7 +1035,7 @@ private:
 /// input curve, the ON_NurbsCurveFitSegment class is used to save
 /// the smooth approximations between kinks.
 /// </summary>
-class ON_WIP_CLASS ON_NurbsCurveFitSegment
+class ON_CLASS ON_NurbsCurveFitSegment
 {
 public:
   ON_NurbsCurveFitSegment() = default;
@@ -1004,7 +1097,7 @@ ON_DLL_TEMPLATE template class ON_CLASS ON_SimpleArray<ON_NurbsCurveFitSegment>;
 /// one time for each input curve and steps that need to be done every
 /// time a value changes in ON_NurbsCurveFitParameters.
 /// </summary>
-class ON_WIP_CLASS ON_NurbsCurveFitBuilder
+class ON_CLASS ON_NurbsCurveFitBuilder
 {
 public:
 
@@ -1254,6 +1347,7 @@ private:
   int m_symmetry_mirror_plane_count = 0;
   ON_PlaneEquation m_symmetry_mirror_planes[2] = { ON_PlaneEquation::NanPlaneEquation , ON_PlaneEquation::NanPlaneEquation };
   ON_Plane m_symmetry_rotation_axis = ON_Plane::NanPlane;
+  double m_symmetry_rotation_radius = ON_DBL_QNAN;
   double m_symmetry_snap_tolerance = ON_DBL_QNAN;
 
 public:
@@ -1335,4 +1429,4 @@ public:
   // m_maximum_separation_parameters[1] is an m_nurbs_curve_fit parameter.
   mutable double m_maximum_separation_parameters[2] = { ON_DBL_QNAN, ON_DBL_QNAN };
 };
-
+#endif // OPENNURBS_IN_RHINO

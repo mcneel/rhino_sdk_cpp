@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2023 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -160,6 +160,15 @@ public:
   double HatchRotation() const;
   void SetHatchRotation(double rotation);
 
+  // Plot width of the hatch pattern curves for a section.
+  //    values less than -1 (-10 is default): plot weight is determined by the
+  //                                          object's attributes
+  //   -1: do not plot
+  //    0: use default weight defined by the print dialog
+  //    positive values are thicknesses in millimeters to print to
+  double HatchPatternPlotWeightMillimeters() const;
+  void SetHatchPatternPlotWeightMillimeters(double weight);
+
   // Custom hatch pattern color for a section. If unset (default), the object's
   // color is used
   ON_Color HatchColor(bool print) const;
@@ -169,6 +178,15 @@ public:
   // from the parent layer or attributes
   const ON_Linetype* BoundaryLinetype() const;
   void SetBoundaryLinetype(const ON_Linetype& linetype);
+
+  // If the boundary linetype needs to come from the document, then set the
+  // index using an index in the document's linetype table. Default is
+  // ON_UNSET_INT_INDEX which means the linetype is not set to a document linetype
+  // and is instead derived from the locally held custom linetype or the object's
+  // linetype
+  void SetBoundaryLinetypeIndex(int index);
+  int BoundaryLinetypeIndex() const;
+
   void RemoveBoundaryLinetype();
 private:
   class ON_SectionStylePrivate* m_private = nullptr;

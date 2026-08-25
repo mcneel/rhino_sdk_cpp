@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2025 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // Rhinoceros is a registered trademark of Robert McNeel & Associates.
 //
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
@@ -1418,6 +1418,12 @@ public:
     // Call when there is a change to the document's pageview group table.
     event_type_rhinodoc_pageview_group_table_changed = 24,
 
+    // Call when a worksession reference model is attached or detached.
+    event_type_worksession_file = 25,
+
+    // Call when the document's markup view state (the viewed/edited markup) changes.
+    event_type_rhinodoc_markup_view_changed = 26,
+
     // Bound on event type value
     event_type_max,
 
@@ -2428,7 +2434,6 @@ private:
   CRhinoDocSectionStyleTableChanged& operator=(const CRhinoDocSectionStyleTableChanged&) = delete;
 };
 
-#if defined(OPENNURBS_MARKUP_WIP)
 class RHINO_SDK_CLASS CRhinoDocMarkupTableChanged : public CRhinoEventWatcherEx
 {
 public:
@@ -2484,10 +2489,64 @@ private:
   CRhinoDocMarkupTableChanged(const CRhinoDocMarkupTableChanged&) = delete;
   CRhinoDocMarkupTableChanged& operator=(const CRhinoDocMarkupTableChanged&) = delete;
 };
-#endif // OPENNURBS_MARKUP_WIP
 
 
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
+// https://mcneel.myjetbrains.com/youtrack/issue/RH-92369
+// Fired when a document's markup view state changes, i.e. when the document enters or
+// leaves markup Create/View/Edit mode, or switches which markup is being viewed/edited.
+// Unlike CRhinoDocMarkupTableChanged (which reports table add/delete/modify), this reports
+// the "which markup is currently active" state so UI (e.g. the Markups panel) can indicate it.
+class RHINO_SDK_CLASS CRhinoDocMarkupViewChanged : public CRhinoEventWatcherEx
+{
+public:
+  CRhinoDocMarkupViewChanged(ON_UUID plugin_id);
+  CRhinoDocMarkupViewChanged(ON_UUID plugin_id, bool headlessDocAware, bool headlessAppAware);
+
+  // The markup mode the document is now in. Values match the internal MarkupModeType.
+  enum class MarkupMode : unsigned char
+  {
+    None,
+    Create,
+    View,
+    Edit
+  };
+
+  class CParameters
+  {
+  public:
+    // The serial number of the document whose markup view state changed.
+    unsigned int m_rhino_doc_sn;
+
+    // The markup mode the document is now in.
+    CRhinoDocMarkupViewChanged::MarkupMode m_markup_mode;
+
+    // The table index of the markup being viewed/edited, or -1 if none
+    // (e.g. when leaving markup mode or while creating a new markup).
+    int m_markup_index;
+
+  private:
+    // prohibit use
+    CParameters();
+    CParameters(const CParameters&);
+    CParameters& operator=(const CParameters&);
+  };
+
+  // Rhino will call Notify() immediately after the document's markup view state changes.
+  // WARNING:
+  //   Never modify the Rhino document in a CRhinoDocMarkupViewChanged::Notify override.
+  //   If you need to change the Rhino document or post update messages
+  //   to controls, then your CRhinoDocMarkupViewChanged::Notify
+  //   should record what happened in an efficient way and then make
+  //   any changes that are required in a CRhinoIsIdle.Notify() override.
+  virtual void Notify(const class CRhinoDocMarkupViewChanged::CParameters& params) = 0;
+
+private:
+  // prohibit use
+  CRhinoDocMarkupViewChanged(const CRhinoDocMarkupViewChanged&) = delete;
+  CRhinoDocMarkupViewChanged& operator=(const CRhinoDocMarkupViewChanged&) = delete;
+};
+
+
 class RHINO_SDK_CLASS CRhinoDocPageViewGroupTableChanged : public CRhinoEventWatcherEx
 {
 public:
@@ -2543,4 +2602,58 @@ private:
   CRhinoDocPageViewGroupTableChanged(const CRhinoDocPageViewGroupTableChanged&) = delete;
   CRhinoDocPageViewGroupTableChanged& operator=(const CRhinoDocPageViewGroupTableChanged&) = delete;
 };
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
+
+// 28 May 2026, Rajaa, RH-95912
+class RHINO_SDK_CLASS CRhinoOnWorksessionFile : public CRhinoEventWatcherEx
+{
+public:
+  CRhinoOnWorksessionFile(ON_UUID plugInId);
+  CRhinoOnWorksessionFile(ON_UUID plugInId, bool headlessDocAware, bool headlessAppAware);
+
+  enum class change_type : unsigned int
+  {
+    attached = 0,
+    detached = 1,
+    // 29 May 2026, Rajaa, RH-95735
+    before_detach = 2,
+  };
+
+  class RHINO_SDK_CLASS CParameters
+  {
+  public:
+    CParameters(class CRhinoOnWorksessionFilePrivate* privateParameters);
+    ~CParameters();
+
+    // Document the worksession belongs to.
+    CRhinoDoc* Document() const;
+
+    // Runtime serial number of the worksession reference model being
+    // attached or detached. Not persistent across sessions.
+    unsigned int WorksessionModelRuntimeSerialNumber() const;
+
+    // Full path of the .3dm file being attached or detached.
+    const wchar_t* FilePath() const;
+
+    // Whether the model was attached or detached.
+    CRhinoOnWorksessionFile::change_type ChangeType() const;
+
+  private:
+    class CRhinoOnWorksessionFilePrivate* m_private = nullptr;
+
+  protected:
+    CParameters(const CParameters&) = delete;
+    CParameters& operator=(const CParameters&) = delete;
+  };
+
+  // Description:
+  //   Rhino calls Notify after a worksession reference model has been
+  //   attached to or detached from the document. At the time of the
+  //   notification, the document state already reflects the change:
+  //   attached models' objects/layers are present, detached models'
+  //   objects/layers have been purged.
+  virtual void Notify(const class CRhinoOnWorksessionFile::CParameters& params) = 0;
+
+private:
+  CRhinoOnWorksessionFile(const CRhinoOnWorksessionFile&) = delete;
+  CRhinoOnWorksessionFile& operator=(const CRhinoOnWorksessionFile&) = delete;
+};

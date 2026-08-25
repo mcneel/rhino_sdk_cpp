@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -428,7 +428,7 @@ public:
   // m_floating_viewport is used to track floating viewport information.
   //  0 = the view is docked in the main application window.
   // >0 = the view is floating. When floating, this corresponds to the
-  //      number of monitors on on the user's computer when the file was saved
+  //      number of monitors on the user's computer when the file was saved
   unsigned char m_floating_viewport;
 private:
   // reserved for future use
@@ -592,15 +592,8 @@ public:
   ON_3dmView();
   ~ON_3dmView();
 
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
   ON_3dmView(const ON_3dmView&);
   ON_3dmView& operator=(const ON_3dmView&);
-#else
-  // The C++ default copy constructor and operator= work fine.
-  // Do not provide customized versions.
-  // NO // ON_3dmView(const ON_3dmView&);
-  // NO // ON_3dmView& operator=(const ON_3dmView&);
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
 
   void Default();
 
@@ -619,7 +612,7 @@ public:
   // After Dec 14, 2010 m_clipping_planes is saved.
   ON_SimpleArray<ON_ClippingPlaneInfo> m_clipping_planes;
 
-  // If true, the the camera location, camera direction,
+  // If true, the camera location, camera direction,
   // and lens angle should not be changed.
   // It is ok to adjust clipping planes.
   bool m_bLockedProjection;
@@ -746,7 +739,6 @@ public:
 
   //Focal blur settings - per view for renderers.
 
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
   // pageview group interface
   int PageViewGroupCount() const;
   int PageViewGroupList(ON_SimpleArray<int>& group_list) const;
@@ -756,10 +748,25 @@ public:
   void RemoveFromPageViewGroup(int group_index);
   void RemoveFromAllPageViewGroups();
 
+  // Gets the pageview's sort index within the pageview group with the specified
+  // index. Returns ON_UNSET_INT_INDEX ("unsorted", i.e. use page-number order) if
+  // the pageview is not in the group or has no explicit sort index in it.
+  int PageViewGroupSortIndex(int group_index) const;
+  // Sets the pageview's sort index within the pageview group with the specified
+  // index. If the pageview is not yet in the group, it is added. A sort index of
+  // ON_UNSET_INT_INDEX means "unsorted" (use page-number order).
+  void SetPageViewGroupSortIndex(int group_index, int sort_index);
+
+  // Direct access to the raw pageview group memberships as (group index, sort index)
+  // pairs, where .i = pageview group index and .j = sort index (ON_UNSET_INT_INDEX
+  // when unsorted). Handy for copying or remapping memberships while preserving sort
+  // indices in a single step.
+  const ON_SimpleArray<ON_2dex>& PageViewGroups() const;
+  void SetPageViewGroups(const ON_SimpleArray<ON_2dex>& groups);
+
   // description
   ON_wString Description() const;
   void SetDescription(const wchar_t* description);
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
 
 private:
   double m_dFocalBlurDistance = 100.0;
@@ -770,13 +777,9 @@ private:
   ON_2iSize m_sizeRendering = ON_2iSize(640, 480);
 
 private:
-#if defined(OPENNURBS_PAGEVIEWGROUP_WIP)
   void Internal_Copy(const ON_3dmView& src);
   void Internal_Destroy();
   mutable class ON_3dmViewPrivate* m_private = nullptr;
-#else
-  ON__INT_PTR reserved = 0;
-#endif // OPENNURBS_PAGEVIEWGROUP_WIP
 };
 
 #if defined(ON_DLL_TEMPLATE)
@@ -1187,7 +1190,7 @@ public:
     elevation_unit_system - [in]
       length unit system for returned value.
   Returns:
-    Earth location elevation in in elevation_unit_system.
+    Earth location elevation in elevation_unit_system.
     The value is with
     Can be ON_UNSET_VALUE
   */
@@ -1501,16 +1504,12 @@ public:
   bool UseCompression(void) const;
   void SetUseCompression(bool bUseCompression);
 
-  bool EmbedLinkedBlocks(void) const;
-  void SetEmbedLinkedBlocks(bool bEmbedLinkedBlocks);
-
   // bitmaps associated with rendering materials.  
   // Consider this private until the SDK changes for real.  Use accessor functions (we may change the backing storage)
   bool m_bSaveTextureBitmapsInFile = true;
 
 private:
   bool m_bUseCompression = false;
-  bool m_bEmbedLinkedBlocks = false;
   bool m_reserved = false;
 
 public:

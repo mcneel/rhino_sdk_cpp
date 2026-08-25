@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -2063,7 +2063,7 @@ public:
   /*
   Description:
     This is a debugging tool to test the code that starts with a font and 
-    Unicode code point and and finds a glyph in the font definition for 
+    Unicode code point and finds a glyph in the font definition for 
     that code point.
   Parameters:
     text_log - [in]
@@ -5418,7 +5418,7 @@ public:
   
     Currently opennurbs and Rhino work on Microsoft Windows and Apple
     platforms and use FreeType to access font information. When a font 
-    is not "tricky", the "font design" units are the the units FreeType
+    is not "tricky", the "font design" units are the units FreeType
     uses when a font is loaded with FT_LOAD_NO_SCALE.
   
     When working with fonts and glyhphs in opennurbs and Rhino, 

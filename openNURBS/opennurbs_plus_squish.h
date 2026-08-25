@@ -1,5 +1,5 @@
 //
-// Copyright (c) 1993-2022 Robert McNeel & Associates. All rights reserved.
+// Copyright (c) 1993-2026 Robert McNeel & Associates. All rights reserved.
 // OpenNURBS, Rhinoceros, and Rhino3D are registered trademarks of Robert
 // McNeel & Associates.
 //
@@ -217,13 +217,13 @@ public:
   double m_diagonal_compress_rel_tol; // unused
 
   /*
-  If -1.0 <= m_absolute_limit < 0.0, then then an absolute
+  If -1.0 <= m_absolute_limit < 0.0, then an absolute
   compression limit is applied so that
   (2d length)/(3d length) >= fabs(m_absolute_limit).
   In particular, if m_absolute_limit = -1.0, then no compression
   is permitted (2d length) >= (3d length).
 
-  If 0.0 < m_absolute_limit <= 1.0 then then an absolute
+  If 0.0 < m_absolute_limit <= 1.0 then an absolute
   stretching limit is applied so that
   (2d length)/(3d length) <= 1/fabs(m_absolute_limit).
 
