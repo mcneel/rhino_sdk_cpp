@@ -338,6 +338,8 @@ The `Visual Studio 18 2026` generator needs a recent CMake - older releases (3.2
 
 The compiled `.rhp` is written under `build/` (for example `build\Debug\MyPlugin.rhp`); load and debug it as in the platform sections above.
 
+Both platform paths are runtime-verified: the plug-in built this way loads into Rhino and its commands run - on macOS with `cmake -G Xcode`, and on Windows with `cmake -G "Visual Studio 18 2026"` (Debug and Release, Rhino 9.0.26237).
+
 ## Maintaining the macOS link stubs
 
 The macOS `lib/*.tbd` files are text-based link stubs (the equivalent of Windows import libraries), generated from a Rhino app bundle with Apple's `tapi`.  They contain only exported symbols and install names — the real frameworks are loaded at runtime from inside Rhino — so the full multi-MB framework binaries are not committed.  When the Mac frameworks change, regenerate the stubs:
