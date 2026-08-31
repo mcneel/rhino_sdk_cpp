@@ -84,6 +84,8 @@ You are now ready to start setting up your boilerplate CRhinoPlugIn class in the
     };
     static MYPLUGIN my_plug_in;
 
+Your plug-in also needs a declaration block, which exports the SDK version and the metadata Rhino shows in Options > Plug-ins.  It is the same on both platforms - see "Plug-in declaration" below, and `samples/SampleCppPlugIn.cpp` for a worked example.
+
 ### Compiling your plugin.
 
 Command-B to build.  Everything should compile.
@@ -183,10 +185,10 @@ This assumes the layout used above — your plug-in as a git repository with thi
 ### Plug-in declaration
 
 Whatever the build system, a Windows `.rhp` must export the SDK version it was
-built against, or Rhino refuses it with *"Rhino version not specified."*  The
-`samples` source in this repository does not do this, so add a declaration block
-to one of your `.cpp` files - it is cross-platform, and the same block works for
-the Xcode target:
+built against, or Rhino refuses it with *"Rhino version not specified."*  Add a
+declaration block to one of your `.cpp` files - it is cross-platform, and the
+same block works for the Xcode target.  `samples/SampleCppPlugIn.cpp` carries a
+complete one, with comments on what each macro is for:
 
 ```cpp
 #include "SDK/inc/rhinoSdkPlugInDeclare.h"
