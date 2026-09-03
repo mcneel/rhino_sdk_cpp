@@ -535,6 +535,12 @@ public:
   Remarks:
     If "this" or other_bbox is invalid, they are treated as
     the empty set, and false is returned.
+    This function always overwrites "this", including when it returns false.
+    The coordinates of an invalid "this" are not meaningful, so check the
+    return value, or ON_BoundingBox::IsValid(), before reading them.
+    To test two boxes for overlap without modifying either one, use
+    ON_BoundingBox::IsDisjoint().  To save the intersection somewhere else,
+    use the two argument Intersection() below.
   */
   bool Intersection(
          const ON_BoundingBox& other_bbox
@@ -549,10 +555,12 @@ public:
   Returns:
     True if the "this" is a non-empty valid bounding box.
     False if the intersection is empty, in which case
-    "this" is set to an invalid bounding box.
+    "this" is set to an invalid bounding box.  The coordinates of an
+    invalid "this" are not meaningful.
   Remarks:
     If bbox_A or bbox_B is invalid, they are treated as
     the empty set, and false is returned.
+    bbox_A and bbox_B are not modified, so "this" may safely be a third box.
   */
   bool Intersection( // this = intersection of two args
          const ON_BoundingBox& bbox_A, 

@@ -379,6 +379,18 @@ public:
   bool InViewCapture() const;
 
   // Returns:
+  //  True if what this pipeline draws has to be complete when the frame ends,
+  //  because nothing will repaint it. Printing, print preview, view capture,
+  //  file and UI previews, masks and selection maps are all consumed once and
+  //  then thrown away, so anything a draw defers to a later frame is simply
+  //  missing from them.
+  //  False for an ordinary viewport draw, which is free to show a partial
+  //  result now and refine it on a subsequent frame.
+  //  Use this in preference to IsPrinting() when deciding whether work may be
+  //  put off; IsPrinting() alone is true for far less than the name suggests.
+  bool RequiresCompleteDraw() const;
+
+  // Returns:
   //  The current stereo projection if stereo mode is on
   //  0 = left, 1 = right
   //  If stereo mode is not enable, this just returns 0

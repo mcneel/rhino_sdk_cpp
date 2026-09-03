@@ -1189,4 +1189,81 @@ public:
   float cy = 0;
 };
 
+
+/*
+Class ON_4fRect
+  Float precision version of ON_4dRect.
+*/
+class ON_CLASS ON_4fRect
+{
+public:
+  ON_4fRect() = default;
+  ~ON_4fRect() = default;
+  ON_4fRect(const ON_4fRect& ) = default;
+  ON_4fRect& operator=(const ON_4fRect& ) = default;
+
+  ON_4fRect( float left, float top, float right, float bottom );
+  ON_4fRect(const ON_2fPoint topLeft, const ON_2fPoint& bottomRight);
+  ON_4fRect(const ON_2fPoint& point, const ON_2fSize& size);
+
+public:
+  static const ON_4fRect Zero;  // (0.0f,0.0f,0.0f,0.0f)
+  static const ON_4fRect Unset; // (ON_UNSET_FLOAT,ON_UNSET_FLOAT,ON_UNSET_FLOAT,ON_UNSET_FLOAT)
+
+public:
+  /*
+  Returns:
+    true if all of left, top, right, and bottom are set to 0.
+  */
+  bool IsZero() const;
+
+  void SetZero();
+
+  /*
+  Returns:
+    true if none of left, top, right, or bottom is set to ON_UNSET_FLOAT
+  */
+  bool IsSet() const;
+
+  float Width(void) const;
+  float Height(void) const;
+
+  const ON_2fSize Size(void) const;
+
+  const ON_2fPoint CenterPoint(void) const;
+  const ON_2fPoint TopLeft(void) const;
+  const ON_2fPoint BottomRight(void) const;
+
+  bool  IntersectRect(const ON_4fRect* r1, const ON_4fRect* r2);
+  bool  IntersectRect(const ON_4fRect& r1, const ON_4fRect& r2);
+
+  bool IsRectEmpty(void) const;
+  bool IsRectNull(void) const;
+  void SetRectEmpty(void) { *this = Zero; }
+  void SetRect(float l, float t, float r, float b);
+
+  bool PtInRect(const ON_2fPoint& pt) const;
+
+  void OffsetRect(float, float);
+  void OffsetRect(const ON_2fVector&);
+  void InflateRect(float, float);
+  void InflateRect(float, float, float, float);
+  void DeflateRect(float, float);
+  bool SubtractRect(const ON_4fRect* rect1, const ON_4fRect* rect2);
+
+  void NormalizeRect();
+
+public:
+  float left = 0;
+  float top = 0;
+  float right = 0;
+  float bottom = 0;
+};
+
+ON_DECL
+bool operator==(const ON_4fRect&, const ON_4fRect&);
+
+ON_DECL
+bool operator!=(const ON_4fRect&, const ON_4fRect&);
+
 #endif

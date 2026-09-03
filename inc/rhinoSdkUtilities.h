@@ -7459,6 +7459,7 @@ enum class RhinoRefitTrimKnotMode : int
 #pragma endregion
 
 /*
+WARNING: DEPRECATED. Use one of the new  RhinoCreate*FilletSrf
 Description:
   Creates a surface between two surfaces.
 Parameters:
@@ -7600,6 +7601,7 @@ bool RhinoFilletSurfaceToRail(
 );
 
 /*
+WARNING: DEPRECATED. Use one of the new  RhinoCreate*FilletSrf
 Description:
   Creates a non-rational constant-radius fillet surface between two surfaces.
 Parameters:
@@ -7641,6 +7643,7 @@ Parameters:
                       [3] max angle deviation along surface 1 (in degrees)
                       [4] max angle deviation between Bézier surfaces (in degrees)
                       [5] max  curvature difference between Bézier surfaces
+                      NOTE: Due to deprecation, the fitResults array will not be filled.
 Returns:
   true if successful, false otherwise.
 Remarks:
@@ -9896,7 +9899,9 @@ public:
   bool NonRationalCubicArcs(int rail_degree, bool bExtend, ON_SimpleArray<ON_Brep*>& Fillets);//Arc approximation
   bool NonRationalCubic(int rail_degree, double TanSlider, bool bExtend, ON_SimpleArray<ON_Brep*>& Fillets);
   bool G2ChordalQuintic(int rail_degree, bool bExtend, ON_SimpleArray<ON_Brep*>& Fillets);
-  //bool WhateverElse();
+  bool CollectRails(bool bExtend, ON_SimpleArray<ON_Curve*> Rails2d[2], ON_SimpleArray<ON_Curve*> Rails3d[2]);
+  // get the radii. these can be negative if the offset direction was flipped
+  bool CollectRadii(double radii[2]);
 
   //This will clear out the existing rails and fillet surfaces, 
   //and redo the offset intersections, etc. DO NOT use this for SrfToRail - there is no radius..  

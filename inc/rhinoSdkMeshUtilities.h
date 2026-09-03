@@ -668,13 +668,41 @@ Parameters:
 meshesSubdsAndPointclouds - [in/out] Input array of meshes, meshes pointclouds and subds.  These inputs are modified.
 distance - [in] Distance to not exceed when modifying the meshes.
 onlyNaked - [in] Only target naked edges for modification and snapping to.
-vertexFlags - [in] Array of arrays of flags to determine which vertices may be modified. Can be null
+vertexFlags - [in] Array of arrays of flags to determine which vertices may be modified. Can be null.
+  SubD vertices are not currently supported: a list given for a SubD is ignored, and every one of its
+  vertices is considered. This may be supported in a future version.
 averagePoints - [in] Instructs Rhino to move candidate points near each other, rather than priviledging one.
 Returns:
 Count of all vertices that were modified if successful. -1 for error.
 */
 RHINO_SDK_FUNCTION
 int RhinoAlignVerticesInPlace(ON_SimpleArray<ON_Geometry*>& meshesSubdsAndPointclouds, double distance, bool onlyNaked, const ON_SimpleArray<const ON_SimpleArray<bool>*>* vertexFlags, bool averagePoints);
+
+/*
+Description:
+Tests whether RhinoAlignVertices and RhinoAlignVerticesInPlace accept this geometry.
+Meshes, SubDs, point clouds and degree 1 curves are accepted.
+Parameters:
+geometry - [in] The geometry to test. Can be null.
+Returns:
+True if the geometry can be aligned.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoAlignVerticesSupportsGeometry(const ON_Geometry* geometry);
+
+/*
+Description:
+Suggests a distance for RhinoAlignVertices from the geometry itself, so the caller does not
+have to measure the gaps first. A vertex whose nearest neighbour of all belongs to another
+object was meant to be shared with it; the largest such gap closes all of them.
+Parameters:
+geometry - [in] The geometry that would be aligned.
+Returns:
+A distance greater than zero, or zero when no vertex is nearer to another object than to its own.
+*/
+RHINO_SDK_FUNCTION
+double RhinoAlignVerticesSuggestedDistance(const ON_SimpleArray<const ON_Geometry*>& geometry);
+
 
 /*
 Description:

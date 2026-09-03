@@ -19,6 +19,13 @@
 #define ON_RUNTIME_LINUX
 #endif
 
+// Mirror the __linux__ self-define above for Apple, so that consumers which
+// reach this header before ON_RUNTIME_APPLE is established (e.g. the CMake
+// rhinocore_tests build) don't fall through to the Windows-only checks below.
+#if !defined(ON_RUNTIME_APPLE) && defined(__APPLE__)
+#define ON_RUNTIME_APPLE
+#endif
+
 #if !defined(ON_RUNTIME_APPLE) && !defined(ON_RUNTIME_LINUX)
 // These checks are very specific to Windows Rhino
 #if defined(ON_CMAKE_BUILD)

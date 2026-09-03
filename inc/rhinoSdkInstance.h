@@ -751,6 +751,25 @@ public:
 
   /*
   Description:
+    Remove instance definition geometry that no instance definition uses.
+
+    Use this after a call that added objects to the document as instance definition geometry
+    and then failed. ModifyInstanceDefinitionGeometry validates its objects after the caller
+    has added them, and CRhinoDoc::PurgeObject refuses instance definition geometry, so
+    without this the objects stay in the document owned by nothing. Compact() also reclaims
+    them, but it sweeps the whole document.
+  Parameters:
+    objects - [in] the objects the caller added. An object that an instance definition still
+        uses is left alone, so a list that mixes the two is safe.
+  Returns:
+    Number of objects removed.
+  */
+  int PurgeUnusedInstanceDefinitionGeometry(
+     const ON_SimpleArray<CRhinoObject*>& objects
+     );
+
+  /*
+  Description:
     Undeletes an instance definition that has been deleted by DeleteLayer().
   Parameters:
     idef_index - [in] zero based index of an instance definition

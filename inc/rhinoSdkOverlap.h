@@ -27,6 +27,23 @@
 // The public C++ SDK surface for overlap detection is the CRhinoOverlapFate class and
 // the RhinoGetOverlaps free function, declared at the bottom of this header.
 
+// Granularity at which the overlap engine removes covered geometry.
+enum class RhinoOverlapMode : int {
+  // An overlapped curve is removed only as a single unit.
+  WholeCurves = 0,
+  // Curves may be split at their segment boundaries so that only the
+  // overlapping segments are affected. Segment coverage is decided on the
+  // polyline proxies, so interval ends inherit the approximation's noise.
+  Segments = 1,
+  // Arbitrary parameter chunks may be removed. Candidate pairs are found with
+  // bounding boxes, but the removal intervals themselves come from the exact
+  // curve-curve intersector run on projected copies of the curves, so the
+  // chunk ends are not subject to polyline-approximation noise. Transverse
+  // crossings come back from the intersector as point events and are ignored,
+  // so crossing curves are never nicked apart.
+  Partial = 2
+};
+
 class OverlapInternalResults {
 private:
   size_t m_n_curves;
@@ -679,6 +696,7 @@ private:
 
   bool m_exclusive_locked;
   const ON_Xform& m_projection;
+  RhinoOverlapMode m_mode;
   bool m_segments;
   double m_tolerance;
 
@@ -754,15 +772,37 @@ private:
     return ((RTreeOverlap*) voidctx)->segment_callback((OverlapProxyIndex::SegmentIndex) a);
   };
 
+  // ---- Partial (chunk) mode ----
+  // Partial mode is not streamed: the whole computation runs on the first call
+  // to get_overlap_result and the results are queued. Curves only lose
+  // material to earlier inputs (and to locked geometry), so of two mutually
+  // overlapping curves the earlier one keeps the shared region; overlap
+  // intervals contributed by an earlier curve are clipped against its own
+  // surviving spans first, so a chunk that has already been removed covers
+  // nothing.
+  struct ChunkResult {
+    int m_object_index = -1;
+    bool m_entire = false;
+    ON_SimpleArray<ON_COMPONENT_INDEX> m_dead_segments;
+    std::unique_ptr<ON_PolyCurve> m_replacement;
+  };
+  bool m_chunks_computed = false;
+  std::vector<ChunkResult> m_chunk_results;
+  size_t m_chunk_cursor = 0;
+
+  void compute_chunk_results();
+  int get_chunk_result(bool& entirely_dead, ON_SimpleArray<ON_COMPONENT_INDEX>& dead_segments, std::unique_ptr<ON_PolyCurve>& replacement);
+
 public:
-  RTreeOverlap(const ON_SimpleArray<const ON_Object*>& objects, const ON_Xform& projection, bool segments, double tolerance,
+  RTreeOverlap(const ON_SimpleArray<const ON_Object*>& objects, const ON_Xform& projection, RhinoOverlapMode mode, double tolerance,
                const ON_SimpleArray<const ON_Object*>* locked_objects = nullptr, bool exclusive_locked = false, ON_Terminator* terminator = nullptr) :
   m_objects(objects), m_projection(projection),
   m_results((size_t) objects.Count()),
   m_proxy(objects, projection, tolerance),
   m_locked_proxy(locked_objects ? *locked_objects : objects, projection, tolerance),
   m_terminator(terminator){
-    m_segments = segments;
+    m_mode = mode;
+    m_segments = (mode == RhinoOverlapMode::Segments);
     m_tolerance = tolerance;
     m_locked_objects = locked_objects;
     m_exclusive_locked = exclusive_locked;
@@ -792,9 +832,11 @@ Parameters:
                           before testing (the projection maps each point P to
                           plane.ClosestPointTo(P)).
   tolerance        - [in] Overlap distance tolerance, in the projected plane.
-  whole_curves     - [in] True treats an overlapping curve as a single unit;
-                          false allows splitting at segment boundaries so that
-                          only the overlapping portions are affected.
+  mode             - [in] Granularity of the removal; see RhinoOverlapMode.
+                          RhinoOverlapMode::Partial removes arbitrary parameter
+                          chunks, with the chunk boundaries computed by the
+                          exact curve-curve intersector; transverse crossings
+                          are never split.
   locked           - [in] Geometry that participates in the test but is never
                           itself reported or modified. May be empty.
   locked_exclusive - [in] True reports overlaps only where an input object
@@ -807,6 +849,26 @@ Parameters:
                           computation. May be nullptr.
 Returns:
   True if at least one overlap was found (fates is non-empty); false otherwise.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoGetOverlaps(
+  const ON_SimpleArray<const ON_Geometry*>& objects,
+  const ON_Plane& plane,
+  double tolerance,
+  RhinoOverlapMode mode,
+  const ON_SimpleArray<const ON_Geometry*>& locked,
+  bool locked_exclusive,
+  ON_ClassArray<CRhinoOverlapFate>& fates,
+  ON_Terminator* cancel = nullptr
+);
+
+/*
+Description:
+  Two-mode convenience overload of RhinoGetOverlaps.
+Parameters:
+  whole_curves - [in] True is RhinoOverlapMode::WholeCurves, false is
+                      RhinoOverlapMode::Segments. All other parameters are as
+                      in the overload above.
 */
 RHINO_SDK_FUNCTION
 bool RhinoGetOverlaps(
@@ -842,7 +904,7 @@ public:
 private:
   ON_Curve* m_replacement = nullptr;
   friend RHINO_SDK_FUNCTION bool RhinoGetOverlaps(
-    const ON_SimpleArray<const ON_Geometry*>&, const ON_Plane&, double, bool,
+    const ON_SimpleArray<const ON_Geometry*>&, const ON_Plane&, double, RhinoOverlapMode,
     const ON_SimpleArray<const ON_Geometry*>&, bool,
     ON_ClassArray<CRhinoOverlapFate>&, ON_Terminator*);
 };

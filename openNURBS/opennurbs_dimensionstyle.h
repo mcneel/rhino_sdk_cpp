@@ -1008,8 +1008,12 @@ public:
     ClippingArrowType2 = 118,
     /// <summary></summary>
     ClippingArrowSize = 119,
+    /// <summary>Suppress the dimension line and arrowhead between the first extension line and the text.</summary>
+    SuppressDimLine1 = 120,
+    /// <summary>Suppress the dimension line and arrowhead between the second extension line and the text.</summary>
+    SuppressDimLine2 = 121,
     /// <summary>Every enum UINT value that identifies a valid dimension style property is less than the UINT value of Count.</summary>
-    Count = 120
+    Count = 122
   };
   
 #pragma endregion
@@ -1619,6 +1623,16 @@ public:
   // Suppress second dimension extension line
   bool SuppressExtension2() const;
   void SetSuppressExtension2(bool);
+
+  // Suppress the dimension line and arrowhead between the first
+  // extension line and the text.
+  bool SuppressDimLine1() const;
+  void SetSuppressDimLine1(bool);
+
+  // Suppress the dimension line and arrowhead between the second
+  // extension line and the text.
+  bool SuppressDimLine2() const;
+  void SetSuppressDimLine2(bool);
 
   // Extension of dimension line past extension lines
   double DimExtension() const;

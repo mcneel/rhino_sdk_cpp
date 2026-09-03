@@ -2896,7 +2896,7 @@ private:
   ON_MeshNgonAllocator& operator=(const ON_MeshNgonAllocator&) = delete;
 };
 
-class ON_MeshFaceSide
+class ON_CLASS ON_MeshFaceSide
 {
 public:
   unsigned int   m_vi[2]; // vertex indices or ids (equal values indicate unset)
@@ -4531,6 +4531,23 @@ instance of ON_MeshIntersectionOptions.
     the caller must check it before dereferencing.
   */
   const class ON_RTree* MeshFaceTree( bool bCreateIfNoneExists ) const;
+
+  /*
+  Parameters:
+    bCreateIfNoneExists - [in]
+      If a triangulation cache is not present on this mesh and
+      bCreateIfNoneExists is true, then an empty one will be
+      created and cached.
+      If a triangulation cache is not present on this mesh and
+      bCreateIfNoneExists is false, then null is returned.
+  Returns:
+    A cache of this mesh's face triangulation, shared by the intersection
+    routines so it is computed once per mesh rather than once per call. The
+    cache is created empty and filled by its first consumer. It is discarded
+    with the other cached trees whenever DestroyTree() runs. The pointer may
+    be null and the caller must check it before dereferencing.
+  */
+  class ON_MeshTessellationCache* MeshTessellationCache( bool bCreateIfNoneExists ) const;
 
   /*
   Description:

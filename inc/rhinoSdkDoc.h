@@ -692,6 +692,65 @@ private:
   friend class CRhinoDoc;
 };
 
+/*
+Description:
+  CRhinoUndoRecord is a snapshot of a single entry in a document's
+  undo or redo history.
+Remarks:
+  A document deletes its internal records as undo and redo are performed.
+  CRhinoUndoRecord copies the values it reports, so an instance stays valid
+  after the document's history changes. Once the history has changed, the
+  value returned by SerialNumber() may no longer identify a record in that
+  history.
+See Also:
+  CRhinoDoc::GetUndoRecords
+  CRhinoDoc::GetRedoRecords
+*/
+class RHINO_SDK_CLASS CRhinoUndoRecord
+{
+public:
+  CRhinoUndoRecord();
+  ~CRhinoUndoRecord();
+  CRhinoUndoRecord(const CRhinoUndoRecord&);
+  CRhinoUndoRecord& operator=(const CRhinoUndoRecord&);
+
+  /*
+  A record with a zero serial number and an empty description.
+  */
+  static const CRhinoUndoRecord Unset;
+
+  /*
+  Returns:
+    The runtime serial number Rhino assigned to this undo event, or zero
+    when this record is not set.
+  Remarks:
+    Pass this value to CRhinoDoc::UndoTo() or CRhinoDoc::RedoTo() to unwind
+    a document's history through this record.
+  */
+  unsigned int SerialNumber() const;
+
+  /*
+  Returns:
+    The name of the command that created the undoable events, or a
+    description of what created them when they did not happen in a command.
+    Never nullptr.
+  */
+  const wchar_t* Description() const;
+
+  /*
+  Returns:
+    True if this record has a nonzero serial number.
+  */
+  bool IsSet() const;
+
+private:
+  friend class CRhinoDoc;
+  unsigned int m_undo_event_sn = 0;
+  unsigned int m_doc_sn = 0;
+  ON_wString m_description;
+  class CRhUndoRecordPrivate* m_private = nullptr;
+};
+
 enum class TextureReportFilter : unsigned int
 {
   MissingOnly,
@@ -4876,6 +4935,36 @@ public:
     Number of undo records.
   */
   int GetRedoRecords(ON_SimpleArray<class CRhUndoRecord* >&) const;
+
+  /*
+  Description:
+    Get a copy of this document's undo history, ordered from the most
+    recently recorded action to the oldest recorded action.
+  Parameters:
+    records - [out]
+      The array is emptied before the records are appended.
+  Returns:
+    Number of records.
+  See Also:
+    CRhinoDoc::UndoMultiple
+    CRhinoDoc::UndoTo
+  */
+  int GetUndoRecords(ON_ClassArray<CRhinoUndoRecord>& records) const;
+
+  /*
+  Description:
+    Get a copy of this document's redo history, ordered from the action the
+    next call to Redo() will repeat to the oldest action that can be redone.
+  Parameters:
+    records - [out]
+      The array is emptied before the records are appended.
+  Returns:
+    Number of records.
+  See Also:
+    CRhinoDoc::RedoMultiple
+    CRhinoDoc::RedoTo
+  */
+  int GetRedoRecords(ON_ClassArray<CRhinoUndoRecord>& records) const;
 
   // MRU Commands for this document
   const wchar_t* MruMenuString() const;

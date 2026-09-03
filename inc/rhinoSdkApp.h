@@ -2146,6 +2146,49 @@ public:
   RHINO_SDK_FUNCTION
   bool IsHeadless() const;
 
+  /*
+  Description:
+    Returns true when Rhino was started with the /batchmode command line
+    switch. Batch runs are driven by an external process (a test
+    harness, an automation script, an MCP or AI agent) with a visible
+    main window but no human at the keyboard.
+
+    In a batch run:
+      - the splash screen and the start-up template chooser are skipped,
+        and a document is opened straight away
+      - every command runs as though its name were typed with a leading
+        "-", so commands present command-line options instead of dialogs
+        (see CRhinoCommandContext::IsInteractive)
+      - modal message boxes are suppressed and written to the command
+        line instead of blocking
+
+    Use IsUnattended() rather than this in code that only needs to know
+    "is there a human who can answer a dialog".
+  Returns:
+    True if the /batchmode command line switch was used.
+  */
+  RHINO_SDK_FUNCTION
+  bool IsBatchMode() const;
+
+  /*
+  Description:
+    Returns true when nobody is present to answer a question. This is the
+    predicate to test before showing any modal user interface that blocks
+    until it is dismissed.
+
+    Equivalent to IsHeadless() || IsBatchMode().
+
+    IsAutomated() is deliberately not part of this. COM automation clients
+    have driven a fully interactive Rhino - hidden main window, dialogs and
+    all - since V4, and are entitled to the behaviour they were written
+    against, so /Automation is unchanged by this predicate. A client that
+    wants unattended behaviour asks for it with /batchmode.
+  Returns:
+    True if Rhino is running without a user.
+  */
+  RHINO_SDK_FUNCTION
+  bool IsUnattended() const;
+
   RHINO_SDK_FUNCTION
   bool InAppMode() const;
 
@@ -2314,6 +2357,19 @@ public:
   //
   CRhinoApp(class CRhApp&);
   virtual ~CRhinoApp();
+
+  /*
+  Description:
+    Records the URL passed to Rhino by the protocol handler registered with the system,
+    so the startup licensing path can consume a rhinoN://license link before the license
+    check runs. On Windows the URL arrives on the command line and is recorded by
+    CRhinoApp::InitInstance; macOS delivers it through the application:openURLs: app
+    delegate instead, which calls this.
+  Parameters:
+    protocolHandlerUrl - [in]
+      the URL, in the full form protocol://verb/path. Ignored when null or empty.
+  */
+  void SetProtocolHandlerUrl(const wchar_t* protocolHandlerUrl);
 
   /*
   Description:
