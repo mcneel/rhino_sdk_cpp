@@ -2896,7 +2896,7 @@ private:
   ON_MeshNgonAllocator& operator=(const ON_MeshNgonAllocator&) = delete;
 };
 
-class ON_MeshFaceSide
+class ON_CLASS ON_MeshFaceSide
 {
 public:
   unsigned int   m_vi[2]; // vertex indices or ids (equal values indicate unset)
@@ -4276,12 +4276,7 @@ Returns:
 
   /*
   Description:
-    Return information on intersections and overlaps for a group of meshes. This method uses the new code.
-
-    anyTypeOfIntersection - [in] if provided, it will be set to true if any mesh perforates another or overlaps - or nullptr.
-    pairs - [in] if provided, a list of pairs of mesh indices that intersect or overlap. Each pair appears once only - or nullptr.
-
-    See the parameter description in the function above.
+    Report which meshes intersect. Same as the overload below with fast = true.
   */
   static bool IntersectArrayPredicate(
     const ON_SimpleArray<const ON_Mesh*>& meshesA,
@@ -4290,6 +4285,49 @@ Returns:
     double tolerance,
     bool* anyTypeOfIntersection,
     ON_SimpleArray<ON_2dex>* pairs,
+    ON_TextLog* log,
+    ON_Terminator* cancel,
+    ON_ProgressReporter* reporter);
+
+  /*
+  Description:
+    Report which meshes intersect.
+  Parameters:
+    meshesA - [in]
+    meshesB - [in] nullptr tests every pair within meshesA once; otherwise every mesh of
+      meshesA is tested against every mesh of meshesB.
+    cacheForMeshesB - [in] not used; accepted for compatibility.
+    tolerance - [in]
+    fast - [in]
+      true: the fast line-segment intersector behind IntersectMesh(mesh, lines), stopping at
+      the first crossing found for each pair of meshes. A pair counts when a face of one mesh
+      crosses or touches a face of the other within tolerance; coplanar overlap without a
+      crossing is not reported. Much faster than IntersectArray.
+      false: the accurate mesh intersector, one pair of meshes at a time, stopping at the
+      first crossing or coplanar overlap found. A pair counts when faces cross or overlap
+      while coplanar.
+    anyTypeOfIntersection - [out] optional. Set to true when any pair intersects.
+    pairs - [out] optional. The intersecting pairs are appended as (i, j): i indexes meshesA
+      and j indexes meshesB, or both index meshesA with i < j. When pairs is nullptr, the
+      search stops at the first intersecting pair.
+    facePairs - [out] optional, used with pairs. For each pair appended to pairs, one entry
+      (faceA, faceB) is appended here: a face of the first mesh and a face of the second that
+      intersect: the first one found.
+    log - [in] optional, used only when fast is false.
+    cancel - [in] optional.
+    reporter - [in] optional, used only when fast is false.
+  Returns:
+    true if the search finished, false if it was cancelled or could not run.
+  */
+  static bool IntersectArrayPredicate(
+    const ON_SimpleArray<const ON_Mesh*>& meshesA,
+    const ON_SimpleArray<const ON_Mesh*>* meshesB,
+    ON_MeshIntersectionCache* cacheForMeshesB,
+    double tolerance,
+    bool fast,
+    bool* anyTypeOfIntersection,
+    ON_SimpleArray<ON_2dex>* pairs,
+    ON_SimpleArray<ON_2dex>* facePairs,
     ON_TextLog* log,
     ON_Terminator* cancel,
     ON_ProgressReporter* reporter);
@@ -4531,6 +4569,23 @@ instance of ON_MeshIntersectionOptions.
     the caller must check it before dereferencing.
   */
   const class ON_RTree* MeshFaceTree( bool bCreateIfNoneExists ) const;
+
+  /*
+  Parameters:
+    bCreateIfNoneExists - [in]
+      If a triangulation cache is not present on this mesh and
+      bCreateIfNoneExists is true, then an empty one will be
+      created and cached.
+      If a triangulation cache is not present on this mesh and
+      bCreateIfNoneExists is false, then null is returned.
+  Returns:
+    A cache of this mesh's face triangulation, shared by the intersection
+    routines so it is computed once per mesh rather than once per call. The
+    cache is created empty and filled by its first consumer. It is discarded
+    with the other cached trees whenever DestroyTree() runs. The pointer may
+    be null and the caller must check it before dereferencing.
+  */
+  class ON_MeshTessellationCache* MeshTessellationCache( bool bCreateIfNoneExists ) const;
 
   /*
   Description:

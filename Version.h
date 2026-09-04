@@ -14,9 +14,9 @@
 // first step in each build.
 //
 #define RMA_VERSION_YEAR   2026
-#define RMA_VERSION_MONTH  8
-#define RMA_VERSION_DATE   18
-#define RMA_VERSION_HOUR   12
+#define RMA_VERSION_MONTH  9
+#define RMA_VERSION_DATE   4
+#define RMA_VERSION_HOUR   6
 #define RMA_VERSION_MINUTE 30
 
 ////////////////////////////////////////////////////////////////
@@ -33,10 +33,10 @@
 //     1 = build system trunk build
 //     2 = build system release candidate build
 //     3 = build system release build
-#define RMA_VERSION_BRANCH 3
+#define RMA_VERSION_BRANCH 4
 
-#define VERSION_WITH_COMMAS  9,0,26230,12303
-#define VERSION_WITH_PERIODS 9.0.26230.12303
+#define VERSION_WITH_COMMAS  9,0,26247,6304
+#define VERSION_WITH_PERIODS 9.0.26247.06304
 #define COPYRIGHT "Copyright (C) 1993-2026, Robert McNeel & Associates. All Rights Reserved."
 #define SPECIAL_BUILD_DESCRIPTION "Rhino 9 BETA"
 
@@ -47,8 +47,8 @@
 #define RMA_VERSION_NUMBER_SR_STRING   "SR0"
 #define RMA_VERSION_NUMBER_SR_WSTRING L"SR0"
 
-#define RMA_VERSION_WITH_PERIODS_STRING   "9.0.26230.12303"
-#define RMA_VERSION_WITH_PERIODS_WSTRING L"9.0.26230.12303"
+#define RMA_VERSION_WITH_PERIODS_STRING   "9.0.26247.06304"
+#define RMA_VERSION_WITH_PERIODS_WSTRING L"9.0.26247.06304"
 
 // BEGIN - OBSOLETE SVN INFORMATION ////////////////////////////
 ////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@
 // the git revision SHA-1 hash in hexadecimal format.
 
 // OBSOLETE - current set to git hash
-#define RMA_SRC_SVN_REVISION "6f106e5b835d5e5898cf05bb9cc1139943a5666f"
+#define RMA_SRC_SVN_REVISION "a2d522ef05ec39114e4552b90a47b44b6edcaf38"
 
 // OBSOLETE - never changed
 #define RMA_SRC_SVN_BRANCH ""

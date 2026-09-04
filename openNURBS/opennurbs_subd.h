@@ -20,6 +20,50 @@
 #if !defined(OPENNURBS_SUBD_INC_)
 #define OPENNURBS_SUBD_INC_
 
+// ON_SubDVertexPtr, ON_SubDEdgePtr, and ON_SubDFacePtr are unsigned ints that store a
+// pointer to an ON_SubDVertex, ON_SubDEdge, or ON_SubDFace along with a direction bit
+// that is 0 or 1. The direction bit indicates whether the component is being referenced
+// with its natural orientation (0) or the reverse of its natural orientation (1).
+//
+// ON_SubDComponentPtr additionally stores a type value indicating whether the component
+// is a vertex (2), an edge (4), or a face (6).
+//
+// This packing assumes that ON_SubDVertex, ON_SubDEdge and ON_SubDFace are allocated on
+// an 8 byte boundary (they contain doubles) and that pointers are 8 bytes wide.
+static_assert(8 == ON_SIZEOF_POINTER, "SubD component pointers require 64-bit pointers.");
+
+// NOTE: RhinoCommon mirrors this bit layout in the internal
+// Rhino.Geometry.SubDComponent.SubDComponentPtr struct, so that the .NET SDK can decode a
+// component pointer without a round trip. The .NET enum is generated from this one, which
+// keeps the two from drifting apart. It is typed as ulong there, which assumes 64-bit
+// pointers; the static_assert below enforces that.
+#pragma region RH_C_SHARED_ENUM [ON_SubDComponentPtrTypesAndMasks] [Rhino.Geometry.SubDComponent.SubDComponentPtrTypesAndMasks] [internal:ulong:nested]
+/// <summary>
+/// ON_SubDComponentPtrTypesAndMasks contains the bit layout used by ON_SubDComponentPtr,
+/// ON_SubDVertexPtr, ON_SubDEdgePtr and ON_SubDFacePtr to pack a component pointer, a
+/// direction bit and a component type into a single unsigned integer.
+/// </summary>
+enum class ON_SubDComponentPtrTypesAndMasks : ON__UINT_PTR
+{
+  /// <summary>The component type is not set.</summary>
+  UnsetType =     0x0U,
+  /// <summary>Bit storing the component direction (0 = natural, 1 = reversed).</summary>
+  DirectionMask = 0x1U,
+  /// <summary>The component is an ON_SubDVertex.</summary>
+  VertexType =    0x2U,
+  /// <summary>The component is an ON_SubDEdge.</summary>
+  EdgeType =      0x4U,
+  /// <summary>The component is an ON_SubDFace.</summary>
+  FaceType =      0x6U,
+  /// <summary>Bits storing the component type.</summary>
+  TypeMask =      0x6U,
+  /// <summary>Bits storing the component type and direction.</summary>
+  FlagsMask =     0x7U,
+  /// <summary>Bits storing the component pointer.</summary>
+  PointerMask =   0xFFFFFFFFFFFFFFF8U
+};
+#pragma endregion
+
 /// <summary>
 /// ON_SubDGetControlNetMeshPriority specifies what type of ON_SubD information
 /// is most important to transfer to the ON_Mesh.
@@ -334,8 +378,8 @@ public:
 
 public:
   /// <summary>
-  /// ON_SubDEdgeSharpness::MaximumValue = 4.
-  /// SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
+  /// ON_SubDEdgeSharpness::MaximumValue = 4.0.
+  /// Valid SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
   /// </summary>
   static const double MaximumValue;
 
@@ -349,9 +393,9 @@ public:
   /// <summary>
   /// ON_SubDEdgeSharpness::CreaseValue = ON_SubDEdgeSharpness::MaximumValue + 1.
   /// Valid SubD edge sharpness values are &lt;= ON_SubDEdgeSharpness::MaximumValue.
-  /// This value is used when it is convenient to use and ON_SubDEdgeSharpness to
+  /// This value is used when it is convenient to use an ON_SubDEdgeSharpness to
   /// indicate an edge has a crease tag. Edges with crease tags always have a 
-  /// sharpness property of ON_SubDEdgeSharpness::Smooth.
+  /// sharpness property of ON_SubDEdgeSharpness::Crease.
   /// </summary>
   static const double CreaseValue;
 
@@ -377,9 +421,9 @@ public:
   /// <summary>
   /// An edge sharpness with both end values = ON_SubDEdgeSharpness::CreaseValue.
   /// This value is not a valid sharpness value for a sharp edge 
-  /// (A sharp edge a smooth edge with nonzero sharpness).
-  /// When working with edges, it is sometimes convenient to have
-  /// an ON_SubDEdgeSharpness value that indicated the edge is a crease. 
+  /// (a sharp edge is a smooth edge with nonzero sharpness).
+  /// When working with edges, it is sometimes convenient to have 
+  /// an ON_SubDEdgeSharpness value that indicates that the edge is a crease. 
   /// ON_SubDEdgeSharpness::Crease is used for this purpose.
   /// </summary>
   static const ON_SubDEdgeSharpness Crease;
@@ -409,7 +453,7 @@ public:
   /// This is useful in user interface code that expresses sharpness in percentages.
   /// If 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue,
   /// valid, a number followed by a percent sign is returned.
-  /// If sharpness = ON_SubDEdgeSharpness::CreaseValue, "crease" is returned.
+  /// If sharpness == ON_SubDEdgeSharpness::CreaseValue, "crease" is returned.
   /// If the sharpness is not valid, a warning sign is returned.
   /// </summary>
   /// <param name="sharpness"></param>
@@ -418,19 +462,19 @@ public:
 
   /// <summary>
   /// Convert sharpness to a percentage from 0 to 100.0.
-  /// This is useful in user interface code that experesses sharpness in percentages.
+  /// This is useful in user interface code that expresses sharpness in percentages.
   /// </summary>
   /// <param name="sharpness"></param>
   /// <param name="crease_percentage"></param>
   /// <returns>
   /// If 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue, then 100.0*sharpness/ON_SubDEdgeSharpness::MaximumValue is returned.
-  /// If sharpness = ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
+  /// If sharpness == ON_SubDEdgeSharpness::CreaseValue, then crease_percentage is returned.
   /// Otherwise ON_DBL_QNAN is returned.
   /// </returns>
   static double ToPercentage(double sharpness, double crease_percentage);
 
   /// <returns>
-  /// If the sharpness value is valid and contant, returns true.
+  /// If the sharpness value is valid and constant, returns true.
   /// Otherwise returns false.
   /// Note that ON_SubDEdgeSharpness::Crease.IsConstant() and ON_SubDEdgeSharpness::Nan.IsConstant() are both false.
   ///</returns>
@@ -441,19 +485,19 @@ public:
   /// </param>
   /// <returns>
   /// If this is equal to ON_SubDEdgeSharpness::Crease, returns bCreaseResult.
-  /// If the sharpness value is valid and contant, returns true.
+  /// If the sharpness value is valid and constant, returns true.
   /// Otherwise returns false.
   /// </returns>
   bool IsConstant( bool bCreaseResult ) const;
 
   /// <returns>
-  /// If EndSharpness(0) &gt; EndSharpness(1), true is returned.
+  /// If EndSharpness(0) &lt; EndSharpness(1), true is returned.
   /// Otherwise false is returned.
   /// </returns>
   bool IsIncreasing() const;
 
   /// <returns>
-  /// If EndSharpness(0) &lt; EndSharpness(1), true is returned.
+  /// If EndSharpness(0) &gt; EndSharpness(1), true is returned.
   /// Otherwise false is returned.
   /// </returns>
   bool IsDecreasing() const;
@@ -522,8 +566,8 @@ public:
   /// <param name="eptr0"></param>
   /// <param name="eptr1"></param>
   /// <returns>
-  /// If the edges have the same tag, eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0), and
-  /// then ON_SubDEdgeSharpness::EqualEndSharpness(eptr0.RelativeSharpness(),eptr1.RelativeSharpness()) is returned.
+  /// If the edges have the same tag, and eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0),
+  /// then ON_SubDEdgeSharpness::EqualEndSharpness(eptr0.RelativeSharpness(true), eptr1.RelativeSharpness(true)) is returned.
   /// Otherwise false is returned.
   /// </returns>
   static bool EqualEndSharpness(
@@ -532,13 +576,13 @@ public:
   );
 
   /// <summary>
-  /// Determine if edges are adjacent, have the same sharpness trend, and equal adjacent sharpness values.
+  /// Determine if edges are adjacent, have the same sharpness delta, and equal adjacent sharpness values.
   /// </summary>
   /// <param name="eptr0"></param>
   /// <param name="eptr1"></param>
   /// <returns>
   /// If the edges have the same tag, eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0), and
-  /// then ON_SubDEdgeSharpness::EqualTrend(eptr0.RelativeSharpness(),eptr1.RelativeSharpness()) is returned.
+  /// then ON_SubDEdgeSharpness::EqualTrend(eptr0.RelativeSharpness(), eptr1.RelativeSharpness()) is returned.
   /// Otherwise false is returned.
   /// </returns>
   static bool EqualTrend(
@@ -552,8 +596,8 @@ public:
   /// <param name="eptr0"></param>
   /// <param name="eptr1"></param>
   /// <returns>
-  /// If the edges have the same tag, eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0), and
-  /// then ON_SubDEdgeSharpness::EqualDelta(eptr0.RelativeSharpness(),eptr1.RelativeSharpness()) is returned.
+  /// If the edges have the same tag, and eptr0.RelativeVertex(1) = eptr1.RelativeVertex(0),
+  /// then ON_SubDEdgeSharpness::EqualDelta(eptr0.RelativeSharpness(1), eptr1.RelativeSharpness(0)) is returned.
   /// Otherwise false is returned.
   /// </returns>
   static bool EqualDelta(
@@ -563,7 +607,7 @@ public:
 
 
   /// <summary>
-  /// Determine if all the input edges have idential constant sharpeness.
+  /// Determine if all the input edges have identical constant sharpness.
   /// </summary>
   /// <param name="edges"></param>
   /// <param name="bCreaseResult">
@@ -662,41 +706,91 @@ public:
   );
 
   /// <summary>
-  /// Create a constant ON_SubDEdgeSharpness;
+  /// Create a constant ON_SubDEdgeSharpness.
   /// </summary>
   /// <param name="sharpness">0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
   /// <returns>
-  /// If the input values is valid, an ON_SubDEdgeSharpness 
+  /// If the input value is valid, an ON_SubDEdgeSharpness 
   /// with constant value sharpness is returned. 
-  /// If the input vaue is ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease is returned.
+  /// If the input value is ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease is returned.
   /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
   /// </returns>
   static const ON_SubDEdgeSharpness FromConstant(double sharpness);
 
   /// <summary>
-  /// Create a variable ON_SubDEdgeSharpness;
+  /// Create a variable ON_SubDEdgeSharpness.
   /// </summary>
   /// <param name="sharpness0">0 &lt;= sharpness0 &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
   /// <param name="sharpness1">0 &lt;= sharpness1 &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
   /// <returns>
   /// If both input values are valid, an edge sharpness 
   /// with start value sharpness0 and end value sharpness1 is returned. 
-  /// If both input values are ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease::Crease is returned.
+  /// If both input values are ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease is returned.
   /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
   /// </returns>
   static const ON_SubDEdgeSharpness FromInterval(double sharpness0, double sharpness1);
 
   /// <summary>
-  /// Create a variable ON_SubDEdgeSharpness;
+  /// Create a variable ON_SubDEdgeSharpness.
   /// </summary>
-  /// <param name="sharpness_interval">0 &lt;= sharpness0 &lt;= ON_SubDEdgeSharpness::MaximumValue</param>
+  /// <param name="sharpness_interval">
+  /// 0 &lt;= sharpness_interval[0] &lt;= ON_SubDEdgeSharpness::MaximumValue
+  /// 0 &lt;= sharpness_interval[1] &lt;= ON_SubDEdgeSharpness::MaximumValue
+  /// </param>
   /// <returns>
   /// If the interval's values are valid, an edge sharpness 
   /// with start value sharpness_interval[0] and end value sharpness_interval[1] is returned. 
-  /// If both sharpness_interval[] values are ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease::Crease is returned.
+  /// If both sharpness_interval[] values are ON_SubDEdgeSharpness::CreaseValue, ON_SubDEdgeSharpness::Crease is returned.
   /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
   /// </returns>
   static const ON_SubDEdgeSharpness FromInterval(const class ON_Interval& sharpness_interval);
+
+  /// <summary>
+  /// Create a constant ON_SubDEdgeSharpness from a percentage.
+  /// This is useful in user interface code that expresses sharpness in percentages.
+  /// </summary>
+  /// <param name="percentage">0 &lt;= percentage &lt;= 100.0, or ON_DBL_MAX for a crease.</param>
+  /// <returns>
+  /// If the input value is valid, an ON_SubDEdgeSharpness with constant value
+  /// (percentage * ON_SubDEdgeSharpness::MaximumValue / 100.0) is returned.
+  /// If the input value is ON_DBL_MAX, ON_SubDEdgeSharpness::Crease is returned.
+  /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
+  /// </returns>
+  static const ON_SubDEdgeSharpness FromConstantPercentage(double percentage);
+
+  /// <summary>
+  /// Create a variable ON_SubDEdgeSharpness from percentages.
+  /// This is useful in user interface code that expresses sharpness in percentages.
+  /// </summary>
+  /// <param name="percentage0">0 &lt;= percentage0 &lt;= 100.0, or ON_DBL_MAX for a crease.</param>
+  /// <param name="percentage1">0 &lt;= percentage1 &lt;= 100.0, or ON_DBL_MAX for a crease.</param>
+  /// <returns>
+  /// If both input values are valid, an edge sharpness with start value
+  /// (percentage0 * ON_SubDEdgeSharpness::MaximumValue / 100.0) and end value
+  /// (percentage1 * ON_SubDEdgeSharpness::MaximumValue / 100.0) is returned.
+  /// If both input values are ON_DBL_MAX, ON_SubDEdgeSharpness::Crease is returned.
+  /// Note that mixing ON_DBL_MAX with a valid percentage returns
+  /// ON_SubDEdgeSharpness::Nan: an edge is either a crease or it is not.
+  /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
+  /// </returns>
+  static const ON_SubDEdgeSharpness FromIntervalPercentage(double percentage0, double percentage1);
+
+  /// <summary>
+  /// Create a variable ON_SubDEdgeSharpness from percentages.
+  /// This is useful in user interface code that expresses sharpness in percentages.
+  /// </summary>
+  /// <param name="percentage_interval">
+  /// 0 &lt;= percentage_interval[0] &lt;= 100.0, or ON_DBL_MAX for a crease.
+  /// 0 &lt;= percentage_interval[1] &lt;= 100.0, or ON_DBL_MAX for a crease.
+  /// </param>
+  /// <returns>
+  /// If the interval's values are valid, an edge sharpness with start value
+  /// (percentage_interval[0] * ON_SubDEdgeSharpness::MaximumValue / 100.0) and end value
+  /// (percentage_interval[1] * ON_SubDEdgeSharpness::MaximumValue / 100.0) is returned.
+  /// If both percentage_interval[] values are ON_DBL_MAX, ON_SubDEdgeSharpness::Crease is returned.
+  /// Otherwise ON_SubDEdgeSharpness::Nan is returned.
+  /// </returns>
+  static const ON_SubDEdgeSharpness FromIntervalPercentage(const class ON_Interval& percentage_interval);
 
   /// <summary>
   /// Return a sharpness interval that is the union of the nonzero input sharpness intervals.
@@ -716,9 +810,9 @@ public:
   );
 
   /// <summary>
-  /// Sharpness value for a subdivided edge.
+  /// Sharpness value that an edge with this sharpness would have once subdivided.
   /// </summary>
-  /// <param name="end_index"0 or 1.</param>
+  /// <param name="end_index">0 or 1.</param>
   /// <returns>Subdivided sharpness or ON_SubDEdgeSharpness::Smooth if index is out of range.</returns>
   const ON_SubDEdgeSharpness Subdivided(int end_index) const;
 
@@ -792,7 +886,7 @@ public:
   /// <summary>
   /// Get the edge sharpness at the start or end.
   /// </summary>
-  /// <param name="end_index"0 or 1.</param>
+  /// <param name="end_index">0 or 1.</param>
   /// <returns>EndSharpness(end_index).</returns>
   double operator[](int end_index) const;
 
@@ -837,7 +931,7 @@ public:
   /// <param name="vertex_tag">
   /// The vertex tag (smooth, crease, dart, corner). 
   /// For smooth, crease, and dart, this is used to determine the number of attached crease edges.
-  /// COrner vertices always have sharpness = 0.
+  /// Corner vertices always have sharpness = 0.
   /// </param>
   /// <param name="interior_crease_vertex_sharpness">
   /// If the original source of the vertex is an interior crease vertex 
@@ -846,7 +940,7 @@ public:
   /// vertex's end of all smooth edges from both sectors. 
   /// This parameter is important in special situations that occur
   /// in low level SubD evaluation code where information from only one
-  /// sector is present. In all other cases, this value doesn't matter as long
+  /// sector is present. In all other cases, this parameter doesn't matter as long
   /// as interior_crease_vertex_sharpness &lt;= maximum_edge_sharpness_at_vertex.
   /// When in doubt pass 0.0 or ON_DBL_QNAN.
   /// </param>
@@ -869,7 +963,7 @@ public:
 
   /// <summary>
   /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue and return an integer value when
-  /// the input sharpenss is within ON_SubDEdgeSharpness::Tolerance of an integer.
+  /// the input sharpness is within ON_SubDEdgeSharpness::Tolerance of an integer.
   /// </summary>
   /// <param name="sharpness"></param>
   /// <param name="invalid_input_result">Value returned when the sharpness parameter is invalid.</param>
@@ -881,7 +975,7 @@ public:
 
   /// <summary>
   /// Verify 0 &lt;= sharpness &lt;= ON_SubDEdgeSharpness::MaximumValue and return an integer value when
-  /// the input sharpenss is within ON_SubDEdgeSharpness::Tolerance of an integer.
+  /// the input sharpness is within ON_SubDEdgeSharpness::Tolerance of an integer.
   /// </summary>
   /// <param name="sharpness"></param>
   /// <returns>SubD edge sharpness value that makes sense or 0.0 if the input sharpness is invalid.</returns>
@@ -1342,12 +1436,6 @@ public:
   /// </summary>
   static const ON_SubDFaceParameter Nan;
 
-  /// <returns>True if all values are valid.</returns>
-  bool IsSet();
-
-  /// <returns>True if all values are not valid.</returns>
-  bool IsNotSet();
-
   /// <summary>
   /// Well ordered dictionary compare of m_cdex, m_s, and m_t using
   /// ON_SubDFaceCornerDex::CompareAll() and ON_DBL::CompareValue().
@@ -1371,8 +1459,10 @@ public:
   /// <returns></returns>
   static int Compare(const ON_SubDFaceParameter* lhs, const ON_SubDFaceParameter* rhs);
 
+  /// <returns>True if all values are valid.</returns>
   bool IsSet() const;
 
+  /// <returns>True if any value is not valid.</returns>
   bool IsNotSet() const;
 
   /// <summary>
@@ -2245,7 +2335,7 @@ public:
     points in the opposite direction as the face's oriented boundary.
     If an edge is nonmanifold (3 or more faces), then nullptr is always returned.
     If an edge has two faces that do not attach to this edge with opposite orientations
-    (nonoriented manifold edge), then nullptr is returned.    
+    (nonoriented manifold edge), then nullptr is returned.
   Parameters:
     relative_face_index - [in]
       0: return face on the left side of the edge with respect to EdgeOrientation().
@@ -2254,6 +2344,23 @@ public:
     The requested face.
   */
   const class ON_SubDFace* RelativeFace(
+    int relative_face_index
+  ) const;
+
+  /*
+  Description:
+    Same as RelativeFace(), but returns an ON_SubDFacePtr whose direction bit is set
+    so the face's boundary is oriented in the same direction as this ON_SubDEdgePtr.
+    Use this instead of RelativeFace() when the caller needs the face orientation
+    relative to the edge, not just the face itself.
+  Parameters:
+    relative_face_index - [in]
+      0: return face on the left side of the edge with respect to EdgeOrientation().
+      1: return face on the right side of the edge with respect to EdgeOrientation().
+  Returns:
+    The requested face, or ON_SubDFacePtr::Null if there is no such face.
+  */
+  const class ON_SubDFacePtr RelativeFacePtr(
     int relative_face_index
   ) const;
 
@@ -2836,10 +2943,10 @@ public:
   /// </summary>
   enum class Type : unsigned char
   {
-    Unset = 0,
-    Vertex = 2,
-    Edge = 4,
-    Face = 6
+    Unset  = (unsigned char)ON_SubDComponentPtrTypesAndMasks::UnsetType,
+    Vertex = (unsigned char)ON_SubDComponentPtrTypesAndMasks::VertexType,
+    Edge   = (unsigned char)ON_SubDComponentPtrTypesAndMasks::EdgeType,
+    Face   = (unsigned char)ON_SubDComponentPtrTypesAndMasks::FaceType
   };
 
   static ON_SubDComponentPtr::Type ComponentPtrTypeFromUnsigned(
@@ -3068,7 +3175,7 @@ public:
     The use of this value varies depending on the context.
     Frequently, 0 means the referenced component is being used with its
     natural orientation and 1 means the referenced component is being used
-    with the reverse of its natural oreientation.
+    with the reverse of its natural orientation.
   */
   ON__UINT_PTR ComponentDirection() const;
 
@@ -3089,7 +3196,7 @@ public:
   /*
   Returns:
     An ON_SubDComponentPtr referencing the same ON_SubDComponentBase
-    with ON_SubDComponentPtr.ComponentDirection() = 1.
+    with ON_SubDComponentPtr.ComponentDirection() = dir.
   */
   const ON_SubDComponentPtr SetComponentDirection(ON__UINT_PTR dir) const;
    
@@ -3780,10 +3887,11 @@ private:
   void Internal_SetType(ON_SubDComponentPtr::Type type);
   void Internal_SetDir(unsigned dir);
 
-  // The "A" and "B" values are two 12 bit unsigned integer values 
+  // The "A" and "B" values are two 12 bit unsigned integer values
   // (0 to 4095 decimal) that are encoded in the 3 bytes m_valueAB[].
-  // When the referenced component is a SubD face, A = number of face edges
-  // and B = face corner index.
+  // When the referenced component is a SubD face, A = face corner index
+  // and B = number of face edges. This is the order FaceCornerDex()
+  // uses to build an ON_SubDFaceCornerDex(corner_index, edge_count).
   void Internal_SetValueA(unsigned a);
   void Internal_SetValueB(unsigned b);
   unsigned Internal_ValueA() const;
@@ -5823,15 +5931,17 @@ public:
 
   /// <summary>
   /// Returns a parameter between 0 and 1 that identifies a point on the edge.
-  /// This is always an intrisic parameter; 
-  /// ComponentDirection() is not taken into account. 
-  /// If the reference component is not an edge, then ON_DBL_QNAN is returned.
+  /// The parameter is measured along the edge as this parameter orients it,
+  /// that is, from EdgePtr(subd).RelativeVertex(0) to
+  /// EdgePtr(subd).RelativeVertex(1). When ComponentDirection() is 1 that is
+  /// the reverse of the edge's natural orientation.
+  /// If the referenced component is not an edge, then ON_DBL_QNAN is returned.
   /// </summary>
   /// <returns>
-  /// Returns a parameter between 0 and 1 identifying the point
-  /// on the edge. Note that ComponentDirection() is not taken
-  /// into account. If this does not reference an edge or the
-  /// parameter is not set, then ON_DBL_QNAN is returned.
+  /// Returns a parameter between 0 and 1 identifying the point on the edge,
+  /// measured in the direction given by ComponentDirection().
+  /// If this does not reference an edge or the parameter is not set,
+  /// then ON_DBL_QNAN is returned.
   /// </returns>
   double EdgeParameter() const;
 
@@ -5881,6 +5991,45 @@ public:
   /// Otherwise ON_SubDFaceParameter::Nan is returned.
   /// </returns>
   const ON_SubDFaceParameter FaceParameter() const;
+
+  /// <summary>
+  /// Get the face and face parameter that identify the same point on the SubD
+  /// surface as this component parameter. The SubD surface evaluators are
+  /// parameterized by (face, ON_SubDFaceParameter), so this is what makes
+  /// vertex, edge and face parameters uniformly evaluable.
+  ///
+  /// A vertex parameter maps to the (0,0) corner parameter of one of the faces
+  /// attached to the vertex. A face attached to the vertex may be specified by
+  /// passing it to the constructor; see VertexFace().
+  ///
+  /// An edge parameter maps to a parameter on the boundary of one of the faces
+  /// attached to the edge. A face attached to the edge may be specified by
+  /// passing it to the constructor; see EdgeFace(). If s is the edge parameter
+  /// measured along the face's orientation of the edge, then the result is
+  /// (s,0) on the corner at the start of the edge when s &lt;= 1/2 and
+  /// (0,1-s) on the corner at the end of the edge when s &gt; 1/2. Both
+  /// describe the same point when s = 1/2.
+  ///
+  /// A face parameter returns Face(subd) and FaceParameter().
+  /// </summary>
+  /// <param name="subd">
+  /// The SubD that contains the component this parameter references.
+  /// </param>
+  /// <param name="face">
+  /// The face to evaluate is returned here, or nullptr if this fails.
+  /// </param>
+  /// <param name="face_parameter">
+  /// The parameter on face to evaluate is returned here, or
+  /// ON_SubDFaceParameter::Nan if this fails.
+  /// </param>
+  /// <returns>
+  /// True if face and face_parameter were set to an evaluable pair.
+  /// </returns>
+  bool GetFaceAndFaceParameter(
+    const class ON_SubD* subd,
+    const class ON_SubDFace*& face,
+    ON_SubDFaceParameter& face_parameter
+  ) const;
 
   /// <summary>
   /// If the subd has a component with the same type and id,
@@ -7795,8 +7944,6 @@ public:
     );
 
 #if defined(OPENNURBS_PLUS)
-#if defined(ON_WIP_SDK)
-#ifdef OPENNURBS_IN_RHINO
   /// <summary>
   /// Get thecontrol points and knots for a uniform bicubic B-spline bispan
   /// that can be used to evaluate the SubD and the specified parameter.
@@ -7899,6 +8046,22 @@ public:
   /// evaluated derivatives are returned in der_array[]
   /// Otherwise false is returned and der_array[] is set tos ON_DBL_QNANs.
   /// </returns>
+  /// <remarks>
+  /// EXTRAORDINARY VERTICES: no single bicubic patch covers the corner quad of
+  /// an extraordinary vertex, so that quad is subdivided until the parameter is
+  /// covered by one. Subdivision stops at
+  /// ON_SubDDisplayParameters::MaximumDensity, the deepest level the surface
+  /// mesh and the NURBS patches store evaluation points at; beyond that the same
+  /// approximate patch the proxy Brep uses is evaluated, so the answer agrees
+  /// with the proxy Brep rather than being exact.
+  ///
+  /// At an extraordinary vertex itself the surface is C1 but generally not C2.
+  /// The point, the normal, the first partials and the pure higher partials are
+  /// available, but the mixed partials are not: ON_SurfaceValues::Derivative()
+  /// returns an invalid vector for those, and there is no curvature. Check
+  /// ON_SurfaceValues::Derivative(1,1).IsValid() before using a second
+  /// fundamental form. Everywhere else in the corner quad every partial exists.
+  /// </remarks>
   bool EvaluateSurface(
     const ON_SubDFace* f,
     ON_SubDFaceParameter p,
@@ -7935,14 +8098,225 @@ public:
   /// Otherwise false is returned and values is set to 
   /// ON_SurfaceValues::Nan.
   /// </returns>  
+  /// <remarks>
+  /// EXTRAORDINARY VERTICES: no single bicubic patch covers the corner quad of
+  /// an extraordinary vertex, so that quad is subdivided until the parameter is
+  /// covered by one. Subdivision stops at
+  /// ON_SubDDisplayParameters::MaximumDensity, the deepest level the surface
+  /// mesh and the NURBS patches store evaluation points at; beyond that the same
+  /// approximate patch the proxy Brep uses is evaluated, so the answer agrees
+  /// with the proxy Brep rather than being exact.
+  ///
+  /// At an extraordinary vertex itself the surface is C1 but generally not C2.
+  /// The point, the normal, the first partials and the pure higher partials are
+  /// available, but the mixed partials are not: ON_SurfaceValues::Derivative()
+  /// returns an invalid vector for those, and there is no curvature. Check
+  /// ON_SurfaceValues::Derivative(1,1).IsValid() before using a second
+  /// fundamental form. Everywhere else in the corner quad every partial exists.
+  /// </remarks>
   bool EvaluateSurface(
     ON_SubDComponentParameter p,
     unsigned maximum_derivative_order,
     class ON_SurfaceValues& values
   ) const;
-#endif // OPENNURBS_IN_RHINO
-#endif
-#endif
+
+  /// <summary>
+  /// Get the point on this SubD's surface (the limit surface) that is closest
+  /// to test_point.
+  ///
+  /// The search is seeded from the surface mesh cache and then refined on the
+  /// limit surface itself, so the returned point is not restricted to the
+  /// surface mesh. The returned point always satisfies
+  /// EvaluateSurface(subd_parameter, 0, values) == subd_point.
+  ///
+  /// ACCURACY: refinement uses the limit surface partial derivatives, which are
+  /// available everywhere, including in the corner subdivision quad of an
+  /// extraordinary vertex. No single bicubic patch covers such a quad, so the
+  /// evaluator subdivides it until the parameter is covered by one.
+  ///
+  /// Subdivision stops at ON_SubDDisplayParameters::MaximumDensity, the deepest
+  /// level at which the surface mesh and the NURBS patches store evaluation
+  /// points. A parameter close enough to an extraordinary vertex to still be
+  /// unresolved at that depth is evaluated with the same approximate patch the
+  /// proxy Brep uses, so the answer there agrees with the proxy Brep rather than
+  /// being exact.
+  /// </summary>
+  /// <param name="test_point"></param>
+  /// <param name="subd_parameter">
+  /// The parameter of the closest point is returned here. It is
+  /// ON_SubDComponentParameter::Unset if this fails.
+  /// </param>
+  /// <param name="subd_point">
+  /// The closest point is returned here. It is ON_3dPoint::UnsetPoint if this
+  /// fails.
+  /// </param>
+  /// <param name="maximum_distance">
+  /// If maximum_distance &gt; 0 and the distance from test_point to this SubD
+  /// is greater than maximum_distance, then false is returned. Otherwise this
+  /// parameter is ignored.
+  /// </param>
+  /// <returns>
+  /// True if a closest point was found.
+  /// </returns>
+#pragma region RH_C_SHARED_ENUM [ON_SubD::ExtraordinaryVertexCurvature] [Rhino.Geometry.SubD.ExtraordinaryVertexCurvature] [nested:byte]
+  /// <summary>
+  /// ON_SubD::ExtraordinaryVertexCurvature identifies what a curvature evaluation
+  /// reports exactly on an extraordinary vertex.
+  ///
+  /// A SubD limit surface is C1 but generally not C2 at an extraordinary vertex.
+  /// The mixed second partial does not exist there, so there is no second
+  /// fundamental form and no curvature of the surface itself. Every other point
+  /// of the surface, including the rest of an extraordinary vertex's corner quad,
+  /// has a curvature and is unaffected by this setting.
+  /// </summary>
+  enum class ExtraordinaryVertexCurvature : unsigned char
+  {
+    ///<summary>
+    /// Report no curvature. Evaluation fails at an extraordinary vertex.
+    /// This is the default and says exactly what is true of the surface.
+    ///</summary>
+    None = 0,
+
+    ///<summary>
+    /// Report the average of the curvature of the surface immediately around the
+    /// vertex: one sample per surface mesh fragment of the vertex's sector, each
+    /// taken at the fragment grid point nearest the vertex.
+    ///
+    /// The sample spacing follows the surface mesh cache, so a denser cache
+    /// samples closer to the vertex, and a minimum density of 2 is used when the
+    /// cache is coarser than that or absent - the same minimum the SubD to NURBS
+    /// conversion works at.
+    ///
+    /// Gaussian and mean curvature are averaged, not the principal curvatures:
+    /// they are the invariants, whereas k1 and k2 are ordered eigenvalues that do
+    /// not average meaningfully. The principal directions are left unset for the
+    /// same reason.
+    ///
+    /// This is an estimate of a quantity the surface does not have. Use it where
+    /// a plausible continuous value matters more than exactness, such as
+    /// curvature display, and not where the value feeds further geometry.
+    ///</summary>
+    SectorAverage = 1,
+  };
+#pragma endregion
+
+  /// <summary>
+  /// Average the surface curvature immediately around a vertex.
+  ///
+  /// Used to answer a curvature query exactly on an extraordinary vertex, where
+  /// the limit surface has no curvature of its own. See
+  /// ON_SubD::ExtraordinaryVertexCurvature::SectorAverage.
+  /// </summary>
+  /// <param name="face">
+  /// A face of the vertex. It selects the sector to average over, which matters
+  /// when the vertex has creases: each sector is a different surface.
+  /// </param>
+  /// <param name="vertex">The vertex to average around.</param>
+  /// <param name="curvature">The averaged curvature is returned here.</param>
+  /// <returns>
+  /// True if at least one sample could be evaluated and averaged.
+  /// </returns>
+  /// <since>9.0</since>
+  bool GetSectorAverageCurvature(
+    const ON_SubDFace* face,
+    const ON_SubDVertex* vertex,
+    class ON_SurfaceCurvature& curvature
+  ) const;
+
+  /// <summary>
+  /// Evaluate the curvature of the SubD surface (the limit surface) at a
+  /// surface parameter, with everything an ON_SurfaceCurvature carries.
+  /// </summary>
+  /// <param name="p">The surface parameter to evaluate.</param>
+  /// <param name="extraordinary_vertex_curvature">
+  /// What to report when p is exactly on an extraordinary vertex, where the
+  /// limit surface has no curvature.
+  /// </param>
+  /// <param name="point">The surface point is returned here.</param>
+  /// <param name="normal">The unit surface normal is returned here.</param>
+  /// <param name="curvature">The principal curvatures are returned here.</param>
+  /// <param name="kappa1_direction">
+  /// The direction of the first principal curvature is returned here, or
+  /// ON_3dVector::UnsetVector when there is no single direction to report, which
+  /// is the case for an averaged extraordinary vertex curvature.
+  /// </param>
+  /// <param name="kappa2_direction">
+  /// The direction of the second principal curvature, or
+  /// ON_3dVector::UnsetVector. See kappa1_direction.
+  /// </param>
+  /// <returns>True if the evaluation succeeded.</returns>
+  /// <since>9.0</since>
+  bool EvaluateSurfaceCurvature(
+    ON_SubDComponentParameter p,
+    ON_SubD::ExtraordinaryVertexCurvature extraordinary_vertex_curvature,
+    ON_3dPoint& point,
+    ON_3dVector& normal,
+    class ON_SurfaceCurvature& curvature,
+    ON_3dVector& kappa1_direction,
+    ON_3dVector& kappa2_direction
+  ) const;
+
+  bool GetClosestPoint(
+    ON_3dPoint test_point,
+    ON_SubDComponentParameter& subd_parameter,
+    ON_3dPoint& subd_point,
+    double maximum_distance = 0.0
+  ) const;
+
+  /// <summary>
+  /// Get the point on this SubD's surface (the limit surface) that is closest
+  /// to test_point. See GetClosestPoint() for accuracy details.
+  /// </summary>
+  /// <param name="test_point"></param>
+  /// <returns>
+  /// The closest point, or ON_3dPoint::UnsetPoint if none was found.
+  /// </returns>
+  const ON_3dPoint ClosestPoint(
+    ON_3dPoint test_point
+  ) const;
+
+  /// <summary>
+  /// Get the points on this SubD's surface (the limit surface) that are closest
+  /// to each of test_points[]. This is faster than calling GetClosestPoint()
+  /// in a loop because the spatial index over the surface mesh is built once.
+  /// See GetClosestPoint() for accuracy details.
+  /// </summary>
+  /// <param name="maximum_distance_tolerance">
+  /// If maximum_distance_tolerance &gt; 0 and the distance from test_points[i]
+  /// to this SubD is greater than maximum_distance_tolerance, then
+  /// output_points[i] = no_point_value. If maximum_distance_tolerance &lt;= 0
+  /// or is a nan, then this parameter is ignored.
+  /// </param>
+  /// <param name="no_point_value">
+  /// The value to use in output_points[] when no closest point exists.
+  /// </param>
+  /// <param name="point_count">
+  /// Number of elements in test_points[], output_points[] and
+  /// output_parameters[].
+  /// </param>
+  /// <param name="test_points">Test points.</param>
+  /// <param name="output_points">
+  /// output_points[i] = point on this SubD closest to test_points[i], or
+  /// no_point_value if test_points[i] is not valid or is farther from this SubD
+  /// than maximum_distance_tolerance.
+  /// </param>
+  /// <param name="output_parameters">
+  /// If output_parameters is not nullptr, then output_parameters[i] is the
+  /// parameter of output_points[i], or ON_SubDComponentParameter::Unset when no
+  /// closest point was found.
+  /// </param>
+  /// <returns>
+  /// The number of closest points that were found.
+  /// </returns>
+  unsigned int GetClosestPoints(
+    double maximum_distance_tolerance,
+    ON_3dPoint no_point_value,
+    size_t point_count,
+    const ON_3dPoint* test_points,
+    ON_3dPoint* output_points,
+    ON_SubDComponentParameter* output_parameters
+  ) const;
+#endif // OPENNURBS_PLUS
 
 public:
 #pragma region RH_C_SHARED_ENUM [ON_SubD::AutomaticMeshToSubDContext] [Rhino.Geometry.SubDAutomaticMeshToSubDContext] [byte]
@@ -8060,7 +8434,7 @@ public:
       If edge_sharpness = ON_SubDEdgeSharpness::SmoothValue, the edges where box sides meet will be smooth.
       If ON_SubDEdgeSharpness::SmoothValue &lt; edge_sharpness &lt;= ON_SubDEdgeSharpenss::MaximumValue, 
       the edges where box sides meet will have the specified sharpness.
-      If edge_sharpness = ON_SubDEdgeSharpenss::CreaseValue,
+      If edge_sharpness = ON_SubDEdgeSharpness::CreaseValue,
       the edges where box sides meet will be creases.
     facecount_x - [in] Number of faces in x direction
     facecount_y - [in] Number of faces in y direction
@@ -8751,7 +9125,35 @@ public:
 
   /*
   Description:
-    Delete components in cptr_list[]. 
+    Delete components in ci_list[].
+    If a vertex is in ci_list[], the vertex and every edge and face attached
+    to the vertex are deleted.
+    If an edge is in ci_list[], the edge and every face attached
+    to the edge are deleted.
+    If a face is in ci_list[], the face is deleted.
+  Parameters:
+    ci_list - [in]
+    ci_count - [in]
+      length of ci_list[] array.
+    bMarkDeletedFaceEdges - [in]
+      If true, surviving edges attached to deleted faces
+      have their runtime mark set.
+  Returns:
+    True if the deletion succeeded.
+  Remarks:
+    This overload and the ON_SubDComponentPtr one below differ only in the pointer type,
+    so passing a bare nullptr for the list is an ambiguous call. Use a typed null pointer
+    if you need to pass an empty list.
+  */
+  bool DeleteComponents(
+    const ON_COMPONENT_INDEX* ci_list,
+    size_t ci_count,
+    bool bMarkDeletedFaceEdges
+    );
+
+  /*
+  Description:
+    Delete components in cptr_list[].
     If a vertex is in cptr_list[], the vertex and every edge and face attached
     to the vertex are deleted.
     If an edge is in cptr_list[], the edge and every face attached
@@ -8762,11 +9164,10 @@ public:
     cptr_count - [in]
       length of cptr_list[] array.
     bMarkDeletedFaceEdges - [in]
-      If true, surviving edges attached to delete faces 
-      have their runtmime mark set.
+      If true, surviving edges attached to deleted faces
+      have their runtime mark set.
   Returns:
-    1: some state settings changed on the component.
-    1: some state setting changed on the component.
+    True if the deletion succeeded.
   */
   bool DeleteComponents(
     const ON_SubDComponentPtr* cptr_list,
@@ -8774,6 +9175,17 @@ public:
     bool bMarkDeletedFaceEdges
     );
 
+  /*
+  Description:
+    Delete components in cptr_list[]. See the overload above for details.
+  Parameters:
+    cptr_list - [in]
+    bMarkDeletedFaceEdges - [in]
+      If true, surviving edges attached to deleted faces
+      have their runtime mark set.
+  Returns:
+    True if the deletion succeeded.
+  */
   bool DeleteComponents(
     const ON_SimpleArray<ON_SubDComponentPtr>& cptr_list,
     bool bMarkDeletedFaceEdges
@@ -26330,7 +26742,7 @@ public:
     with no self intersections, then true is returned. Otherwise false
     is returned.
   Remarks:
-    This test usesthe MarkBits() values on the edges and vertices and
+    This test uses the MarkBits() values on the edges and vertices and
     restores the values to the input state.
     Multiple threads may not simultaneously use any SubD tools on that rely
     on markbits on the same ON_SubD.
@@ -28081,5 +28493,19 @@ private:
   static const ON_SHA1_Hash Internal_VertexSHA1(const ON_Mesh* mesh);
 };
 #endif
+
+//////////////////////////////////////////////////////////////////////////
+//
+// ON_SubDComponentPtrTypesAndMasks invariants
+//
+// Packing a component pointer and three flag bits into one integer only works while the
+// three component classes are allocated on an 8 byte boundary, which is what leaves the
+// low three bits of every component address free. They contain doubles today, so this
+// holds; asserting it means a layout change that breaks the packing fails to build
+// instead of dereferencing corrupted pointers at run time.
+//
+static_assert(0 == (alignof(ON_SubDVertex) % 8), "ON_SubDVertex must be 8 byte aligned for ON_SubDComponentPtr packing.");
+static_assert(0 == (alignof(ON_SubDEdge) % 8), "ON_SubDEdge must be 8 byte aligned for ON_SubDComponentPtr packing.");
+static_assert(0 == (alignof(ON_SubDFace) % 8), "ON_SubDFace must be 8 byte aligned for ON_SubDComponentPtr packing.");
 
 #endif

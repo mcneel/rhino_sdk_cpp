@@ -383,6 +383,24 @@ public:
 
   ON_SimpleArray<ON_PlaneEquation> GetEnabledClipPlanes(const ON_Xform* xf) const;
 
+public:
+///////////////////////////////////////////////////////////////////////////
+// 2d Drawing routines
+
+  // Description:
+  //  Draw a curve whose coordinates are viewport pixels rather than world units. The
+  //  origin is the top left of the frame and z is ignored.
+  // Parameters:
+  //  curve: [in] the curve, in screen coordinates
+  //  pen: [in] pen to stroke it with
+  //  cacheHandle: [in] optional cache for the curve's display geometry
+  void Draw2dCurve(const ON_Curve& curve, const class CRhinoDisplayPen& pen, CRhinoCacheHandle* cacheHandle);
+  void Draw2dDisplayPath(const class CRhino2dDisplayPath& path, const class CRhinoDisplayPen& pen, CRhinoCacheHandle* cache);
+  void Fill2dDisplayPath(const class CRhino2dDisplayPath& path, const CRhinoDisplayBrush& brush, CRhinoCacheHandle* cache);
+
+///////////////////////////////////////////////////////////////////////////
+
+
 ///////////////////////////////////////////////////////////////////////////
 // Generic engine routines for drawing low-level primitives...
 //

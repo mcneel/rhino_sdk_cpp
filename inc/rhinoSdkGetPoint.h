@@ -1466,3 +1466,34 @@ private:
   virtual void OnMouseDown(CRhinoViewport& vp,UINT nFlags,const ON_3dPoint& point, const class CPoint* view_wnd_point) final;
 };
 
+/*
+Description:
+  Given a test point, calculate the point the current object snap
+  settings would produce in the specified view.
+Parameters:
+  view - [in]
+    The view in which to snap. The document is obtained from
+    CRhinoView::GetDocument().
+  test_point - [in]
+    The world coordinate point to snap.
+  world_point - [out]
+    The snapped point. If no object snap was active or none applied,
+    then test_point is returned.
+  snap_event - [out]
+    If not nullptr, the snap event is returned here. When no snap
+    occurred, snap_event.m_snap_mode is CRhinoAppSettings::os_none.
+Returns:
+  True if world_point was calculated, false otherwise.
+Remarks:
+  This function does not prompt. It resolves a point through the
+  object snaps that are currently enabled.
+See Also:
+  CRhinoAppSettings::osnap_mode
+*/
+RHINO_SDK_FUNCTION
+bool RhinoGetSnapPoint(
+  CRhinoView& view,
+  ON_3dPoint test_point,
+  ON_3dPoint& world_point,
+  CRhinoSnapEvent* snap_event = nullptr
+  );

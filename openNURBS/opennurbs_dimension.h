@@ -105,6 +105,33 @@ public:
   bool ArrowIsFlipped(int i) const;
   void FlipArrow(int i, bool flip) const;
 
+  /*
+  Description:
+    Tests whether SuppressDimLine1 / SuppressDimLine2 hides an arrowhead along
+    with the half of the dimension line it hides. Does not consider
+    SuppressArrow1 / SuppressArrow2, so it is safe to call from the drawing
+    paths that have never honored those.
+  Parameters:
+    which_end - [in] 0 for the first arrow, anything else for the second.
+    style - [in] the dimension style the dimension is being drawn with.
+  Returns:
+    True when the arrowhead should not be drawn.
+  */
+  bool ArrowIsHiddenByDimLineSuppression(int which_end, const ON_DimStyle* style) const;
+
+  /*
+  Description:
+    Tests whether an arrowhead should be drawn. Covers both SuppressArrow1 /
+    SuppressArrow2 and the SuppressDimLine1 / SuppressDimLine2 dimension line
+    suppression.
+  Parameters:
+    which_end - [in] 0 for the first arrow, anything else for the second.
+    style - [in] the dimension style the dimension is being drawn with.
+  Returns:
+    True when the arrowhead should not be drawn.
+  */
+  bool ArrowIsSuppressed(int which_end, const ON_DimStyle* style) const;
+
   // If the dimension is a paper space object and the geometry being dimensioned is in 
   // model space, in a detail viewport, DetailMeasured() will have the UUID of the detail
   // that the dimension references.  Otherwise DetailMeasured() will be ON_nil_uuid.

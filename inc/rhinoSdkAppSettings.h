@@ -824,6 +824,19 @@ public:
   bool CrosshairsAlignedToScreen() const;
   void SetCrosshairsAlignedToScreen(bool alignToScreen);
 
+  // The language used by the Help system (Help panel, F1 context help and the
+  // online help web site). This can be independent of m_language_identifier,
+  // which is the language used by the user interface.
+  // Returns a Windows LCID, or 0 (the default) which means "use the same
+  // language as the user interface."
+  unsigned int HelpLanguageIdentifier() const;
+  void SetHelpLanguageIdentifier(unsigned int languageIdentifier);
+
+  // The LCID the Help system should actually use. This is
+  // HelpLanguageIdentifier() when it is non-zero, otherwise
+  // m_language_identifier. Never returns 0.
+  unsigned int EffectiveHelpLanguageIdentifier() const;
+
 // TODO: should these be included?  Used in V 2.0
   bool m_show_viewport_title;       // viewport name in top left cornner
   bool m_main_window_title;         // main frame window title

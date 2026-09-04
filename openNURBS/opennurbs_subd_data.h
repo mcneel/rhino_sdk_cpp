@@ -32,9 +32,11 @@
 //
 // WARNING WARNING WARNING WARNING WARNING WARNING WARNING WARNING 
 //
-// The definitions in opennurbs_subd_data.h change randomly and unpredictably.
+// The definitions in opennurbs_subd_data.h are not part of the public SDK.
+// They change randomly and unpredictably.
 // Never include this file in any code you write, even as a hack.
-// If you ignore this warning, your code will crash randomly and unpredictably
+// If you ignore this warning, your compiled code might crash when run against
+// newer versions of the SDK, and your source might not compile against them.
 //
 ///////////////////////////////////////////////////////////////////
 #error Please read the comment above this line.
@@ -452,33 +454,28 @@ void ON_SubDIncrementErrorCount(); // defined in opennurbs_subd.cpp
 
 //////////////////////////////////////////////////////////////////////////
 //
-// ON_SubDVertexPtr, ON_SubDEdgePtr, and ON_SubDFacePtr are unsigned ints 
-// that store a pointer to an ON_SubDVertex, ON_SubDEdge, or ON_SubDFace
-// along with a direction bit that is 0 or 1. The direction bit is used
-// to indicate if the component is being referenced with its 
-// natural orientation (0) or the reverse of its natural orientation (1).
+// These macros are shorthand for the bit layout described by
+// ON_SubDComponentPtrTypesAndMasks in opennurbs_subd.h. That enum is the single
+// definition of these values; do not repeat the literals here.
 //
-// ON_SubDComponentPtr is an unsigned int that stores a pointer to an 
-// ON_SubDVertex, ON_SubDEdge, or ON_SubDFace, the direction bit
-// described above, and a type value used to indicate if the component is
-// a vertex(2), edge(4), or face (6).
-//
-// This code assumes that the memory used to store ON_SubDVertex, ON_SubDEdge, 
-// and ON_SubDFace classes begins on an 8 bytes boundary (they contain doubles).
-// If this assumption is false, you will get lots of crashes.
-//
-#define ON_SUBD_COMPONENT_DIRECTION_MASK (0x1U)
-#define ON_SUBD_COMPONENT_TYPE_MASK (0x6U)
-#define ON_SUBD_COMPONENT_FLAGS_MASK (0x7U)
-#if (8 == ON_SIZEOF_POINTER)
-#define ON_SUBD_COMPONENT_POINTER_MASK (0xFFFFFFFFFFFFFFF8ULL)
-#else
-#define ON_SUBD_COMPONENT_POINTER_MASK (0xFFFFFFF8U)
-#endif
+#define ON_SUBD_COMPONENT_DIRECTION_MASK ((ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::DirectionMask)
+#define ON_SUBD_COMPONENT_TYPE_MASK      ((ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::TypeMask)
+#define ON_SUBD_COMPONENT_FLAGS_MASK     ((ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::FlagsMask)
+#define ON_SUBD_COMPONENT_POINTER_MASK   ((ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::PointerMask)
 
-#define ON_SUBD_COMPONENT_TYPE_VERTEX (0x2U)
-#define ON_SUBD_COMPONENT_TYPE_EDGE (0x4U)
-#define ON_SUBD_COMPONENT_TYPE_FACE (0x6U)
+#define ON_SUBD_COMPONENT_TYPE_UNSET     ((ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::UnsetType)
+#define ON_SUBD_COMPONENT_TYPE_VERTEX    ((ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::VertexType)
+#define ON_SUBD_COMPONENT_TYPE_EDGE      ((ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::EdgeType)
+#define ON_SUBD_COMPONENT_TYPE_FACE      ((ON__UINT_PTR)ON_SubDComponentPtrTypesAndMasks::FaceType)
+
+// The macros above and ON_SubDComponentPtr::Type must agree, since ON_SubDComponentPtr
+// stores its type in the same bits that these macros read.
+static_assert(ON_SUBD_COMPONENT_TYPE_UNSET == (ON__UINT_PTR)ON_SubDComponentPtr::Type::Unset, "SubD component type bits disagree.");
+static_assert(ON_SUBD_COMPONENT_TYPE_VERTEX == (ON__UINT_PTR)ON_SubDComponentPtr::Type::Vertex, "SubD component type bits disagree.");
+static_assert(ON_SUBD_COMPONENT_TYPE_EDGE == (ON__UINT_PTR)ON_SubDComponentPtr::Type::Edge, "SubD component type bits disagree.");
+static_assert(ON_SUBD_COMPONENT_TYPE_FACE == (ON__UINT_PTR)ON_SubDComponentPtr::Type::Face, "SubD component type bits disagree.");
+static_assert(0 == (ON_SUBD_COMPONENT_POINTER_MASK & ON_SUBD_COMPONENT_FLAGS_MASK), "SubD component pointer and flag bits overlap.");
+static_assert(ON_SUBD_COMPONENT_FLAGS_MASK == (ON_SUBD_COMPONENT_TYPE_MASK | ON_SUBD_COMPONENT_DIRECTION_MASK), "SubD component flag bits are inconsistent.");
 
 #define ON_SUBD_COMPONENT_DIRECTION(p) ((p) & ON_SUBD_COMPONENT_DIRECTION_MASK)
 #define ON_SUBD_COMPONENT_TYPE(p) ((p) & ON_SUBD_COMPONENT_TYPE_MASK)

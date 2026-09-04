@@ -279,7 +279,7 @@ private:
 class RHINO_SDK_CLASS CRhinoRebuildCurveOptions
 {
 public:
-  CRhinoRebuildCurveOptions() = default;
+  CRhinoRebuildCurveOptions();
   ~CRhinoRebuildCurveOptions() = default;
   CRhinoRebuildCurveOptions(const CRhinoRebuildCurveOptions&) = default;
   CRhinoRebuildCurveOptions& operator=(const CRhinoRebuildCurveOptions&) = default;
@@ -287,6 +287,9 @@ public:
 
 public:
   static const CRhinoRebuildCurveOptions Defaults;
+
+  void ReadSettings();
+  void WriteSettings();
 
 public:
   // Interface to use to get and update options used in curve rebuilding.

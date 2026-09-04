@@ -3555,6 +3555,86 @@ bool RhinoBooleanSplit(
 
 /*
 Description:
+  Cuts a solid Brep with extrusions of closed planar curves.
+Parameters:
+  brep             - [in]  The solid (closed polysurface) to cut.
+  closed_curves    - [in]  Closed cutting curves. All are extruded along the same direction.
+  direction        - [in]  Extrusion direction of the cutters.
+  depth            - [in]  Extrusion depth. If <= 0 or ON_UNSET_VALUE, the cut
+                           goes all the way through the Brep (extent computed
+                           from the bounding box, as the command does on Enter).
+  bBothSides       - [in]  Extrude the cutters to both sides of the curves.
+                           Ignored when cutting through.
+  tolerance        - [in]  Intersection and boolean tolerance. If the boolean
+                           fails at this tolerance it is retried at a raised
+                           tolerance, as the command does.
+  bSplitKinkyFaces - [in]  Split output pieces along creases.
+  kept_pieces      - [out] Pieces that remain after the cut (boolean difference side).
+  cut_away_pieces  - [out] The cut-away pieces (boolean intersection side).
+Returns:
+  false if error.
+Remarks:
+  There is no keep/flip logic here - the caller decides which pieces to keep.
+  Memory for the output pieces is allocated and becomes the responsibility
+  of the caller.
+ */
+RHINO_SDK_FUNCTION
+bool RhinoWireCutBrep(
+  const ON_Brep& brep,
+  const ON_SimpleArray<const ON_Curve*>& closed_curves,
+  ON_3dVector direction,
+  double depth,
+  bool bBothSides,
+  double tolerance,
+  bool bSplitKinkyFaces,
+  ON_SimpleArray<ON_Brep*>& kept_pieces,
+  ON_SimpleArray<ON_Brep*>& cut_away_pieces
+);
+
+/*
+Description:
+  Cuts a solid Brep with a single open cutting curve. The open curve is extruded
+  along direction into a sheet, then along trim_direction to close the sheet
+  into a solid cutter.
+Parameters:
+  brep             - [in]  The solid (closed polysurface) to cut.
+  open_curve       - [in]  Open cutting curve.
+  direction        - [in]  First extrusion direction (the wire sweep).
+  trim_direction   - [in]  Second extrusion direction that closes the cutter.
+  depth            - [in]  Depth along direction. If <= 0 or ON_UNSET_VALUE,
+                           cuts through and skips trim capping.
+  trim_depth       - [in]  Depth along trim_direction. Ignored when cutting through.
+  bBothSides       - [in]  Extrude both ways along direction.
+  bTrimBothSides   - [in]  Extrude both ways along trim_direction.
+  tolerance        - [in]  Intersection and boolean tolerance.
+  bSplitKinkyFaces - [in]  Split output pieces along creases.
+  kept_pieces      - [out] Pieces that remain after the cut (boolean difference side).
+  cut_away_pieces  - [out] The cut-away pieces (boolean intersection side).
+Returns:
+  false if error.
+Remarks:
+  There is no keep/flip logic here - the caller decides which pieces to keep.
+  Memory for the output pieces is allocated and becomes the responsibility
+  of the caller.
+ */
+RHINO_SDK_FUNCTION
+bool RhinoWireCutBrepOpenCurve(
+  const ON_Brep& brep,
+  const ON_Curve& open_curve,
+  ON_3dVector direction,
+  ON_3dVector trim_direction,
+  double depth,
+  double trim_depth,
+  bool bBothSides,
+  bool bTrimBothSides,
+  double tolerance,
+  bool bSplitKinkyFaces,
+  ON_SimpleArray<ON_Brep*>& kept_pieces,
+  ON_SimpleArray<ON_Brep*>& cut_away_pieces
+);
+
+/*
+Description:
   Projects curves onto Breps
 Parameters:
   Breps        - [in]  The Breps to project onto
@@ -7459,6 +7539,7 @@ enum class RhinoRefitTrimKnotMode : int
 #pragma endregion
 
 /*
+WARNING: DEPRECATED. Use one of the new  RhinoCreate*FilletSrf
 Description:
   Creates a surface between two surfaces.
 Parameters:
@@ -7600,6 +7681,7 @@ bool RhinoFilletSurfaceToRail(
 );
 
 /*
+WARNING: DEPRECATED. Use one of the new  RhinoCreate*FilletSrf
 Description:
   Creates a non-rational constant-radius fillet surface between two surfaces.
 Parameters:
@@ -7641,6 +7723,7 @@ Parameters:
                       [3] max angle deviation along surface 1 (in degrees)
                       [4] max angle deviation between Bézier surfaces (in degrees)
                       [5] max  curvature difference between Bézier surfaces
+                      NOTE: Due to deprecation, the fitResults array will not be filled.
 Returns:
   true if successful, false otherwise.
 Remarks:
@@ -9896,7 +9979,9 @@ public:
   bool NonRationalCubicArcs(int rail_degree, bool bExtend, ON_SimpleArray<ON_Brep*>& Fillets);//Arc approximation
   bool NonRationalCubic(int rail_degree, double TanSlider, bool bExtend, ON_SimpleArray<ON_Brep*>& Fillets);
   bool G2ChordalQuintic(int rail_degree, bool bExtend, ON_SimpleArray<ON_Brep*>& Fillets);
-  //bool WhateverElse();
+  bool CollectRails(bool bExtend, ON_SimpleArray<ON_Curve*> Rails2d[2], ON_SimpleArray<ON_Curve*> Rails3d[2]);
+  // get the radii. these can be negative if the offset direction was flipped
+  bool CollectRadii(double radii[2]);
 
   //This will clear out the existing rails and fillet surfaces, 
   //and redo the offset intersections, etc. DO NOT use this for SrfToRail - there is no radius..  

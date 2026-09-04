@@ -429,8 +429,8 @@ public:
     t - [out] if a discontinuity is found, then *t reports the
           parameter at the discontinuity.
     hint - [in/out] if GetNextDiscontinuity will be called 
-       repeatedly, passing a "hint" with initial value *hint=0
-       will increase the speed of the search.       
+       repeatedly, passing a "hint" array of size 2 with initial values
+       hint[0] = hint[1] = 0 will increase the speed of the search.       
     dtype - [out] if not nullptr, *dtype reports the kind of 
         discontinuity found at *t.  A value of 1 means the first 
         derivative or unit tangent was discontinuous.  A value 

@@ -393,6 +393,21 @@ typedef bool(*ON_PLUS_FUNCTION_Brep_IsPointInsideHelper)(
 
 ////////////////////////////////////////////////////////////////////////
 //
+// Used by ON_RayHitIsOnFace()
+//
+// 27 Aug 2026 Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-13351
+// Returns 0 when (u,v) is outside the face's trimming loops, 1 when it is
+// inside them and 2 when it is on one of them.
+//
+typedef int(*ON_PLUS_FUNCTION_Brep_PointIsOnFace)(
+	const ON_Brep&,
+	int,
+	double,
+	double
+	);
+
+////////////////////////////////////////////////////////////////////////
+//
 // Used by ON_BrepFace::GetSilhouette()
 //
 typedef bool(*ON_PLUS_FUNCTION_BrepFace_Silhouette)(
@@ -938,6 +953,10 @@ public:
   // Used by ON_Brep::
   static
   ON_PLUS_FUNCTION_Brep_IsPointInsideHelper f_ON_Brep_IsPointInsideHelper;
+
+  // Used by ON_RayHitIsOnFace()
+  static
+  ON_PLUS_FUNCTION_Brep_PointIsOnFace f_ON_Brep_PointIsOnFace;
 
 	// Used by ON_Brep::
 	static

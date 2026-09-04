@@ -692,6 +692,65 @@ private:
   friend class CRhinoDoc;
 };
 
+/*
+Description:
+  CRhinoUndoRecord is a snapshot of a single entry in a document's
+  undo or redo history.
+Remarks:
+  A document deletes its internal records as undo and redo are performed.
+  CRhinoUndoRecord copies the values it reports, so an instance stays valid
+  after the document's history changes. Once the history has changed, the
+  value returned by SerialNumber() may no longer identify a record in that
+  history.
+See Also:
+  CRhinoDoc::GetUndoRecords
+  CRhinoDoc::GetRedoRecords
+*/
+class RHINO_SDK_CLASS CRhinoUndoRecord
+{
+public:
+  CRhinoUndoRecord();
+  ~CRhinoUndoRecord();
+  CRhinoUndoRecord(const CRhinoUndoRecord&);
+  CRhinoUndoRecord& operator=(const CRhinoUndoRecord&);
+
+  /*
+  A record with a zero serial number and an empty description.
+  */
+  static const CRhinoUndoRecord Unset;
+
+  /*
+  Returns:
+    The runtime serial number Rhino assigned to this undo event, or zero
+    when this record is not set.
+  Remarks:
+    Pass this value to CRhinoDoc::UndoTo() or CRhinoDoc::RedoTo() to unwind
+    a document's history through this record.
+  */
+  unsigned int SerialNumber() const;
+
+  /*
+  Returns:
+    The name of the command that created the undoable events, or a
+    description of what created them when they did not happen in a command.
+    Never nullptr.
+  */
+  const wchar_t* Description() const;
+
+  /*
+  Returns:
+    True if this record has a nonzero serial number.
+  */
+  bool IsSet() const;
+
+private:
+  friend class CRhinoDoc;
+  unsigned int m_undo_event_sn = 0;
+  unsigned int m_doc_sn = 0;
+  ON_wString m_description;
+  class CRhUndoRecordPrivate* m_private = nullptr;
+};
+
 enum class TextureReportFilter : unsigned int
 {
   MissingOnly,
@@ -2549,6 +2608,28 @@ public:
   bool LockDocumentEx(LPCTSTR lpsFileName, bool bOldMode);
   /*
   Description:
+    Lock document without putting up any user interface.
+    Used when re-acquiring the lock on a file Rhino has just written.  That
+    attempt can fail for transient reasons - a sync client or another process
+    holding the file for a moment - and the save it follows may be running on
+    a background thread, where a modal warning is illegal.  See RH-98273.
+  Parameters:
+    lpsFileName [in] Name of file to lock
+  Returns:
+    Returns true if the document is locked otherwise false.
+  See Also:
+    CRhinoDoc::LockDocument
+  */
+  bool LockDocumentQuiet(LPCTSTR lpsFileName);
+private:
+  // Shared implementation of LockDocument, LockDocumentEx and LockDocumentQuiet.
+  // bQuiet suppresses every dialog this can otherwise raise.
+  bool Internal_LockDocument(LPCTSTR lpsFileName, bool bOldMode, bool bQuiet);
+#if defined (ON_RUNTIME_APPLE)
+public:
+#endif
+  /*
+  Description:
     Remove file lock associated with this document.
   Returns:
     Returns previous lock state.
@@ -2580,12 +2661,20 @@ public:
   bool IsDocumentLocked() const;
   /*
   Description:
-    Return file version extracted by CRhinoDoc::Read3DM().  Will not return
-    values from referenced or merged files.
+    Return the major version of Rhino that wrote the .3dm file this document
+    was read from. Will not return values from referenced or merged files.
   Returns:
-    Less than zero means no file has bee read otherwise 1 (V1.x), 2( V2.x) or 3
+    The Rhino major version (1, 2, 3, ... 8, 9) or -1 if this document was not
+    read from a .3dm file.
+  Remarks:
+    This is the Rhino version, not the opennurbs 3dm archive version. A file
+    written by Rhino 8 returns 8, not 80. Compare with
+    Rhino.FileIO.File3dm.ReadArchiveVersion(), which returns the archive
+    version (1, 2, 3, 4, 5, 50, 60, 70, 80, ...) for a file on disk.
+    A document created by "New" reports -1 even when a template was read.
   See Also:
     CRhinoDoc::Read3DM
+    CRhinoFileUtilities::FileIsRhino3dm
   */
   int ReadFileVersion() const;
 
@@ -4876,6 +4965,36 @@ public:
     Number of undo records.
   */
   int GetRedoRecords(ON_SimpleArray<class CRhUndoRecord* >&) const;
+
+  /*
+  Description:
+    Get a copy of this document's undo history, ordered from the most
+    recently recorded action to the oldest recorded action.
+  Parameters:
+    records - [out]
+      The array is emptied before the records are appended.
+  Returns:
+    Number of records.
+  See Also:
+    CRhinoDoc::UndoMultiple
+    CRhinoDoc::UndoTo
+  */
+  int GetUndoRecords(ON_ClassArray<CRhinoUndoRecord>& records) const;
+
+  /*
+  Description:
+    Get a copy of this document's redo history, ordered from the action the
+    next call to Redo() will repeat to the oldest action that can be redone.
+  Parameters:
+    records - [out]
+      The array is emptied before the records are appended.
+  Returns:
+    Number of records.
+  See Also:
+    CRhinoDoc::RedoMultiple
+    CRhinoDoc::RedoTo
+  */
+  int GetRedoRecords(ON_ClassArray<CRhinoUndoRecord>& records) const;
 
   // MRU Commands for this document
   const wchar_t* MruMenuString() const;
