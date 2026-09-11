@@ -6,7 +6,16 @@ The "main" branch corresponds with the latest service release of Rhino.  If you 
 
 To create your own plug-in from scratch, follow the instructions below to set up projects for Windows and OSX.  If you intend your project to be cross platform, begin with the OSX project.
 
+If you already have a **Windows-only** plug-in and want to add a macOS build to it, read "Porting a Windows-only plug-in to macOS" below instead - it covers the same ground in the order you will actually hit it, and lists the handful of things in existing Windows sources that clang rejects.
+
 ## Apple OSX
+
+### Requirements
+
+* A Mac with Apple Silicon.  Rhino for Mac is **arm64 only** - Intel support was dropped - so an Intel Mac cannot build a plug-in that will load.
+* Xcode, recent enough to target the macOS SDK your Rhino was built against.
+* Rhino 9 for Mac installed.
+* `git lfs` if you also build on Windows; the Windows import libraries in `lib` are stored with Git LFS.
 
 ### Creating the OSX Bundle
 
@@ -35,6 +44,8 @@ You will need to create a “Bundle” project in Xcode.  The compiled bundle wi
 * Under “Configurations” - further to the right.  Open the “Debug” configuration drop down and Click where it says “None” on the first line under this. Select PlugInDebug.xcconfig.
 * Do the same for the release section - selecting PlugInRelease.xcconfig.
 
+`Debug.xcconfig` sets `DEVELOPMENT_TEAM` to McNeel's team ID and `CODE_SIGN_IDENTITY` to ad-hoc signing.  Override both in your own target (TARGETS > Signing & Capabilities) with your own team, or clear them.
+
 ### Adding the frameworks.
 
 The `SDK/lib` folder contains small text-based `.tbd` link stubs rather than the full framework binaries — you link against these, and Rhino provides the actual frameworks at runtime.
@@ -44,6 +55,8 @@ The `SDK/lib` folder contains small text-based `.tbd` link stubs rather than the
 * On the right, click “Frameworks and Libraries” and press the “+” button.
 * On the following dialog, click “Add Other…” and choose “Add Files”
 * Navigate to the “SDK/lib” folder and select the three stubs inside (OpenNURBS.tbd, RhCore.tbd, RhMaterialEditor.tbd).  Click Open.  They should now appear under Frameworks and Libraries.
+
+Then confirm they reached the link step: TARGETS > **Build Phases** > **Link Binary With Libraries** must list all three.  Adding a `.tbd` to the project as a file reference without adding it here is easy to do by accident, and the symptom is a link failure listing hundreds of undefined openNURBS symbols - see step 6 of the porting section below.
 
 ### Adding the source files.
 
@@ -84,6 +97,8 @@ You are now ready to start setting up your boilerplate CRhinoPlugIn class in the
     };
     static MYPLUGIN my_plug_in;
 
+Your plug-in also needs a declaration block, which exports the SDK version and the metadata Rhino shows in Options > Plug-ins.  It is the same on both platforms - see "Plug-in declaration" below, and `samples/SampleCppPlugIn.cpp` for a worked example.
+
 ### Compiling your plugin.
 
 Command-B to build.  Everything should compile.
@@ -92,14 +107,15 @@ To find the compiled RHP, Choose “Show Build Folder in Finder” from the Prod
 
 ### Getting your plugin to load into Rhino.
 
-Download Rhino 9.
-Use the TestLoadPlugin command and select your compiled bundle.
+Download Rhino 9.  Run the `TestLoadPlugin` command and select your compiled bundle.
+
+`TestLoadPlugin` is a *test* command: it is present in every build, but test commands are deliberately hidden from the command line's autocomplete list.  Type the whole name - it will not complete for you, and its absence from the dropdown does not mean it is missing.
 
 ### Debugging your plug-in
 
 By default, Rhino cannot be debugged.  However, we have included a shell script make_rhino_debuggable.sh which you should run after you download Rhino to make the bundle debuggable.  Notice that the sample xcodeproj includes this script as a RunScript action meaning that you don't actually need to run the shell command.
 
-To run Rhino when you press the "Run" button in Xcode, Edit the Scheme for the Debug configuration to change the executable to RhinoWIP.app (from the applications folder).  Rhino will now start running in the debugger.  You can alteratively attach to the Rhino process once it is running.  In both cases, your breakpoints in your C++ plug-in code should be activated and hit.
+To run Rhino when you press the "Run" button in Xcode, Edit the Scheme for the Debug configuration to change the executable to your Rhino 9 application (Rhino.app or RhinoBETA.app, from the Applications folder).  Rhino will now start running in the debugger.  You can alteratively attach to the Rhino process once it is running.  In both cases, your breakpoints in your C++ plug-in code should be activated and hit.
 
 To run the shell script, open Terminal, navigate to the repo directory and type sh make_rhino_debuggable.sh
 
@@ -174,11 +190,243 @@ Start Rhino 9 and run the **TestLoadPlugin** command, then select your compiled 
 
 Commit the new Windows files (the `.sln`, `.vcxproj`, `.vcxproj.filters`, `stdafx.h` and `stdafx.cpp`) to your repository.  The shared `.cpp` / `.hpp` and the `SDK` submodule are unchanged and remain common to both platforms.
 
+## Porting a Windows-only plug-in to macOS
+
+If you already have a Windows plug-in, you are not starting a new project.  You
+are adding a second build of the same sources to the repository you already
+have: one git repository, one `SDK` submodule, one set of `.cpp` / `.h` files,
+and a separate Xcode project alongside the existing `.vcxproj`.  Very little of
+your own code has to change - only the places where it touches MFC, or relies on
+a Microsoft compiler extension that clang does not accept.
+
+Work through these in order.
+
+### 1. Add the SDK to the repository you already have
+
+Do not create a fresh repository for the Mac build.  Branch the existing one:
+
+    cd MyWindowsPlugIn
+    git checkout -b mac-build
+    git submodule add https://github.com/mcneel/rhino_sdk_cpp.git SDK
+    git commit -m "Add Rhino SDK submodule"
+
+Then follow "Creating the OSX Bundle" above from the Xcode step onwards.  The
+bundle target belongs in this same folder, next to the `.vcxproj`, so both
+projects compile the same files.
+
+### 2. Point the Mac target at the SDK headers
+
+Xcode, asked to create a project inside an existing folder, will put the
+`.xcodeproj` in a **subfolder**.  `$(SRCROOT)` is then that subfolder - not the
+repository root - so a path that looks right relative to the repository will not
+resolve.  If your `.xcodeproj` is at `MyPlugInMac/MyPlugInMac.xcodeproj` and the
+submodule is at `SDK/`, set TARGETS > Build Settings > **Header Search Paths**,
+for **both** Debug and Release:
+
+    $(SRCROOT)/..           # so #include "SDK/inc/rhinoSdk.h" resolves
+    $(SRCROOT)/../SDK/inc   # so unadorned SDK includes resolve
+
+Keeping the `.xcodeproj` at the repository root avoids the indirection
+altogether; then the two entries are `$(SRCROOT)` and `$(SRCROOT)/SDK/inc`.
+
+### 3. Fork `stdafx.h`, not your sources
+
+Your Windows plug-in already has a `stdafx.h` full of MFC.  Guard it by platform
+rather than maintaining a second copy - the shared `.cpp` files then need no
+changes at all:
+
+```cpp
+#pragma once
+
+#if defined(_WIN32)
+
+// Existing Windows / MFC precompiled header.
+// See "The Windows precompiled header" below for the required include order.
+
+#elif defined(__APPLE__)
+
+#include "SDK/inc/rhinoSdkStdafxPreamble.h"
+#include "SDK/inc/rhinoSdk.h"
+#include "SDK/inc/RhRdkHeaders.h"
+#include "SDK/inc/rhinoSdkChecks.h"
+
+#endif
+```
+
+The preamble must be the first thing compiled in every translation unit, so
+force-include this header on the Mac target too - Build Settings > **Prefix
+Header**, or `-include` - exactly as the Windows target force-includes it with
+`/FI`.
+
+### 4. Leave the MFC-only files out of the Mac target
+
+The application object generated by the Visual Studio plug-in wizard -
+typically `MyPlugInApp.cpp`, holding a `CWinApp` derivative with
+`DECLARE_MESSAGE_MAP` / `BEGIN_MESSAGE_MAP` and `AFX_MANAGE_STATE` - is pure MFC
+and has no macOS counterpart.  Do not add it to the Mac target.  The same goes
+for `resource.h`, the `.rc` file, and anything under `res/`.
+
+What *does* belong in the Mac target is the rest of it: your `CRhinoPlugIn`
+derivative, your commands, and the declaration block described under "Plug-in
+declaration" below.  Those are cross-platform.
+
+### 5. Fix what MSVC accepts and clang does not
+
+**`BOOL OnLoadPlugIn()`.**  The SDK declares `virtual int OnLoadPlugIn()`.  On
+Windows, MFC's `BOOL` is a typedef for `int`, so overriding with `BOOL` compiles.
+On macOS `BOOL` is Objective-C's, and the override is rejected:
+
+    error: virtual function 'OnLoadPlugIn' has a different return type
+           ('BOOL' aka 'bool') than the function it overrides (return type 'int')
+
+Change the declaration and definition to `int`.  That is correct on both
+platforms and needs no `#if`.  Older Visual Studio plug-in wizard templates
+generate `BOOL` here, so most ported plug-ins will hit this.
+
+**Temporaries bound to non-const references, or having their address taken.**
+MSVC permits both as a non-conforming extension; clang does not.  Give the
+temporary a name:
+
+```cpp
+// Rejected by clang
+hash = ON_CRC32(hash, sizeof(ON_UserString), &edgeInfo.GetString());
+CMyDistanceInfo d0(radius, m_domain.Min(), edge.PointAtStart());  // ctor takes ON_3dPoint&
+
+// Accepted by both
+ON_UserString userStr = edgeInfo.GetString();
+hash = ON_CRC32(hash, sizeof(ON_UserString), &userStr);
+
+ON_3dPoint ptStart = edge.PointAtStart();
+CMyDistanceInfo d0(radius, m_domain.Min(), ptStart);
+```
+
+Where the parameter is only read, changing it to a `const&` fixes the call sites
+permanently rather than one at a time.
+
+### 6. Link the stubs - and check that they are linked
+
+Follow "Adding the frameworks" above.  If the build compiles but the link fails
+with a long list like
+
+    Undefined symbols for architecture arm64:
+      "_ON_CRC32", referenced from: ...
+      "_ON_ErrorEx", referenced from: ...
+      "ON_CreateId()", referenced from: ...
+
+then the `.tbd` stubs are in the project as file references but not in the link
+step.  Add them under TARGETS > **Build Phases** > **Link Binary With
+Libraries**.  Undefined *openNURBS* symbols almost always mean this, rather than
+anything wrong with your code.
+
+### 7. Check it loads, and check what it loads into
+
+Build, then load the bundle with `TestLoadPlugin` as described above.
+
+Be deliberate about which Rhino you test in.  A plug-in built against this SDK is
+tied to the Rhino it was built against; loading a 9.0 build into Rhino 8 is not
+something to read as a success.  Keep the `SDK` submodule and the Rhino you are
+testing with on the same major version, and note which one you used when you
+report a result.
+
+### 8. Ship one distribution per platform
+
+A Windows `.rhp` is a DLL; a macOS `.rhp` is a bundle directory.  They are
+different binaries, and a single package cannot serve both.
+
+The package manager takes the platform from the `.yak` filename suffix, and a
+package built without one is tagged `any`, meaning "runs everywhere".  An `any`
+package containing only a Windows DLL will therefore install happily on macOS
+and then fail to load, with nothing in the Rhino UI to explain why.  Build the
+two distributions explicitly, from each platform's build output:
+
+    yak build --platform win
+    yak build --platform mac
+
+and check the filenames that come out - `myplugin-1.0.0-rh9_0-win.yak` and
+`myplugin-1.0.0-rh9_0-mac.yak`.  Publish both.
+
 ## Building with CMake
 
 CMake is an alternative to the hand-built projects above: you describe the plug-in once and CMake generates an Xcode project on macOS and a Visual Studio solution on Windows from the same sources.
 
 This assumes the layout used above — your plug-in as a git repository with this SDK added as the `SDK` submodule and your shared `.cpp` / `.h` files at the top level.  On macOS the `lib` folder holds small text-based `.tbd` link stubs, so nothing extra is needed.  On Windows the import libraries in `lib` are stored with Git LFS, so run `git -C SDK lfs pull` first or the link step will fail.
+
+### Plug-in declaration
+
+Whatever the build system, a Windows `.rhp` must export the SDK version it was
+built against, or Rhino refuses it with *"Rhino version not specified."*  Add a
+declaration block to one of your `.cpp` files - it is cross-platform, and the
+same block works for the Xcode target.  `samples/SampleCppPlugIn.cpp` carries a
+complete one, with comments on what each macro is for:
+
+```cpp
+#include "SDK/inc/rhinoSdkPlugInDeclare.h"
+
+// The plug-in object must be constructed before any class derived from
+// CRhinoCommand; init_seg(lib) ensures that.
+#if defined(_MSC_VER)
+#pragma warning(push)
+#pragma warning(disable : 4073)
+#pragma init_seg(lib)
+#pragma warning(pop)
+#endif
+
+RHINO_PLUG_IN_DECLARE
+RHINO_PLUG_IN_NAME(L"MyPlugin");
+RHINO_PLUG_IN_ID(L"FC563BB1-C1D1-4529-8E7E-7B229D6F5AA4");   // same id your CRhinoPlugIn::PlugInID() returns
+RHINO_PLUG_IN_VERSION(__DATE__ "  " __TIME__)
+RHINO_PLUG_IN_DESCRIPTION(L"My plug-in");
+RHINO_PLUG_IN_DEVELOPER_ORGANIZATION(L"My Company");
+RHINO_PLUG_IN_DEVELOPER_ADDRESS(L"My Address");
+RHINO_PLUG_IN_DEVELOPER_COUNTRY(L"My Country");
+RHINO_PLUG_IN_DEVELOPER_PHONE(L"My Phone");
+RHINO_PLUG_IN_DEVELOPER_EMAIL(L"My Email");
+RHINO_PLUG_IN_DEVELOPER_WEBSITE(L"My Website");
+RHINO_PLUG_IN_UPDATE_URL(L"My Update URL");
+```
+
+Note that the SDK version is baked in: Rhino will not load a plug-in built
+against an SDK newer than the running Rhino (*"This plug-in is designed to run
+in the latest Rhino 9 Service Release"*), so keep the `SDK` submodule and your
+installed Rhino in step.
+
+### The Windows precompiled header
+
+On Windows the SDK cannot simply be force-included as a list of headers.  The preamble has to be compiled *before* the MFC and Windows headers, and `rhinoSdk.h` *after* them, and the linking pragmas come last.  Put that order in a `stdafx.h` next to your sources - the same file described in the "Adding a precompiled header" section above, with the MFC includes added - and let CMake force-include it:
+
+```cpp
+#pragma once
+
+// This plug-in is Rhino 6 (and later) ready.
+#define RHINO_V6_READY
+
+// Define this if you want to use Rhino's MFC UI classes.
+#define RHINO_SDK_MFC
+
+// Rhino SDK preamble - must be the first include in every translation unit.
+#include "SDK/inc/rhinoSdkStdafxPreamble.h"
+
+// MFC and Windows headers the SDK expects to already be present.
+#include <afxwin.h>
+#include <afxext.h>
+#include <afxdisp.h>
+#include <afxdtctl.h>
+#include <afxcmn.h>
+
+#include "SDK/inc/rhinoSdk.h"
+#include "SDK/inc/RhRdkHeaders.h"
+
+#if defined(RHINO_DEBUG_PLUGIN)
+// Now that the system headers are read, it is safe to define _DEBUG.
+#define _DEBUG
+#endif
+
+#include "SDK/inc/rhinoSdkPlugInLinkingPragmas.h"
+```
+
+macOS does not need this file; there the four SDK headers are force-included directly.
+
+### CMakeLists.txt
 
 Drop this `CMakeLists.txt` at the top of your plug-in folder, renaming `MyPlugin` and the source files to match:
 
@@ -192,24 +440,19 @@ add_library(MyPlugin MODULE MyPlugin.cpp MyPlugin.h)
 target_include_directories(MyPlugin PRIVATE "${CMAKE_CURRENT_SOURCE_DIR}")
 set_target_properties(MyPlugin PROPERTIES CXX_STANDARD 14 CXX_STANDARD_REQUIRED ON)
 
-# The SDK preamble (and the headers after it) must be compiled first in every
-# translation unit.  Force-include them so the shared source stays untouched.
-# (A forced include is used rather than target_precompile_headers, which
-# conflicts with the Objective-C++ mode required below under the Xcode generator.)
-set(RHINO_FORCED_HEADERS
-    "${RHINO_SDK}/inc/rhinoSdkStdafxPreamble.h"
-    "${RHINO_SDK}/inc/rhinoSdk.h"
-    "${RHINO_SDK}/inc/RhRdkHeaders.h"
-    "${RHINO_SDK}/inc/rhinoSdkChecks.h")
-foreach(header ${RHINO_FORCED_HEADERS})
-    if(MSVC)
-        target_compile_options(MyPlugin PRIVATE "/FI${header}")
-    else()
-        target_compile_options(MyPlugin PRIVATE "-include${header}")
-    endif()
-endforeach()
-
 if(APPLE)
+    # The SDK preamble (and the headers after it) must be compiled first in every
+    # translation unit.  Force-include them so the shared source stays untouched.
+    # (A forced include is used rather than target_precompile_headers, which
+    # conflicts with the Objective-C++ mode required below under the Xcode generator.)
+    foreach(header
+            "${RHINO_SDK}/inc/rhinoSdkStdafxPreamble.h"
+            "${RHINO_SDK}/inc/rhinoSdk.h"
+            "${RHINO_SDK}/inc/RhRdkHeaders.h"
+            "${RHINO_SDK}/inc/rhinoSdkChecks.h")
+        target_compile_options(MyPlugin PRIVATE "-include${header}")
+    endforeach()
+
     target_compile_options(MyPlugin PRIVATE -x objective-c++ -fobjc-arc -fno-operator-names)
     target_compile_definitions(MyPlugin PRIVATE
         ON_COMPILER_CLANG ON_RUNTIME_APPLE RHINO_APPLE=1 _GNU_SOURCE MY_ZCALLOC
@@ -224,13 +467,32 @@ if(APPLE)
 endif()
 
 if(WIN32)
+    # CMake's default MSVC flags define WIN32.  Rhino for Windows is 64-bit only
+    # and the SDK checks insist on WIN64 with WIN32 absent.
+    string(REPLACE "/DWIN32" "" CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS}")
+
+    # Rhino plug-ins always link the *release* CRT and MFC, even when built with
+    # debugging information - a plug-in built against the debug CRT will not
+    # load.  RHINO_DEBUG_PLUGIN takes the place of _DEBUG for a debuggable build.
+    set_target_properties(MyPlugin PROPERTIES MSVC_RUNTIME_LIBRARY "MultiThreadedDLL")
+    target_compile_definitions(MyPlugin PRIVATE $<$<CONFIG:Debug>:RHINO_DEBUG_PLUGIN>)
+
     set(CMAKE_MFC_FLAG 2)  # MFC in a shared DLL
-    target_compile_definitions(MyPlugin PRIVATE _AFXDLL _UNICODE UNICODE RHINO_LIB_DIR="SDK/lib")
+
+    # RHINO_LIB_DIR is pasted into #pragma comment(lib, ...) instructions, which
+    # the linker resolves relative to the build directory - so it must be an
+    # absolute path, not "SDK/lib".
+    target_compile_definitions(MyPlugin PRIVATE
+        WIN64 _AFXDLL _UNICODE UNICODE RHINO_LIB_DIR="${RHINO_SDK}/lib")
+
+    # Force-include the precompiled header above rather than the SDK headers.
+    target_compile_options(MyPlugin PRIVATE "/FI${CMAKE_CURRENT_SOURCE_DIR}/stdafx.h")
+
     set_target_properties(MyPlugin PROPERTIES SUFFIX ".rhp")
 endif()
 ```
 
-Then configure and build — an Xcode project on macOS, a Visual Studio (x64) solution on Windows:
+### Configuring and building
 
 ```
 # macOS (Rhino for Mac is arm64-only; the CMakeLists pins this)
@@ -243,7 +505,11 @@ cmake -G "Visual Studio 18 2026" -A x64 -S . -B build
 cmake --build build --config Debug
 ```
 
-The compiled `.rhp` is written under `build/`; load and debug it as in the platform sections above.  The macOS path is runtime-verified; the Windows CMake path has not yet been test-built.
+The `Visual Studio 18 2026` generator needs a recent CMake - older releases (3.24, for instance) do not know it and will list only up to `Visual Studio 17 2022`.  If `cmake --version` is too old, use the copy that ships with Visual Studio, under `Common7\IDE\CommonExtensions\Microsoft\CMake\CMake\bin`.
+
+The compiled `.rhp` is written under `build/` (for example `build\Debug\MyPlugin.rhp`); load and debug it as in the platform sections above.
+
+Both platform paths are runtime-verified: the plug-in built this way loads into Rhino and its commands run - on macOS with `cmake -G Xcode`, and on Windows with `cmake -G "Visual Studio 18 2026"` (Debug and Release, Rhino 9.0.26237).
 
 ## Maintaining the macOS link stubs
 
