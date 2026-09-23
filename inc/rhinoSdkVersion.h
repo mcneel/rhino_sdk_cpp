@@ -149,11 +149,11 @@ RHINO_VERSION_BRANCH
 // builds.
 #define RHINO_WINDOWS_REGISTRY_SVN_BRANCH L"trunk"
 
-// Apple OS X SDK version number
-// When the Rhino SDK is frozen, this number will be hard
-// coded.  Until then, it will increase each time the
-// build system increments the build version numbers.
-#define RHINO_SDK_OSX_VERSION RHINO_SDK_SERVICE_RELEASE
+// Apple OS X SDK version number.  The Mac SDK is now frozen, so this is the
+// hard coded number rhino 421c95a76d0 froze it to.  This file was generated
+// from an 18 Aug 2026 build, before that, and carried the old per-build value,
+// which Rhino 9 refuses.  The next generation pass produces this same line.
+#define RHINO_SDK_OSX_VERSION ON_VERSION_NUMBER_CTOR(9, 0, 2026, 9, 12, 1)
 #define RHINO_SDK_LINUX_VERSION RHINO_SDK_SERVICE_RELEASE
 
 // Windows SDK version number.
