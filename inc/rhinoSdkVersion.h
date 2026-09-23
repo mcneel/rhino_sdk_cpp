@@ -49,7 +49,10 @@
 
 #define OPENNURBS_VERSION_DEFINITION
 
-#if defined(RHINO_CORE_COMPONENT) || defined(ON_RUNTIME_APPLE) || defined(ON_RUNTIME_LINUX)
+// The Apple and Linux terms stand in for RHINO_CORE_COMPONENT on build systems
+// that do not set it.  A third-party plug-in compiles on those runtimes too, so
+// the public SDK's own macro has to veto them.
+#if defined(RHINO_CORE_COMPONENT) || ((defined(ON_RUNTIME_APPLE) || defined(ON_RUNTIME_LINUX)) && !defined(RHINO_THIRD_PARTY_OSX_PLUGIN_COMPILE))
 // Build system path to opennurbs_version.h 
 #include "../../../opennurbs/opennurbs_version.h"
 #else

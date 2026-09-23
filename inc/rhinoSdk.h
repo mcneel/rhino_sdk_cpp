@@ -49,8 +49,10 @@
 #endif
 
 #if !defined(RHINO_WIP_INC_)
-#if !defined(OPENNURBS_INC_)
+#if !defined(OPENNURBS_INC_) || defined(RHINO_THIRD_PARTY_OSX_PLUGIN_COMPILE)
 // 3rd party Rhino SDK plug-in developer path to rhino_wip.h
+// OPENNURBS_INC_ on its own only tests include order, so a plug-in that
+// includes opennurbs.h first would take the internal path.
 #include "../rhino_wip.h"
 #else
 // internal McNeel build path to rhino_wip.h

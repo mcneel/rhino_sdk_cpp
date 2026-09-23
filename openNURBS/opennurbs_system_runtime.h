@@ -102,10 +102,10 @@
 #define ON_RUNTIME_APPLE_MACOS
 #endif
 
-#if !defined(RHINO_CORE_COMPONENT)
+#if !defined(RHINO_CORE_COMPONENT) && !defined(RHINO_THIRD_PARTY_OSX_PLUGIN_COMPILE)
 // Apple:
-//   Defines RHINO_CORE_COMPONENT here.
-//   If we publish an Apple C++ pubic SDK, this will need to be adjusted.
+//   Defines RHINO_CORE_COMPONENT here, except when the public C++ SDK's
+//   xcconfigs are in use - a third-party plug-in is not a core component.
 // Windows:
 //   uses the property sheet RhinoProjectPropertySheets/Rhino.Cpp.common.props
 //   Some build products in Windows are not "core components"
