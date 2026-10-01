@@ -4,11 +4,11 @@ This repository contains a complete C++ SDK for Rhino, and is intended to be use
 
 The "main" branch corresponds with the latest service release of Rhino.  If you want to target a specific service release, use the corresponding branch.
 
-To create your own plug-in from scratch, follow the instructions below to set up projects for Windows and OSX.  If you intend your project to be cross platform, begin with the OSX project.
+To create your own plug-in from scratch, follow the instructions below to set up projects for Windows and macOS.  If you intend your project to be cross platform, begin with the macOS project.
 
-## Apple OSX
+## Apple macOS
 
-### Creating the OSX Bundle
+### Creating the macOS Bundle
 
 You will need to create a “Bundle” project in Xcode.  The compiled bundle will become your RHP - but it is actually set of folders much like a package.
 
@@ -107,9 +107,9 @@ To run the shell script, open Terminal, navigate to the repo directory and type 
 
 ## Microsoft Windows
 
-These instructions build a Windows plug-in project **around the folder you already created in the OSX steps**.  They assume that folder already exists as a git repository, that this SDK is present as the `SDK` submodule, and that your shared `.cpp` / `.hpp` source files are already in place.  The same source files and the same submodule are reused - only the Visual Studio project files are new.  Use Visual Studio 2026.
+These instructions build a Windows plug-in project **around the folder you already created in the macOS steps**.  They assume that folder already exists as a git repository, that this SDK is present as the `SDK` submodule, and that your shared `.cpp` / `.hpp` source files are already in place.  The same source files and the same submodule are reused - only the Visual Studio project files are new.  Use Visual Studio 2026.
 
-If you are starting on Windows first, complete the "Creating the OSX Bundle" steps up to and including adding the submodule and creating the source files (you can do the git and file steps on Windows - Xcode is not required), then continue here.
+If you are starting on Windows first, complete the "Creating the macOS Bundle" steps up to and including adding the submodule and creating the source files (you can do the git and file steps on Windows - Xcode is not required), then continue here.
 
 ### Prerequisites
 
