@@ -66,7 +66,7 @@
 			#define SS_INCLUDE_TEX_MAT_ON               L"include-texmat-on" // OBSOLETE; Not used.
 
 			// Early post effects.
-			#define SS_PEP_GLARE                        L"glare"
+			#define SS_PEP_GLARE                        L"glare" // OBSOLETE; Glare was removed in Rhino 7.
 			#define SS_PEP_GLARE_GAIN                     L"gain"
 			#define SS_PEP_GLARE_WHITE_POINT_BOUND        L"white-point-bound"
 			#define SS_PEP_GLARE_AREA_MULTIPLIER          L"area-multiplier"

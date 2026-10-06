@@ -303,6 +303,96 @@ void ON_SortUnsignedIntArray(
         size_t nel
         );
 
+
+/*
+Description:
+  A (key, index) pair for the distribution sorts below. The point of sorting
+  these rather than the values themselves is that the values are usually much
+  bigger than 16 bytes, and a distribution sort moves every element on every
+  pass.
+*/
+class ON_CLASS ON_SortKeyIndex
+{
+public:
+  ON__UINT64   m_key = 0;
+  unsigned int m_index = 0;
+};
+
+/*
+Description:
+  Sort (key, index) pairs by key with a least-significant-digit radix sort,
+  one byte per pass. O(n) in the number of pairs, with no comparisons.
+
+  Use this when the keys are wide - a Morton code, a hash, a packed composite -
+  and there is no small dense range to count over. For keys that are already a
+  small dense range of integers, ON_CountingSortIndices() is one pass instead of
+  eight and will be quicker.
+Parameters:
+  a - [in/out]
+    The pairs to sort. On return this array holds the sorted result if
+    key_byte_count is even, and is scratch if it is odd - so use the returned
+    pointer rather than assuming.
+  b - [in/out]
+    Scratch, at least as long as a[]. Contents on return are unspecified.
+  count - [in]
+    Number of pairs in a[] and capacity of b[].
+  key_byte_count - [in]
+    How many low bytes of the key to sort on, 1 to 8. Passing fewer than the
+    keys actually use will silently sort on a prefix, so pass 8 unless the key
+    range is known - for example 3 for a 24 bit key, or 5 for Morton codes of
+    quantized 13 bit coordinates.
+Returns:
+  Pointer to whichever of a[] or b[] holds the sorted pairs, or nullptr if the
+  parameters are invalid. Nothing is allocated.
+*/
+ON_DECL
+ON_SortKeyIndex* ON_RadixSortKeyIndex(
+  ON_SortKeyIndex* a,
+  ON_SortKeyIndex* b,
+  size_t count,
+  unsigned int key_byte_count
+  );
+
+/*
+Description:
+  Stable counting sort of an index array by an unsigned integer key drawn from a
+  small dense range. One counting pass and one scatter pass, so O(n + key_range).
+
+  Being stable, calling this repeatedly from the least significant key to the
+  most significant sorts by a composite key without ever comparing anything -
+  which is how to order by, say, (vertex, face) without packing the two into one
+  wide key first.
+Parameters:
+  keys - [in]
+    keys[i] is the key of item i. Every value must be < key_range.
+  key_range - [in]
+    One more than the largest key. The counting array is this long, so this
+    wants to be comparable to count, not vastly larger.
+  in_order - [in]
+    The order to sort. Pass nullptr to start from 0, 1, 2, ... which is what the
+    first (least significant) pass wants; pass the previous pass's output for
+    later passes.
+  out_order - [out]
+    Receives the sorted order. Must be at least count long, and must not alias
+    in_order.
+  count - [in]
+    Number of entries in in_order[] and out_order[].
+  counts - [in/out]
+    Scratch, at least key_range + 1 long. Contents on return are unspecified.
+Returns:
+  True if the order was written. False if a parameter is invalid or a key is out
+  of range, in which case out_order[] is not usable. Nothing is allocated.
+*/
+ON_DECL
+bool ON_CountingSortIndices(
+  const unsigned int* keys,
+  unsigned int key_range,
+  const unsigned int* in_order,
+  unsigned int* out_order,
+  size_t count,
+  unsigned int* counts
+  );
+
 /*
 Description:
   Sort an array of unsigned 64-bit ints in place.

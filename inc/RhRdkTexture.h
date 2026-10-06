@@ -128,7 +128,7 @@ public: // Local mapping support.
 	RDK_DEPRECATED virtual void SetMappingChannel(int iMappingChannel, eChangeContext cc);
 	virtual void SetMappingChannel(int iMappingChannel);
 
-	RDK_DEPRECATED enum eWrapType { clamped=0, repeating=1, force32bit_wt = 0xFFFFFFFF };
+	enum RDK_DEPRECATED eWrapType { clamped=0, repeating=1, force32bit_wt = 0xFFFFFFFF };
 	RDK_DEPRECATED virtual void SetWrapType(eWrapType wt, eChangeContext cc);
 
 	enum class WrapTypes : unsigned int
@@ -139,7 +139,7 @@ public: // Local mapping support.
 	virtual WrapTypes WrapType(void) const;
 	virtual void SetWrapType(WrapTypes wt);
 
-	RDK_DEPRECATED enum eProjectionMode { pm_unset=-1, mapping_channel=0, wcs= 2, emap=3, wcs_box= 4, screen=5, force32=0xFFFFFFFF };
+	enum RDK_DEPRECATED eProjectionMode { pm_unset=-1, mapping_channel=0, wcs= 2, emap=3, wcs_box= 4, screen=5, force32=0xFFFFFFFF };
 	RDK_DEPRECATED virtual void SetProjectionMode(eProjectionMode pm, eChangeContext cc);
 
 	enum class ProjectionModes : int

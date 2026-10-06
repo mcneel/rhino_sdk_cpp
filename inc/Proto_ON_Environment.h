@@ -14,7 +14,7 @@ public:
 
 	bool operator == (const CRhRdkSimulatedEnvironment& src) const;
 
-	RDK_DEPRECATED enum eBackgroundProjection { planar, spherical, emap, box, automatic, lightprobe, cubemap, vertical_cross_cubemap, horizontal_cross_cubemap, hemispherical, force32 = 0xFFFFFFFF };
+	enum RDK_DEPRECATED eBackgroundProjection { planar, spherical, emap, box, automatic, lightprobe, cubemap, vertical_cross_cubemap, horizontal_cross_cubemap, hemispherical, force32 = 0xFFFFFFFF };
 
 	enum class BackgroundProjections : unsigned int
 	{

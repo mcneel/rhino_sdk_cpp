@@ -65,6 +65,8 @@ enum GUMBALL_MODE
   gb_mode_uvn_north,
   gb_mode_uvn_south,
   gb_mode_uvn_normal,
+
+  gb_mode_uvn_extraordinary,
 };
 
 /*
@@ -318,6 +320,58 @@ public:
 
   /*
   Description:
+    Extraordinary SubD vertices have no east/west/north/south directions.
+    Instead the frame carries one direction per edge coming into the vertex.
+    Setting a non empty list of directions puts the frame in extraordinary
+    mode. Setting an empty list takes it back out.
+  Parameters:
+    aDirections - [in]
+      One direction per edge, in vertex edge order.
+  Returns:
+    True if the frame is in extraordinary mode when this returns.
+  */
+  bool SetUvnExtraordinaryDirections(const ON_SimpleArray<ON_3dVector>& aDirections);
+
+  /*
+  Returns:
+    True if this frame carries per edge directions for an extraordinary
+    SubD vertex instead of east/west/north/south directions.
+  */
+  bool IsUvnExtraordinary() const;
+
+  /*
+  Returns:
+    Number of extraordinary directions, zero when the frame is not in
+    extraordinary mode.
+  */
+  int UvnExtraordinaryDirectionCount() const;
+
+  /*
+  Parameters:
+    index - [in]
+      Index into the extraordinary directions.
+    vOut - [out]
+  Returns:
+    True if index is in range and the direction is valid.
+  */
+  bool TryGetUvnExtraordinaryDirection(int index, ON_3dVector& vOut) const;
+
+  /*
+  Description:
+    The extraordinary direction the user is currently dragging or hovering.
+    Drawing a frame in gb_mode_uvn_extraordinary uses this to know which arrow
+    to show or highlight. CRhinoGumballFrame::DragTo() sets it on the frame it
+    returns, so a dragged frame already knows. Setting the extraordinary
+    directions clears it back to -1.
+  Parameters:
+    index - [in] -1 for none.
+  */
+  void SetActiveUvnExtraordinaryDirection(int index);
+
+  int ActiveUvnExtraordinaryDirection() const;
+
+  /*
+  Description:
     Get drag to point from picking information when
     the world_pick_point is not on the gumball.  This
     typically happens when a GetPoint or grip drag
@@ -352,6 +406,10 @@ public:
     drag_to_point - [in]
     dragged_gumball_frame - [out]
     drag_line - [out]
+  Remarks:
+    gb_mode_uvn_extraordinary drags the arrow this frame's
+    ActiveUvnExtraordinaryDirection() names, and dragged_gumball_frame comes
+    back naming the same one, so drawing it shows that arrow.
   */
   bool DragTo( 
           GUMBALL_MODE gumball_mode,
@@ -407,6 +465,8 @@ public:
 
   const ON_3dPoint& Center() const;
 
+  // Handles the east/west/north/south/normal modes. gb_mode_uvn_extraordinary
+  // needs an arrow index, so use TryGetUvnExtraordinaryDirection() for that.
   bool TryGetUvnLine(GUMBALL_MODE uvnMode, ON_Line& lOut) const;
 
   ON_Plane m_plane;
@@ -617,6 +677,12 @@ public:
   // If m_gumball_mode is gb_mode_nothing, then
   // the pick missed.
   GUMBALL_MODE m_gumball_mode;
+
+  // When m_gumball_mode is gb_mode_uvn_extraordinary, this is the index of
+  // the picked arrow in the gumball frame's extraordinary directions.
+  // Otherwise it is -1.
+  int m_uvn_extraordinary_index;
+
   double m_pick_depth;
   double m_pick_distance;
   // point to use when CRhinoGumball::m_appearance.m_bSnappy is false;
@@ -737,6 +803,9 @@ public:
     drag_line - [in] line returned by m_frame.Drag(...)
     start_frame - [in] starting point for the gumball
     highlight_mode - [in] indicates which gumball element to draw highlighted
+  Remarks:
+    When gumball_mode or highlight_mode is gb_mode_uvn_extraordinary, the arrow
+    drawn or highlighted is m_frame.ActiveUvnExtraordinaryDirection().
   */
   void DrawDynamicGumball(CRhinoDisplayPipeline& dp, 
                           GUMBALL_MODE gumball_mode, 
@@ -751,6 +820,9 @@ public:
   Parameters:
     dp - [in]
     highlight_mode - [in] indicates which gumball element to draw highlighted
+  Remarks:
+    When highlight_mode is gb_mode_uvn_extraordinary, the arrow highlighted is
+    m_frame.ActiveUvnExtraordinaryDirection().
   */
   void DrawStaticGumball(CRhinoDisplayPipeline& dp, GUMBALL_MODE highlight_mode = gb_mode_nothing) const;
 

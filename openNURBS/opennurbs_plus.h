@@ -1711,6 +1711,54 @@ private:
   class ON__SurfaceTreeMem* m__p; 
 };
 
+/*
+Description:
+  Test a surface parameter against the active (trimmed) region of a brep face.
+  This is the test the ON_BrepFace flavors of ON_RayShooter::Shoot() use.
+Parameters:
+  face - [in]
+  u - [in]
+  v - [in]
+    Surface parameters to test.
+Returns:
+  True if (u,v) is inside the face's trimming loops or on one of them.
+  True for an untrimmed face.  False if face is null.
+Remarks:
+  The trimming test lives in TL.  When TL is not available this returns true,
+  which is how Rhino 8 and earlier treated every brep face.
+*/
+ON_DECL
+bool ON_RayHitIsOnFace(
+  const class ON_BrepFace* face,
+  double u,
+  double v
+  );
+
+/*
+Description:
+  Signature of the optional callback ON_RayShooter uses to accept or reject a
+  candidate hit.  Use it to test a hit against something the surface tree does
+  not know about, such as a brep face's trimming loops.
+Parameters:
+  snode_root - [in]
+    The surface tree node that was passed to ON_RayShooter::Shoot().  Use it
+    to work out which surface the candidate hit is on.
+  u - [in]
+  v - [in]
+    Surface parameters of the candidate hit.
+  context - [in]
+    The value of ON_RayShooter::m_hit_filter_context.
+Returns:
+  True to accept the hit.  False to reject it and keep looking further along
+  the ray.
+*/
+typedef bool (*ON_RAY_HIT_FILTER)(
+  const class ON_SurfaceTreeNode* snode_root,
+  double u,
+  double v,
+  void* context
+  );
+
 class ON_CLASS ON_RayShooter
 {
 public:
@@ -1811,6 +1859,53 @@ public:
     ON_X_EVENT& hit
     );
 
+  /*
+  Description:
+    Shoot a ray at a brep face or collection of brep faces.  Unlike the
+    ON_Surface and ON_SurfaceTreeNode flavors above, these honor trimming:
+    a hit on the part of the underlying surface that the face's trimming
+    loops throw away is skipped and the ray keeps going.
+  Parameters:
+    P - [in] start point
+    D - [in] direction of infinite ray
+    face - [in]
+    face_list - [in]
+      Faces with no surface tree are ignored.
+    hit - [in/out]
+      If hit.m_type = ON_X_EVENT::csx_point and 0.0 < hit.m_a[0], then a new
+      hit will be returned only if it is closer to the start of the ray.
+  Returns:
+    True if the ray hits a face.  When true, m_hit_face is the face that was
+    hit.
+  Remarks:
+    These install their own m_hit_filter for the duration of the call.  A
+    filter set by the caller is applied in addition to the trimming test, not
+    replaced by it.
+    Rhino 8 and earlier ignored trimming.  Pass the face's SurfaceTree() to
+    one of the ON_SurfaceTreeNode flavors above to get the old behavior.
+  */
+  bool Shoot(
+    const ON_3dPoint& P,
+    const ON_3dVector& D,
+    const class ON_BrepFace* face,
+    ON_X_EVENT& hit
+    );
+
+  bool Shoot(
+    const ON_3dPoint& P,
+    const ON_3dVector& D,
+    const ON_SimpleArray<const class ON_BrepFace*>& face_list,
+    ON_X_EVENT& hit
+    );
+
+  bool Shoot(
+    ON_3dPoint P,
+    ON_3dVector D,
+    int face_count,
+    const class ON_BrepFace* const * face_list,
+    ON_X_EVENT& hit
+    );
+
   ////////////////////////////////////////////////////////////
   //
   // For expert users ...
@@ -1838,6 +1933,23 @@ public:
   // before an intersection is considered a "hit".  
   // The default is zero.
   double m_min_travel_distance;
+
+  // Optional filter used to accept or reject candidate hits.  When m_hit_filter
+  // is null, which is the default, every hit on the underlying surface is
+  // accepted.  A rejected hit does not end the search - the ray keeps going.
+  ON_RAY_HIT_FILTER m_hit_filter;
+
+  // Passed to m_hit_filter as its "context" argument.
+  void* m_hit_filter_context;
+
+  // Set by Shoot() to the element of its snode_list that was hit, or to null
+  // when nothing was hit.  Saves callers from keeping a map of surface tree
+  // serial numbers to surfaces.
+  const ON_SurfaceTreeNode* m_hit_snode_root;
+
+  // Set by the ON_BrepFace flavors of Shoot() to the face that was hit, or to
+  // null when nothing was hit.  The other flavors always set this to null.
+  const class ON_BrepFace* m_hit_face;
 
   // Workspace for holding ray information.
   ON_CurveTree m_curve_tree;
@@ -2192,8 +2304,16 @@ public:
                     double overlap_tolerance = 0.0) const;
 
   // fast and sloppy
-  int IntersectMesh(const class ON_MeshTreeNode* mnodeB, 
-                    ON_SimpleArray< ON_Line > & lines 
+  int IntersectMesh(const class ON_MeshTreeNode* mnodeB,
+                    ON_SimpleArray< ON_Line > & lines
+                    ) const;
+
+  // fast and sloppy, with mnodeB's mesh mapped through xformB into this tree's
+  // space. Neither mesh nor tree is modified, so one tree per mesh serves any
+  // number of placements. Output lines are in this tree's space.
+  int IntersectMesh(const class ON_MeshTreeNode* mnodeB,
+                    const ON_Xform& xformB,
+                    ON_SimpleArray< ON_Line > & lines
                     ) const;
 
   /*
@@ -2346,6 +2466,39 @@ bool ON_MeshMeshIntersect(const ON_Mesh* meshA,
                           double intersection_tolerance = 0.0, 
                           double overlap_tolerance = 0.0,
                           bool bDebug = false);
+
+// Exact classification of a transform - every test is exact equality, so the
+// cheaper kinds are pure fast paths with identical results. Ordered by generality:
+// anything past Translation needs a computed inverse.
+enum class ON_XformKind : unsigned char
+{
+  Identity = 0,
+  Translation = 1,   // upper 3x3 is the identity; any translation
+  Affine = 2,        // bottom row is (0,0,0,1)
+  Projective = 3,
+};
+
+ON_DECL ON_XformKind ON_ClassifyXform(const ON_Xform& xform);
+
+ON_DECL
+// Axis-aligned box of the transformed box: exact for affine transforms without
+// forming corners, corners only for a projective transform. The same box map the
+// transformed mesh/mesh intersection uses for its prune.
+void ON_XformBoundingBox(const ON_Xform& xform,
+  const ON_BoundingBox& bbox,
+  ON_BoundingBox& xformed_bbox);
+
+ON_DECL
+// Quickly intersects meshA with the image of meshB under xformB. Ignores overlaps
+// and near misses - the transformed twin of ON_Mesh::IntersectMesh's fast overload.
+// Neither mesh nor its mesh tree is modified, so one tree per mesh serves any number
+// of placements: for meshes placed by world transforms XA and XB, pass
+// XA.Inverse()*XB and map the output lines (returned in meshA's space) by XA.
+// Both meshes get a mesh tree on demand. Returns the number of lines appended.
+int ON_IntersectMeshMeshXform(const ON_Mesh* meshA,
+  const ON_Mesh* meshB,
+  const ON_Xform& xformB,
+  ON_SimpleArray<ON_Line>& lines);
 
 // Finds intersections between a mesh and a semi-infinite, oriented ray.
 // Inputs:

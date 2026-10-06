@@ -824,6 +824,19 @@ public:
   bool CrosshairsAlignedToScreen() const;
   void SetCrosshairsAlignedToScreen(bool alignToScreen);
 
+  // The language used by the Help system (Help panel, F1 context help and the
+  // online help web site). This can be independent of m_language_identifier,
+  // which is the language used by the user interface.
+  // Returns a Windows LCID, or 0 (the default) which means "use the same
+  // language as the user interface."
+  unsigned int HelpLanguageIdentifier() const;
+  void SetHelpLanguageIdentifier(unsigned int languageIdentifier);
+
+  // The LCID the Help system should actually use. This is
+  // HelpLanguageIdentifier() when it is non-zero, otherwise
+  // m_language_identifier. Never returns 0.
+  unsigned int EffectiveHelpLanguageIdentifier() const;
+
 // TODO: should these be included?  Used in V 2.0
   bool m_show_viewport_title;       // viewport name in top left cornner
   bool m_main_window_title;         // main frame window title
@@ -963,6 +976,13 @@ public:
 
   bool RemoveDotFromRhlFiles() const;
   void RemoveDotFromRhlFiles(bool on);
+
+  // https://mcneel.myjetbrains.com/youtrack/issue/RH-98515
+  // When true, the Export command seeds the file dialog with the model's name in the last
+  // used export folder, made unique with a number suffix if that file already exists.
+  // When false, the File name field starts out empty, which is what Rhino 8 did.
+  bool PrefillExportFileName() const;
+  void SetPrefillExportFileName(bool on);
 
   static bool HatchPatternsFolder(ON_wString& hatch_pattern_folder);
 
@@ -1154,10 +1174,8 @@ public:
   
   // Material persistence
 
-  // If true, the "Save" command will save every material
-  // including the ones that are not used by any object
-  // or layer.
-  bool m_bSaveUnreferencedMaterials;
+  // DEPRECATED - unused materials are never saved. This value is ignored.
+  bool m_bSaveUnreferencedMaterials; //DEPRECATED
 
   // DEPRECATED - materials are no longer shared in Rhino.  This value will always be false.
   bool m_bShareMaterials; //DEPRECATED
@@ -2327,6 +2345,9 @@ public:
   void LoadProfile(CRhinoProfileContext& pc); // load from registry
   void SaveProfile( CRhinoProfileContext& ) const; // save in registry
   void Defaults();
+  bool AllowCandidateDrag() const;
+  void SetAllowCandidateDrag(bool bAllow);
+
   static const CRhinoAppChooseOneObjectSettings Default;
   // Choose One Object dialog settings
   bool m_bFollowCursor;
@@ -2351,7 +2372,7 @@ public:
   bool m_bShowObjectTypeDetails;
 
 private:
-  ON__UINT_PTR m_private = 0;
+  class CRhChooseOneObjectSettingsPrivate* m_private = nullptr;
 };
 ///////////////////////////////////////////////////////////////////////////////
 //
@@ -3609,6 +3630,14 @@ public:
 
   bool AutoHideGuides() const;
   void SetAutoHideGuides(bool bEnable);
+
+  // Description:
+  //   When enabled, a click and drag that starts on top of an object starts a
+  //   window/crossing selection instead of dragging the object, the same as
+  //   holding down the Alt key. Grip dragging and gumball dragging are not
+  //   affected, and a click that does not drag still selects normally.
+  bool DragStartsWindowSelection() const;
+  void SetDragStartsWindowSelection(bool bEnable);
 
   // For internal use only
   class CRhAppSettingsData* Private() const;

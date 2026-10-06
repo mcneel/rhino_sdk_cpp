@@ -8,7 +8,7 @@
 	This interface is deprecated in favor of CRhRdkRenderWindowMouseEventWatcher.
 
 */
-RDK_DEPRECATED class RHRDK_SDK CRhRdkRenderWindowEventSink : public CRhRdkExtension
+RDK_DEPRECATED_CLASS class RHRDK_SDK CRhRdkRenderWindowEventSink : public CRhRdkExtension
 {
 public:
 	virtual UUID InterfaceId(void) const final override;

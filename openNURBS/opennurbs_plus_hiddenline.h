@@ -267,7 +267,7 @@ public:
 	int AddObjectAndPlanes(std::shared_ptr<const ON_Geometry> shr_geom_ptr, const ON_Xform* xform, ON_UUID uuid, ON__UINT_PTR id,
 	                       bool occluding_sections, const ON_SimpleArray<ON__UINT_PTR>& active_clip_ids);
 
-	// m_object is the array of objects that that have been added and will be used in the Draw() operation.
+	// m_object is the array of objects that have been added and will be used in the Draw() operation.
 	const ON_SimpleArray<const class ON_HLD_Object*>&	m_object;
 
   /*

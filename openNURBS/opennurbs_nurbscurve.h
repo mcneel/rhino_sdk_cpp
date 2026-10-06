@@ -259,6 +259,22 @@ public:
 
   // virtual ON_Geometry override
   bool IsMorphable() const override;
+
+  // virtual ON_Curve override
+  bool GetLength(
+    double* length,               // length returned here
+    double fractional_tolerance = 1.0e-8,
+    const ON_Interval* sub_domain = nullptr
+  ) const override;
+
+  // virtual ON_Curve override
+  bool GetLocalClosestPoint( 
+    const ON_3dPoint& test_point,
+    double seed_parameter,
+    double* t,
+    const ON_Interval* sub_domain = 0
+  ) const override;
+
 #endif
 
   /////////////////////////////////////////////////////////////////

@@ -1002,7 +1002,7 @@ private:
   bool m_bModelSpaceAnnotationScaling = true;
   bool m_bLayoutSpaceAnnotationScaling = true;
 
-  bool m_bHatchScaling;
+  bool m_bHatchScaling = true;
 private:
   unsigned char m_reserved_2;
   unsigned char m_reserved_3;

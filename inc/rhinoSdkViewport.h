@@ -509,6 +509,26 @@ public:
 	  int delay = 10
 	  );
 
+  /*
+  Description:
+    Same as above, with control over the universal construction plane.
+  Parameters:
+    bSetUniversalPlane - [in] If true, and universal construction plane mode is enabled,
+        then the restored construction plane is set in every model view, the same way the
+        CPlane command sets one. The overload without this parameter passes false.
+  */
+  bool RestoreNamedView(
+	  const ON_3dmView& view,
+	  CRhinoDoc* pDoc,
+	  bool bAspectRatio,
+	  bool bAnimate,
+	  bool bConstantSpeed,
+	  int frames,
+	  double units_per_frame,
+	  int delay,
+	  bool bSetUniversalPlane
+	  );
+
   // viewport target point
   ON_3dPoint Target() const;
 
@@ -1232,6 +1252,13 @@ public:
     true if the transformations are set.
   */
   bool UpdateTransforms( BOOL32 bForceUpdate = false );
+
+  /*
+  Description:
+    Returns the lens length of this viewport the last time it was using
+    perspective projection in this session.
+  */
+  double LastLensLength() const;
 
 public:
   // pretend these are private and you'll be happier.

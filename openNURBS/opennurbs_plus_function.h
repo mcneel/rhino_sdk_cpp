@@ -393,6 +393,21 @@ typedef bool(*ON_PLUS_FUNCTION_Brep_IsPointInsideHelper)(
 
 ////////////////////////////////////////////////////////////////////////
 //
+// Used by ON_RayHitIsOnFace()
+//
+// 27 Aug 2026 Dale Fugier, https://mcneel.myjetbrains.com/youtrack/issue/RH-13351
+// Returns 0 when (u,v) is outside the face's trimming loops, 1 when it is
+// inside them and 2 when it is on one of them.
+//
+typedef int(*ON_PLUS_FUNCTION_Brep_PointIsOnFace)(
+	const ON_Brep&,
+	int,
+	double,
+	double
+	);
+
+////////////////////////////////////////////////////////////////////////
+//
 // Used by ON_BrepFace::GetSilhouette()
 //
 typedef bool(*ON_PLUS_FUNCTION_BrepFace_Silhouette)(
@@ -896,6 +911,38 @@ typedef bool (*ON_PLUS_FUNCTION_OldMeshBooleansPickTwoSides)(
 
 ////////////////////////////////////////////////////////////////////////
 //
+// Used by ON_NurbsCurve::GetLength.
+//
+typedef bool (*ON_PLUS_FUNCTION_ON_NurbsCurveGetLength)(
+  const class ON_NurbsCurve*,
+  double*,
+  double,
+  const ON_Interval*);
+
+////////////////////////////////////////////////////////////////////////
+//
+// Used by ON_NurbsCurve::GetLocalClosestPoint.
+//
+typedef bool (*ON_PLUS_FUNCTION_ON_NurbsCurveGetLocalClosestPoint)(
+  const class ON_NurbsCurve*,
+  const ON_3dPoint&,
+  double,
+  double*,
+  const ON_Interval*
+  );
+
+////////////////////////////////////////////////////////////////////////
+//
+// Used by ON_NurbsSurface::Offset.
+//
+typedef ON_Surface* (*ON_PLUS_FUNCTION_ON_NurbsSurfaceOffset)(
+  const class ON_NurbsSurface*,
+  double,
+  double,
+  double*);
+
+////////////////////////////////////////////////////////////////////////
+//
 // static storage used by Rhino SDK to set function pointers used
 // by opennurbs member functions.
 //
@@ -938,6 +985,10 @@ public:
   // Used by ON_Brep::
   static
   ON_PLUS_FUNCTION_Brep_IsPointInsideHelper f_ON_Brep_IsPointInsideHelper;
+
+  // Used by ON_RayHitIsOnFace()
+  static
+  ON_PLUS_FUNCTION_Brep_PointIsOnFace f_ON_Brep_PointIsOnFace;
 
 	// Used by ON_Brep::
 	static
@@ -1190,7 +1241,19 @@ public:
 
   // Used by ON_Minimize() for to call TL_BoundedBFGSMin()
   static
-    ON_PLUS_FUNCTION_Minimize f_ON_Minimize;  
+    ON_PLUS_FUNCTION_Minimize f_ON_Minimize;
+
+  // Used by ON_NurbsCurve::GetLength
+  static
+    ON_PLUS_FUNCTION_ON_NurbsCurveGetLength f_ON_NurbsCurve_GetLength;
+
+  // Used by ON_NurbsCurve::GetLocalClosestPoint
+  static
+    ON_PLUS_FUNCTION_ON_NurbsCurveGetLocalClosestPoint f_ON_NurbsCurve_GetLocalClosestPoint;
+
+  // Used by ON_NurbsSurface::Offset
+  static
+    ON_PLUS_FUNCTION_ON_NurbsSurfaceOffset f_ON_NurbsSurface_Offset;
 };
 
 
@@ -1237,6 +1300,9 @@ void TL_PLUS_FUNCTION_Set_TL_OldBooleans_PickTwoWays();
 void TL_PLUS_FUNCTION_Set_IntegratePointers();
 void TL_PLUS_FUNCTION_Set_MinimizePointers();
 void TL_PLUS_FUNCTION_Set_GetCurveSeparationPointers();
+void TL_PLUS_FUNCTION_Set_NurbsCurveGetLength();
+void TL_PLUS_FUNCTION_Set_NurbsCurveGetLocalClosestPoint();
+void TL_PLUS_FUNCTION_Set_NurbsSurfaceOffset();
 #endif
 
 #endif

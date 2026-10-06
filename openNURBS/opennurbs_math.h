@@ -1065,8 +1065,8 @@ int ON_Solve2x2(
 //   Solves a system of 3 linear equations and 2 unknowns.
 //
 //          x*col0[0] + y*col1[0] = d0
-//          x*col0[1] + y*col1[1] = d0
-//          x*col0[2] + y*col1[2] = d0
+//          x*col0[1] + y*col1[1] = d1
+//          x*col0[2] + y*col1[2] = d2
 //
 // Parameters:
 //   col0 - [in] coefficients for "x" unknown
@@ -1089,15 +1089,15 @@ int ON_Solve2x2(
 //         = (d0,d1,d2).
 ON_DECL
 int ON_Solve3x2( 
-        const double[3], // col0
-        const double[3], // col1
-        double,  // d0
-        double,  // d1
-        double,  // d2
-        double*, // x
-        double*, // y
-        double*, // error
-        double*  // pivot_ratio
+        const double col0[3],
+        const double col1[3],
+        double d0,
+        double d1,
+        double d2,
+        double*x,
+        double*y,
+        double*error,
+        double*pivot_ratio
         );
 
 /* 
@@ -1610,13 +1610,13 @@ bool ON_EvSectionalCurvature(
 
 ON_DECL
 ON_3dVector ON_NormalCurvature( 
-        const ON_3dVector&, // surface 1rst partial (Ds)
-        const ON_3dVector&, // surface 1rst partial (Dt)
-        const ON_3dVector&, // surface 1rst partial (Dss)
-        const ON_3dVector&, // surface 1rst partial (Dst)
-        const ON_3dVector&, // surface 1rst partial (Dtt)
-        const ON_3dVector&, // surface unit normal
-        const ON_3dVector&  // unit tangent direction
+        const ON_3dVector& S10,
+        const ON_3dVector& S01,
+        const ON_3dVector& S20,
+        const ON_3dVector& S11,
+        const ON_3dVector& S02,
+        const ON_3dVector& UnitNormal,  
+        const ON_3dVector& UnitTangent
         );
 
 /*

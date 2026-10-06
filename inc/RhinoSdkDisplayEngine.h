@@ -383,6 +383,45 @@ public:
 
   ON_SimpleArray<ON_PlaneEquation> GetEnabledClipPlanes(const ON_Xform* xf) const;
 
+public:
+  ///////////////////////////////////////////////////////////////////////////
+  // 2d Drawing routines - all drawing is done to mimic traditional 2d display
+  // graphics APIs. Items are drawn in order with no depth testing in screen
+  // coordinates. Top-Left is 0,0
+
+  // Description:
+  //  Draw a curve whose coordinates are viewport pixels rather than world units. The
+  //  origin is the top left of the frame and z is ignored.
+  // Parameters:
+  //  curve: [in] the curve, in screen coordinates
+  //  pen: [in] pen to stroke it with
+  //  cacheHandle: [in] optional cache for the curve's display geometry
+  void Draw2dCurve(const ON_Curve& curve, const class CRhinoDisplayPen& pen, CRhinoCacheHandle* cacheHandle);
+  void Draw2dLine(float startX, float startY, float endX, float endY, const class CRhinoDisplayPen& pen);
+  void Draw2dPolyline(const ON_2fPoint* points, int pointCount, const class CRhinoDisplayPen& pen, bool closed);
+  // Description:
+  //  Stroke or fill a 2d path whose coordinates are viewport pixels.
+  // Parameters:
+  //  path: [in] the path, in screen coordinates
+  //  pen: [in] pen to stroke it with
+  //  brush: [in] brush to fill it with
+  //  image: [in] image to tile the fill with
+  //  opacity: [in] multiplies the image's alpha
+  //  fillTransform: [in] maps the image's own pixel space into screen coordinates
+  //  transform: [in] optional. A 2d transform applied when the path is drawn.
+  //    Null, or the identity, draws the path where it is.
+  void Draw2dDisplayPath(const class CRhino2dDisplayPath& path, const class CRhinoDisplayPen& pen, const ON_Xform2d* transform, CRhinoCacheHandle* cache);
+
+  // Strokes a path with a pen whose ink is a brush rather than the pen's own flat
+  // color. The pen still says how wide the stroke is and how it caps, joins and
+  // dashes; the brush says what color each pixel of it comes out.
+  void Draw2dDisplayPath(const class CRhino2dDisplayPath& path, const class CRhinoDisplayPen& pen, const class CRhinoDisplayBrush* brush, const ON_Xform2d* transform, CRhinoCacheHandle* cache);
+
+  void Fill2dDisplayPath(const class CRhino2dDisplayPath& path, const class CRhinoDisplayBrush& brush, const ON_Xform2d* transform, CRhinoCacheHandle* cache);
+  void Fill2dDisplayPath(const class CRhino2dDisplayPath& path, const CRhinoDib& image, float opacity, const ON_Xform& fillTransform, const ON_Xform2d* transform);
+
+
+
 ///////////////////////////////////////////////////////////////////////////
 // Generic engine routines for drawing low-level primitives...
 //
@@ -576,6 +615,33 @@ public:
   
   void DrawString(const wchar_t* text, const ON_Color& textColor, const ON_2dPoint& point, double rotationRadians,
                   bool middle, float fontHeightPixels, const ON_Font* font);
+
+  // Description:
+  //  Draws text with specified color, font and height, with control over how the string is
+  //  aligned on its definition point and over kerning.
+  // Parameters:
+  //  text: [in] string to draw
+  //  textColor: [in] text color
+  //  point: [in] definition point that the alignment attaches to
+  //  horizontalAlignment: [in] where point sits across the text's horizontal advance
+  //  verticalAlignment: [in] where point sits down the text's lines
+  //  fontHeightPixels: [in] height in pixels
+  //  font: [in] font to use for font selection
+  //  applyKerning: [in] true: use the font's kerning pairs to space the glyphs
+  // Remarks:
+  //  ON::TextVerticalAlignment::BottomOfTop puts the first line's baseline on the
+  //  definition point. ON::TextVerticalAlignment::Top puts the top of a capital there,
+  //  which is what the middle=false overloads above draw.
+  //  Engines that do not implement kerned screen space text draw the string unkerned.
+  void DrawString(const wchar_t* text, const ON_Color& textColor, const ON_2dPoint& point,
+                  ON::TextHorizontalAlignment horizontalAlignment,
+                  ON::TextVerticalAlignment verticalAlignment,
+                  float fontHeightPixels, const ON_Font* font, bool applyKerning);
+
+  void DrawString(const wchar_t* text, const ON_Color& textColor, const ON_2dPoint& point, double rotationRadians,
+                  ON::TextHorizontalAlignment horizontalAlignment,
+                  ON::TextVerticalAlignment verticalAlignment,
+                  float fontHeightPixels, const ON_Font* font, bool applyKerning);
   
   virtual void DrawString(const ON_TextContent& text, const ON_Xform& textXform, ON_Color color, CRhinoCacheHandle* cache);
   virtual void DrawTextRun(const ON_TextRun& run, const ON_Font* font, const ON_Xform& xform, ON_Color color, CRhinoCacheHandle* cache);

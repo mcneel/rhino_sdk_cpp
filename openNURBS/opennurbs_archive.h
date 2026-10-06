@@ -3317,8 +3317,14 @@ public:
       nullptr or a UTF-8 encoded string with application name, et cetera.
       This information is primarily used when debugging files
       that contain problems.  McNeel and Associates stores
-      application name, application version, compile date, 
+      application name, application version, compile date,
       and the OS in use when file was written.
+  Remarks:
+    A line naming the openNURBS build doing the writing is appended to
+    sStartSectionComment. Any such line already at the end of
+    sStartSectionComment is removed first, so a caller that reads a file and
+    writes it back out - passing the comment Read3dmStartSection returned - gets
+    one line naming the current build rather than one more line each time.
   */
   bool Write3dmStartSection( 
     int version,

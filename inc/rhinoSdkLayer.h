@@ -392,6 +392,10 @@ private:
 
 };
 
+// Defined in rhino3Layer.cpp. See the [SDK_UNFREEZE] note on
+// CRhinoLayerTable::m_private.
+class CRhinoLayerTablePrivate;
+
 class RHINO_SDK_CLASS CRhinoLayerTable : private ON_SimpleArray<CRhinoLayer*>
 {
 public:
@@ -1285,7 +1289,23 @@ private:
     );
 
 private:
-  CRhinoLayer m_DefaultLayer;
+  // [SDK_UNFREEZE] m_DefaultLayer, and anything else this class needs to keep,
+  // now live in CRhinoLayerTablePrivate. CRhinoDoc embeds a layer table BY
+  // VALUE, so growing the table moves every CRhinoDoc member declared after it
+  // and breaks the SDK. These two therefore have to occupy exactly the bytes
+  // m_DefaultLayer used to, which keeps the size and layout of both classes
+  // unchanged; rhtest_classsize pins both sizes.
+  //
+  // The reserve is measured against the pointer that replaces m_DefaultLayer
+  // rather than against void*: std::unique_ptr is one pointer wide on every
+  // implementation worth having, but nothing in the standard says so. Anything
+  // added here in future has to come out of m_reserved as well, or the layout
+  // moves.
+  //
+  // When the SDK is next unfrozen, delete m_reserved and let m_private stand on
+  // its own.
+  unsigned char m_reserved[sizeof(CRhinoLayer) - sizeof(std::unique_ptr<CRhinoLayerTablePrivate>)] = { 0 };
+  std::unique_ptr<CRhinoLayerTablePrivate> m_private;
 
 public:
   /*
@@ -1302,6 +1322,12 @@ public:
       CRhinoLayer::DefaultLayer.Id() = nil,
       CRhinoLayer::DefaultLayer.Name() = ""
   */
+  // [SDK_UNFREEZE] This should be a function, not a public reference member. As
+  // a data member it takes up layout that cannot be changed, it forces the
+  // layer it refers to to be constructed before it, and that ordering
+  // dependency is invisible from the constructor - see the note on
+  // CRhinoLayerTable's member initializer list in rhino3Layer.cpp. Replace it
+  // with "const CRhinoLayer& DefaultLayer() const;" when the SDK is unfrozen.
   const CRhinoLayer& DefaultLayer;
 
   bool UnsortLayer(int layer_index, int sort_index);
@@ -1313,6 +1339,79 @@ private:
 
 private:
   bool AddUndoModifyLayerRecord(int layer_index);
+
+private:
+  friend class CLayerTreeHelper;
+
+  // 8 Sep 2026 Andy le Bihan, https://mcneel.myjetbrains.com/youtrack/issue/RH-98441
+  // Finding one layer's children used to scan the whole layer table, which made
+  // reading a file with N layers cost O(N^2). These answer the same question
+  // from a parent layer id instead.
+  //
+  // Children are filed under their parent's id rather than its index, which is
+  // what makes it work while a file is being read: a child layer can be created
+  // before its parent exists, and filing by id means the parent finds those
+  // children already waiting for it when it arrives.
+  //
+  // Built on first use and then kept up to date as layers are appended, so a
+  // bulk read pays for it once. Deleting or undeleting a layer does not change
+  // who its parent is, so it does not disturb the index - the deleted state is
+  // tested when the index is read. Nothing outside this class may hold on to
+  // the returned indices: they are only valid until the table changes.
+  //
+  // The index lives in CRhinoLayerTablePrivate, so it is owned by the table and
+  // goes away with it. Member functions do not affect the layout of the class,
+  // so declaring these here does not either.
+
+  /*
+  Description:
+    Get the layer table indices of a layer's immediate children.
+  Parameters:
+    parent_layer_id - [in] id of the parent layer. May be nil, which returns
+        the layers that have no parent.
+    child_layer_indices - [out] indices of the children, in increasing order.
+        Emptied first. Includes deleted layers; test IsDeleted() if that
+        matters.
+  Remarks:
+    Building the index the first time is proportional to LayerCount(). Every
+    query after that is proportional to the number of children found.
+  */
+  void Internal_GetChildLayerIndices(
+    ON_UUID parent_layer_id,
+    ON_SimpleArray<int>& child_layer_indices
+    ) const;
+
+  // Add a layer that has just been appended to the table to the index. Does
+  // nothing when the index has not been built, since it is built on demand.
+  void Internal_AddLayerToChildIndex(int layer_index);
+
+  // Discard the index. Must be called whenever a layer already in the table has
+  // its parent changed, and whenever the table is emptied.
+  void Internal_InvalidateChildIndex();
+
+  // Add a layer that has just been appended to the table to the serial number
+  // index. Does nothing when the index has not been built.
+  void Internal_AddLayerToSerialNumberIndex(int layer_index);
+
+  // Discard the serial number index. A layer's serial number never changes, so
+  // this is only needed when layers leave the table.
+  void Internal_InvalidateSerialNumberIndex();
+
+public:
+  /*
+  Description:
+    Get the table index of the layer with a given runtime serial number.
+  Parameters:
+    layer_sn - [in] CRhinoLayer::m_layer_sn of the layer to find.
+  Returns:
+    The layer's index in this table, or -1 when this table has no such layer.
+  Remarks:
+    Building the index the first time is proportional to LayerCount(). Every
+    lookup after that takes the same short time whatever the layer count.
+  */
+  int Internal_LayerIndexFromSerialNumber(unsigned int layer_sn) const;
+
+private:
 
 #if defined (ON_RUNTIME_APPLE)
 public:

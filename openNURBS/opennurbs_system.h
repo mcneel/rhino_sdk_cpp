@@ -668,13 +668,16 @@ typedef ON__UINT32 wchar_t;
 // Windows uses the Direct Write SDK for font and glyph calculations.
 // MacOS and iOS use the Apple Core Text SDK for font and glyph calculations.
 
-#if defined(ON_RUNTIME_ANDROID)
-// May work reasonably for Android versions < 8-ish as of Sep 2018.
-// Test carefully if working right is important.
+#if defined(ON_RUNTIME_ANDROID) || defined(ON_RUNTIME_LINUX)
+// Android and Linux (RhinoCore, the headless Rhino behind Rhino.Inside and
+// Rhino.Compute) have no platform font engine, so the vendored FreeType is
+// the font engine. Android finds font files with the NDK font matcher; Linux
+// scans the installed font files (ON_ManagedFonts::Internal_GetLinuxInstalledFonts).
+// Android: may work reasonably for versions < 8-ish as of Sep 2018. Test carefully.
 #define OPENNURBS_FREETYPE_SUPPORT
 #else
 
-// not Windows, Apple, or Android
+// not Windows, Apple, Android, or Linux
 
 // To disable freetype support, comment out the following define.
 // To enable freetype support, define OPENNURBS_FREETYPE_SUPPORT

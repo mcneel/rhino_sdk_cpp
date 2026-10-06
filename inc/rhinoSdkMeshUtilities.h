@@ -662,19 +662,118 @@ int RhinoAlignMeshVertices(ON_SimpleArray<ON_Mesh*>& MeshArray, const ON_ClassAr
 
 /*
 Description:
+Gives a mesh the per-vertex attributes asked for, using placeholder values where the mesh has
+nothing of its own to supply. Appending meshes together keeps a per-vertex attribute only when
+every one of them has it, so meshes about to be appended need to agree on which ones they carry.
+Vertex normals are computed; the other attributes are filled with placeholders.
+
+Parameters:
+mesh - [in/out] Mesh to add the missing attributes to.
+bVertexNormals - [in] Compute vertex normals if the mesh has none.
+bTextureCoordinates - [in] Add texture coordinates if the mesh has none.
+bVertexColors - [in] Add vertex colors if the mesh has none.
+bPrincipalCurvatures - [in] Add principal curvatures if the mesh has none.
+cachedTextureCoordinateCount - [in] Number of cached texture coordinate sets the mesh should end
+  up with. Pass 0 to leave the cached sets alone.
+*/
+RHINO_SDK_FUNCTION
+void RhinoMeshAddMissingVertexAttributes(ON_Mesh& mesh, bool bVertexNormals, bool bTextureCoordinates, bool bVertexColors, bool bPrincipalCurvatures, int cachedTextureCoordinateCount);
+
+/*
+Description:
+Appends meshes into one, keeping every per-vertex attribute that at least one of them carries.
+A mesh that does not carry an attribute the others do is given placeholder values for it, so a
+single mesh without vertex colors no longer costs the result the colors of all the others. An
+attribute none of them carries is left off the result.
+
+Parameters:
+meshes - [in] Meshes to append together. Null entries are skipped.
+joinedMesh - [in/out] The meshes are appended to this one, which is normally empty on the way in.
+
+Returns:
+True if at least one mesh was appended.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoJoinMeshesPreservingVertexAttributes(const ON_SimpleArray<const ON_Mesh*>& meshes, ON_Mesh& joinedMesh);
+
+/*
+Description:
+  Joins meshes the way the Join command does, without needing a document: vertex attributes are
+  preserved across the inputs, naked edges are optionally pulled together, and the result is
+  optionally handed back as one mesh per connected piece.
+Parameters:
+  meshes              - [in] Meshes to join. Null entries are skipped.
+  bSplitDisjointPieces- [in] True to return one mesh per connected piece rather than a single
+                             mesh. An input that was already disjoint before the join is passed
+                             through untouched, so joining does not break it apart (RH-30778).
+  bAlignNakedEdges    - [in] True to pull naked edges within alignDistance together after
+                             appending, which is what actually welds a shared border.
+  alignDistance       - [in] Distance for that alignment. Ignored when bAlignNakedEdges is false.
+  joinedMeshes        - [out] Results are appended. The caller owns and must delete them.
+  pieceSourceIndices  - [out] Optional, parallel to the appended results: the index in meshes[] of
+                             the first input that contributed to each piece. Callers carrying
+                             per-object attributes take them from this one.
+  pieceInputIndices   - [out] Optional, parallel to the appended results: every index in meshes[]
+                             that contributed to each piece, sorted and without duplicates.
+Returns:
+  Number of meshes appended to joinedMeshes.
+*/
+RHINO_SDK_FUNCTION
+int RhinoJoinMeshes(
+  const ON_SimpleArray<const ON_Mesh*>& meshes,
+  bool bSplitDisjointPieces,
+  bool bAlignNakedEdges,
+  double alignDistance,
+  ON_SimpleArray<ON_Mesh*>& joinedMeshes,
+  ON_SimpleArray<int>* pieceSourceIndices = nullptr,
+  ON_ClassArray<ON_SimpleArray<int>>* pieceInputIndices = nullptr);
+
+/*
+Description:
 Moves mesh vertices that belong to naked edges to neighboring vertices within the specified distance.
 
 Parameters:
 meshesSubdsAndPointclouds - [in/out] Input array of meshes, meshes pointclouds and subds.  These inputs are modified.
 distance - [in] Distance to not exceed when modifying the meshes.
 onlyNaked - [in] Only target naked edges for modification and snapping to.
-vertexFlags - [in] Array of arrays of flags to determine which vertices may be modified. Can be null
+vertexFlags - [in] Array of arrays of flags to determine which vertices may be modified. Can be null.
+  SubD vertices are not currently supported: a list given for a SubD is ignored, and every one of its
+  vertices is considered. This may be supported in a future version.
 averagePoints - [in] Instructs Rhino to move candidate points near each other, rather than priviledging one.
 Returns:
 Count of all vertices that were modified if successful. -1 for error.
 */
 RHINO_SDK_FUNCTION
 int RhinoAlignVerticesInPlace(ON_SimpleArray<ON_Geometry*>& meshesSubdsAndPointclouds, double distance, bool onlyNaked, const ON_SimpleArray<const ON_SimpleArray<bool>*>* vertexFlags, bool averagePoints);
+
+/*
+Description:
+Tests whether RhinoAlignVertices and RhinoAlignVerticesInPlace accept this geometry.
+Meshes, SubDs, point clouds and degree 1 curves are accepted.
+Parameters:
+geometry - [in] The geometry to test. Can be null.
+Returns:
+True if the geometry can be aligned.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoAlignVerticesSupportsGeometry(const ON_Geometry* geometry);
+
+/*
+Description:
+Suggests a distance for RhinoAlignVertices from the geometry itself, so the caller does not
+have to measure the gaps first. A vertex whose nearest neighbour of all belongs to another
+object was meant to be shared with it. Within one mesh or SubD, a cluster of naked vertices
+at least 1000 times closer together than to any other naked vertex of that object was meant
+to be one vertex. The suggestion closes all of these gaps, rounded up to the next power of
+ten unless that would reach the spacing next to a gap.
+Parameters:
+geometry - [in] The geometry that would be aligned. A single object is enough.
+Returns:
+A distance greater than zero, or zero when no such gap is found.
+*/
+RHINO_SDK_FUNCTION
+double RhinoAlignVerticesSuggestedDistance(const ON_SimpleArray<const ON_Geometry*>& geometry);
+
 
 /*
 Description:
@@ -1856,6 +1955,18 @@ public:
   //   inputMesh         - [in] Mesh to use as starting point
   //   componentIndices  - [in] Mesh faces, edges and ngons to extrude
   static IRhinoMeshExtruder* NewMeshExtruder(const ON_Mesh& inputMesh, const ON_SimpleArray<ON_COMPONENT_INDEX>& componentIndices);
+
+  // Description:
+  //   Same as above, but sets the colour used for a wall vertex that maps to no input vertex.
+  //   Vertex colours, texture coordinates, surface parameters and principal curvatures are
+  //   carried over from the input mesh only when it has them, so an input mesh without vertex
+  //   colours still produces an output without them and this colour is never used.
+  // Parameters:
+  //   inputMesh          - [in] Mesh to use as starting point
+  //   componentIndices   - [in] Mesh faces, edges and ngons to extrude
+  //   unsetVertexColor   - [in] Colour for a wall vertex with no corresponding input vertex.
+  //                             Callers with a document typically pass the current layer colour.
+  static IRhinoMeshExtruder* NewMeshExtruder(const ON_Mesh& inputMesh, const ON_SimpleArray<ON_COMPONENT_INDEX>& componentIndices, ON_Color unsetVertexColor);
 
   // Description:
   //   Sets whether or not to perform extrude in UVN basis

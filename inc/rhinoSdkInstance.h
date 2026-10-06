@@ -751,6 +751,25 @@ public:
 
   /*
   Description:
+    Remove instance definition geometry that no instance definition uses.
+
+    Use this after a call that added objects to the document as instance definition geometry
+    and then failed. ModifyInstanceDefinitionGeometry validates its objects after the caller
+    has added them, and CRhinoDoc::PurgeObject refuses instance definition geometry, so
+    without this the objects stay in the document owned by nothing. Compact() also reclaims
+    them, but it sweeps the whole document.
+  Parameters:
+    objects - [in] the objects the caller added. An object that an instance definition still
+        uses is left alone, so a list that mixes the two is safe.
+  Returns:
+    Number of objects removed.
+  */
+  int PurgeUnusedInstanceDefinitionGeometry(
+     const ON_SimpleArray<CRhinoObject*>& objects
+     );
+
+  /*
+  Description:
     Undeletes an instance definition that has been deleted by DeleteLayer().
   Parameters:
     idef_index - [in] zero based index of an instance definition
@@ -1327,3 +1346,62 @@ private:
   ON__INT_PTR m_reserved2 = 0;
 };
 
+/*
+Description:
+  Exports an instance definition's component objects to one of the file formats
+  supported by Rhino.
+Parameters:
+  docSerialNumber - [in] the runtime serial number of the document.
+  idefIndex - [in] index of the instance definition to export. This must be in the
+      range 0 <= idefIndex < CRhinoInstanceDefinitionTable::Count().
+  pszFileName - [in] name of the file to create.
+Returns:
+  True if successful, false otherwise.
+*/
+RHINO_SDK_FUNCTION bool RhinoExportInstanceDefinition(
+  unsigned int docSerialNumber,
+  int idefIndex,
+  const wchar_t* pszFileName
+);
+
+/*
+Description:
+  Creates an instance definition by reading a file, the way the Insert command does when
+  inserting a file as a block, but without creating an instance reference and without any
+  user interface.
+Parameters:
+  docSerialNumber - [in] the runtime serial number of the document.
+  pszFileName - [in] name of the file to read. This can be any file that Rhino or a
+      plug-in can read.
+  pszBlockName - [in] name of the instance definition to create. This must be a valid
+      component name.
+  pszDescription - [in] the instance definition description. If null or empty, then the
+      notes of the file being read, if any, are used.
+  pszUrl - [in] the instance definition url. If null or empty, then the model url of the
+      file being read, if any, is used.
+  pszUrlTag - [in] the instance definition url description, or hyperlink text. If null or
+      empty, then the model url of the file being read, if any, is used.
+  updateType - [in] the type of instance definition to create.
+  layerStyle - [in] how layers from the file appear in the model. This is used only when
+      updateType is ON_InstanceDefinition::IDEF_UPDATE_TYPE::Linked.
+  conflictResolution - [in] what to do when the document already contains an instance
+      definition named pszBlockName.
+  bSkipNestedLinkedDefinitions - [in] if true, then linked instance definitions nested in
+      the file are not read.
+Returns:
+  >=0 index of the new instance definition, or the index of an existing linked instance
+      definition that already references pszFileName.
+   -1 failure.
+*/
+RHINO_SDK_FUNCTION int RhinoCreateInstanceDefinitionFromFile(
+  unsigned int docSerialNumber,
+  const wchar_t* pszFileName,
+  const wchar_t* pszBlockName,
+  const wchar_t* pszDescription,
+  const wchar_t* pszUrl,
+  const wchar_t* pszUrlTag,
+  ON_InstanceDefinition::IDEF_UPDATE_TYPE updateType,
+  ON_InstanceDefinition::eLinkedComponentAppearance layerStyle,
+  ON::ComponentNameConflictResolution conflictResolution,
+  bool bSkipNestedLinkedDefinitions
+);

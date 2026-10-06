@@ -239,9 +239,9 @@ Parameters:
   end_point              - [in] Optional end point. Pass ON_3dPoint::UnsetPoint to ignore.
   frame_type             - [in] 0 = freeform, 1 = roadlike, 2 = AlignWithSurface.
                                 AlignWithSurface requires pRailCurve to be a CRhinoPolyEdge
-                                containing surface edges; otherwise it falls back to roadlike.
-  roadlike_normal        - [in] Up direction for the roadlike (or AlignWithSurface fallback)
-                                frame style. Pass ON_3dVector::UnsetVector to ignore.
+                                containing surface edges; otherwise it falls back to freeform.
+  roadlike_normal        - [in] Up direction for the roadlike frame style. Pass
+                                ON_3dVector::UnsetVector to use the world z-axis.
   bClosed                - [in] Only matters if the rail is closed.
   blend_type             - [in] 0 = local, 1 = global.
   miter_type             - [in] 0 = none, 1 = trimmed, 2 = untrimmed miters.

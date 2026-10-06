@@ -211,6 +211,28 @@ public:
   CRhinoWidgetGrip();
   virtual ~CRhinoWidgetGrip();
 
+  /** \return This grip's own color, or ON_Color::UnsetColor if the grip is drawn entirely
+    in the standard grip color. Widgets can use this to give different kinds of grip
+    different colors; see CRhinoWidget::NewGrip(). */
+  ON_Color GripColor(void) const;
+
+  /** Set this grip's own color. Pass ON_Color::UnsetColor to use the standard grip color.
+    The color is used as the grip's fill; the outline stays the standard grip color, or the
+    selected grip color while the grip is in use. Solid point styles (see ERhinoPointStyle)
+    have no separate fill, so for those the whole point takes this color instead. */
+  void SetGripColor(const ON_Color& col);
+
+  /** Widget grips are drawn bigger than ordinary grips, so this widens the hit area to match. */
+  virtual int Pick(const CRhinoPickContext& pc, CRhinoObjRefArray& objrefs) const override;
+
+  /** Standard colors for widget grips. They are here so that every widget uses the same color
+    for the same kind of handle; see SetGripColor(). A grip that changes an angle is one color,
+    one that changes a size is another, and one that changes a height is a third, because height
+    doesn't feel like the same thing as width or radius to the user. */
+  static ON_Color AngleGripColor(void);
+  static ON_Color SizeGripColor(void);
+  static ON_Color HeightGripColor(void);
+
 public:
   class CImpl;
   CImpl* m_pImpl;

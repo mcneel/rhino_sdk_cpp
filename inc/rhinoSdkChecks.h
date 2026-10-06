@@ -19,15 +19,29 @@
 #define ON_RUNTIME_LINUX
 #endif
 
+// Mirror the __linux__ self-define above for Apple, so that consumers which
+// reach this header before ON_RUNTIME_APPLE is established (e.g. the CMake
+// rhinocore_tests build) don't fall through to the Windows-only checks below.
+#if !defined(ON_RUNTIME_APPLE) && defined(__APPLE__)
+#define ON_RUNTIME_APPLE
+#endif
+
 #if !defined(ON_RUNTIME_APPLE) && !defined(ON_RUNTIME_LINUX)
 // These checks are very specific to Windows Rhino
 #if defined(ON_CMAKE_BUILD)
 #if defined(ON_64BIT_RUNTIME)
+// Guarded: some CMake targets (rhcommon_c) already define WIN64 on the
+// compiler command line, and an unguarded bare #define differs from the
+// command line's "=1", warning C4005 in every translation unit.
+#if !defined(WIN64)
 #define WIN64
+#endif
 #undef WIN32
 #endif
 #if defined(ON_32BIT_RUNTIME)
+#if !defined(WIN32)
 #define WIN32
+#endif
 #undef WIN64
 #endif
 #endif

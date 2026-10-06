@@ -2178,6 +2178,18 @@ public:
 
   bool SplitAtCoplanars() const; // Defaults to true
   void SetSplitAtCoplanars(bool enable);
+
+  /*
+    An intersection curve that stops inside the mesh being split does not separate one side from the
+    other, so the mesh is returned whole. When this is enabled, each such open end is joined to the
+    nearest border of the mesh, or to another cut, following edges the mesh already has. This yields
+    a best-effort cut where the intersection alone leaves the answer undetermined: the added stretch
+    follows existing edges rather than the cutter, so it is not an intersection result. No vertex is
+    moved and no face is added. Cuts that already close, or that already run from border to border,
+    are unaffected.
+  */
+  bool CompleteOpenCuts() const; // Defaults to false
+  void SetCompleteOpenCuts(bool enable);
 };
 
 #endif
@@ -2896,7 +2908,7 @@ private:
   ON_MeshNgonAllocator& operator=(const ON_MeshNgonAllocator&) = delete;
 };
 
-class ON_MeshFaceSide
+class ON_CLASS ON_MeshFaceSide
 {
 public:
   unsigned int   m_vi[2]; // vertex indices or ids (equal values indicate unset)
@@ -4276,12 +4288,7 @@ Returns:
 
   /*
   Description:
-    Return information on intersections and overlaps for a group of meshes. This method uses the new code.
-
-    anyTypeOfIntersection - [in] if provided, it will be set to true if any mesh perforates another or overlaps - or nullptr.
-    pairs - [in] if provided, a list of pairs of mesh indices that intersect or overlap. Each pair appears once only - or nullptr.
-
-    See the parameter description in the function above.
+    Report which meshes intersect. Same as the overload below with fast = true.
   */
   static bool IntersectArrayPredicate(
     const ON_SimpleArray<const ON_Mesh*>& meshesA,
@@ -4290,6 +4297,49 @@ Returns:
     double tolerance,
     bool* anyTypeOfIntersection,
     ON_SimpleArray<ON_2dex>* pairs,
+    ON_TextLog* log,
+    ON_Terminator* cancel,
+    ON_ProgressReporter* reporter);
+
+  /*
+  Description:
+    Report which meshes intersect.
+  Parameters:
+    meshesA - [in]
+    meshesB - [in] nullptr tests every pair within meshesA once; otherwise every mesh of
+      meshesA is tested against every mesh of meshesB.
+    cacheForMeshesB - [in] not used; accepted for compatibility.
+    tolerance - [in]
+    fast - [in]
+      true: the fast line-segment intersector behind IntersectMesh(mesh, lines), stopping at
+      the first crossing found for each pair of meshes. A pair counts when a face of one mesh
+      crosses or touches a face of the other within tolerance; coplanar overlap without a
+      crossing is not reported. Much faster than IntersectArray.
+      false: the accurate mesh intersector, one pair of meshes at a time, stopping at the
+      first crossing or coplanar overlap found. A pair counts when faces cross or overlap
+      while coplanar.
+    anyTypeOfIntersection - [out] optional. Set to true when any pair intersects.
+    pairs - [out] optional. The intersecting pairs are appended as (i, j): i indexes meshesA
+      and j indexes meshesB, or both index meshesA with i < j. When pairs is nullptr, the
+      search stops at the first intersecting pair.
+    facePairs - [out] optional, used with pairs. For each pair appended to pairs, one entry
+      (faceA, faceB) is appended here: a face of the first mesh and a face of the second that
+      intersect: the first one found.
+    log - [in] optional, used only when fast is false.
+    cancel - [in] optional.
+    reporter - [in] optional, used only when fast is false.
+  Returns:
+    true if the search finished, false if it was cancelled or could not run.
+  */
+  static bool IntersectArrayPredicate(
+    const ON_SimpleArray<const ON_Mesh*>& meshesA,
+    const ON_SimpleArray<const ON_Mesh*>* meshesB,
+    ON_MeshIntersectionCache* cacheForMeshesB,
+    double tolerance,
+    bool fast,
+    bool* anyTypeOfIntersection,
+    ON_SimpleArray<ON_2dex>* pairs,
+    ON_SimpleArray<ON_2dex>* facePairs,
     ON_TextLog* log,
     ON_Terminator* cancel,
     ON_ProgressReporter* reporter);
@@ -4394,6 +4444,14 @@ instance of ON_MeshIntersectionOptions.
       This array will be filled with the split result. If nothing happened, the current mesh is not copied.
     log - [out]
       If not nullptr, intersection warnings and errors are printed here. If the intersection runs smoothly, nothing will be printed.
+    completeOpenCuts - [in]
+      An intersection curve that stops inside the mesh does not separate one side from the other, so
+      the mesh is returned whole. If true, each such open end is joined to the nearest border of the
+      mesh, or to another cut, following edges the mesh already has. This yields a best-effort cut
+      where the intersection alone leaves the answer undetermined: the added stretch follows existing
+      edges rather than the splitters, so it is not an intersection result. No vertex is moved and no
+      face is added. Cuts that already close, or that already run from border to border, are
+      unaffected. Defaults to false.
     cancel - [out]
       If not nullptr, a trigger to request termination. When cancellation is requested, the return value will often be false.
       You are responsible to delete new objects that were returned, even if you requested cancellation.
@@ -4414,6 +4472,21 @@ instance of ON_MeshIntersectionOptions.
     ON_ProgressReporter* reporter) const;
 
   /*
+    Same as above, plus completeOpenCuts. The overload above is this one with completeOpenCuts = false.
+  */
+  bool Split(
+    const ON_SimpleArray<const ON_Mesh*>& meshesThatSplit,
+    double tolerance,
+    bool splitAtCoplanar,
+    bool createNgons,
+    bool* somethingHappened,
+    ON_SimpleArray<ON_Mesh*>& results,
+    ON_TextLog* log,
+    ON_Terminator* cancel,
+    ON_ProgressReporter* reporter,
+    bool completeOpenCuts) const;
+
+  /*
   Splits a list of meshes.
   See the parameter description two methods above.
   Additional parameter:
@@ -4430,6 +4503,22 @@ instance of ON_MeshIntersectionOptions.
     ON_TextLog* log,
     ON_Terminator* cancel,
     ON_ProgressReporter* reporter);
+
+  /*
+    Same as above, plus completeOpenCuts. The overload above is this one with completeOpenCuts = false.
+  */
+  static bool SplitArray(
+    const ON_SimpleArray<const ON_Mesh*>& meshesToSplit,
+    const ON_SimpleArray<const ON_Mesh*>& meshesThatSplit,
+    double tolerance,
+    bool splitAtCoplanar,
+    bool createNgons,
+    bool* somethingHappened,
+    ON_SimpleArray<ON_Mesh*>& results,
+    ON_TextLog* log,
+    ON_Terminator* cancel,
+    ON_ProgressReporter* reporter,
+    bool completeOpenCuts);
 
   /*
   Description:
@@ -4531,6 +4620,23 @@ instance of ON_MeshIntersectionOptions.
     the caller must check it before dereferencing.
   */
   const class ON_RTree* MeshFaceTree( bool bCreateIfNoneExists ) const;
+
+  /*
+  Parameters:
+    bCreateIfNoneExists - [in]
+      If a triangulation cache is not present on this mesh and
+      bCreateIfNoneExists is true, then an empty one will be
+      created and cached.
+      If a triangulation cache is not present on this mesh and
+      bCreateIfNoneExists is false, then null is returned.
+  Returns:
+    A cache of this mesh's face triangulation, shared by the intersection
+    routines so it is computed once per mesh rather than once per call. The
+    cache is created empty and filled by its first consumer. It is discarded
+    with the other cached trees whenever DestroyTree() runs. The pointer may
+    be null and the caller must check it before dereferencing.
+  */
+  class ON_MeshTessellationCache* MeshTessellationCache( bool bCreateIfNoneExists ) const;
 
   /*
   Description:
@@ -5852,6 +5958,9 @@ Returns:
   */
   void Append( int count, const ON_Mesh* const* meshes );
 
+  // Back fill uses ON_2fPoint::NanPoint, zero curvature and ON_Color::UnsetColor; it never applies to m_S, and m_N is computed when missing whatever it is set to.
+  void Append( int count, const ON_Mesh* const* meshes, bool bBackFillMissingVertexAttributes );
+
   /*
   Description:
     Append a vector of meshes. This function is much more efficient
@@ -5984,13 +6093,15 @@ Returns:
       true if test_point is inside or the distance from test_point to
       a mesh face is <= tolerance.
   Returns:
-    True if test_point is inside the solid mesh.
+    True if test_point is inside the mesh.
   Remarks:
-    The caller is responsible for making certing the mesh is
-    solid before calling this function. If the mesh is not
-    solid, the behavior is unpredictable.
+    The mesh must be closed and manifold; this function returns
+    false for any other mesh. Inside means enclosed by the mesh,
+    so a consistent face orientation is not required and
+    reversing the faces does not change the answer.
   See Also:
-    ON_Mesh::IsSolid()
+    ON_Mesh::IsClosed()
+    ON_Mesh::IsManifold()
   */
   bool IsPointInside(
           ON_3dPoint test_point, 
@@ -6941,6 +7052,18 @@ Returns:
 
   // m_F[] facets (triangles or quads)
   ON_SimpleArray<ON_MeshFace> m_F;
+
+  // adds a triangle to the mesh with the given vertex indices.
+  // Returns
+  // - true: the triangle was added.
+  // - false: the vertex indices are not valid for indexing into the vertex array
+  bool AddTriangle(int a, int b, int c);
+
+  // adds a quad to the mesh with the given vertex indices.
+  // Returns
+  // - true: the quad was added.
+  // - false: the vertex indices are not valid for indexing into the vertex array
+  bool AddQuad(int a, int b, int c, int d);
 
   ////////////////////////////////////////////////////////////////////////
   //

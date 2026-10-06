@@ -5,12 +5,25 @@
 // THIS SOFTWARE IS PROVIDED "AS IS" WITHOUT EXPRESS OR IMPLIED WARRANTY.
 // ALL IMPLIED WARRANTIES OF FITNESS FOR ANY PARTICULAR PURPOSE AND OF
 // MERCHANTABILITY ARE HEREBY DISCLAIMED.
-//				
+//
 // For complete Rhino SDK copyright information see <http://www.rhino3d.com/developer>.
 //
 ////////////////////////////////////////////////////////////////
 
 #pragma once
+
+// One macro as returned by CRhinoUiFile::Macros().
+class RHINO_SDK_CLASS CRhinoUiMacroInfo
+{
+public:
+  UUID m_macro_id = ON_nil_uuid;
+  // Same value CRhinoUiFile::MacroBitmapID() returns.
+  UUID m_bitmap_id = ON_nil_uuid;
+  // Same value CRhinoUiFile::MacroButtonText() returns.
+  ON_wString m_button_text;
+  // Same value CRhinoUiFile::MacroToolTip() returns.
+  ON_wString m_tooltip;
+};
 
 class RHINO_SDK_CLASS CRhinoUiFile
 {
@@ -77,7 +90,7 @@ public:
   static UUID MacroID(UUID idFile, int index);
 
   // Description:
-  //  Call this method to get the Id for the bitmap associated with this macro. 
+  //  Call this method to get the Id for the bitmap associated with this macro.
   // Parameters:
   //  idFile[in] Id of the file containing the macro.
   //  idMacro[in] Id of the specific macro to query.
@@ -129,6 +142,19 @@ public:
   static ON_wString MacroButtonText(UUID idFile, UUID idMacro, unsigned int locale);
 
   // Description:
+  //  Gets every macro in a file in one call, in the same order as MacroID().
+  //  Use this instead of MacroID(), MacroBitmapID(), MacroButtonText() and
+  //  MacroToolTip() per macro when walking the whole macro table.
+  // Parameters:
+  //  idFile[in] Id of the file containing the macros.
+  //  locale[in] Locale Id of the result strings, will default to English if the
+  //    locale is not specified in the RUI file.
+  //  macros[out] Receives the macros; any previous contents are removed.
+  // Returns:
+  //  Returns the number of macros.
+  static int Macros(UUID idFile, unsigned int locale, ON_ClassArray<CRhinoUiMacroInfo>& macros);
+
+  // Description:
   //  Call this method to get the menu item text associated with the specified macro.
   // Parameters:
   //  idFile[in] Id of the file containing the macro.
@@ -140,7 +166,7 @@ public:
   static ON_wString MacroMenuText(UUID idFile, UUID idMacro, unsigned int locale);
 
   // Description:
-  //  Call this method to get the script associated with the specified macro. 
+  //  Call this method to get the script associated with the specified macro.
   // Parameters:
   //  idFile[in] Id of the file containing the macro.
   //  idMacro[in] Id of the specific macro to query.
@@ -151,7 +177,7 @@ public:
   static void MacroRunScript(UUID idFile, UUID idMacro, bool fromMenu);
 
   // Description:
-  //  Call this method to get the script associated with the specified macro. 
+  //  Call this method to get the script associated with the specified macro.
   // Parameters:
   //  idFile[in] Id of the file containing the macro.
   //  idMacro[in] Id of the specific macro to query.
@@ -200,6 +226,27 @@ public:
   //  Returns the SVG string for the image, or an empty string if the image was not
   //  found or has no SVG representation.
   static ON_wString Svg(UUID idFile, UUID idImage, bool darkMode);
+
+  // Description:
+  //  Call this method to get the image as PNG encoded bytes, rendered at the requested
+  //  pixel size. This is the cross-platform counterpart to Bitmap(), whose HBITMAP is
+  //  only available on Windows.
+  // Parameters:
+  //  idFile[in] Id of the file containing the image.
+  //  idImage[in] Id of the image (the same id returned by MacroBitmapID).
+  //  darkMode[in] Set to true to render the dark-mode variant of the image.
+  //  size[in] Requested width and height in pixels. Pass 0 for the default toolbar size.
+  //  png[out] Receives the PNG encoded bytes. Emptied first.
+  // Returns:
+  //  True if the image was found and rendered, false otherwise.
+  static bool Png(UUID idFile, UUID idImage, bool darkMode, int size, ON_SimpleArray<unsigned char>& png);
+
+  // Description:
+  //  Same as Png() above, with the image drawn on an opaque background, for callers whose
+  //  images are shown on surfaces Rhino does not control.
+  // Parameters:
+  //  background[in] Background color. ON_Color::UnsetColor keeps the image transparent.
+  static bool Png(UUID idFile, UUID idImage, bool darkMode, int size, const ON_Color& background, ON_SimpleArray<unsigned char>& png);
 
 private:
   CRhinoUiFile() = delete;

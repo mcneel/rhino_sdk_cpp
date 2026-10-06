@@ -1182,6 +1182,7 @@ Returns:
   2     user canceled
   3     one object selected - selection was automatically reduced to one by culling
   4     "All" option selected
+  5     user canceled by making another selection. The currently highlighted candidate is returned in selected_object_index
 
 */
 RHINO_SDK_FUNCTION

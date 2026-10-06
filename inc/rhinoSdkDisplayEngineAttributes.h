@@ -45,6 +45,7 @@ enum ERhinoPointStyle : unsigned int
 {
 	RPS_SQUARE = 50, // same as VARIABLE_DOT
 	RPS_CIRCLE = 51, // same as ROUND_DOT
+	RPS_DIAMOND = 52, // same as DIAMOND_DOT
 	RPS_TRIANGLE = 2,
 	RPS_HEART = 3,
 	RPS_CHEVRON = 4,
@@ -59,6 +60,7 @@ enum ERhinoPointStyle : unsigned int
 	// "DOT's" are solid filled, single color entities...
 	RPS_VARIABLE_DOT    = 50, // varying radius
 	RPS_ROUND_DOT       = 51,
+	RPS_DIAMOND_DOT     = 52,
 	
 	RPS_ROUND_SOLID_POINT = 64,
 
@@ -68,6 +70,7 @@ enum ERhinoPointStyle : unsigned int
 	RPS_ACTIVE_POINT    = 101, // Rhino's standard active CV object...
 	RPS_ROUND_CONTROL_POINT = 102,
 	RPS_ROUND_ACTIVE_POINT = 103,
+	RPS_DIAMOND_CONTROL_POINT = 104,
 };
 
 enum class RhinoLineCapStyle : int

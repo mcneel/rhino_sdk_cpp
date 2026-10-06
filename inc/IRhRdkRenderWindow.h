@@ -443,8 +443,13 @@ public:
 		/** \return a clone of the channel. */
 		virtual IGPUChannel* Clone(void) const = 0;
 
-		/** Copy the channel to a 'CPU' channel. */
+		/** Copy the channel to a 'CPU' channel. This cannot report failure; prefer CopyToEx(). */
 		virtual void CopyTo(IChannelEx& chan) const = 0;
+
+		/** Copy the channel to a 'CPU' channel. Reading the pixels back from the graphics card
+			can fail; when it does, 'chan' is left as it was.
+			\return \e true if successful, else \e false. */
+		virtual_su bool CopyToEx(IChannelEx& chan) const; // = 0; [SDK_UNFREEZE] Uses EVF(L"CopyToEx", &chan)
 
 		/** Emergency virtual function for future expansion. */
 		virtual void* EVF(const wchar_t*, void*) = 0;

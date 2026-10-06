@@ -1558,6 +1558,11 @@ private:
 };
 
 RHRDK_SDK ON_Mesh* RhinoCreateMeshVertexColorsFromTexture(CRhinoDoc& doc, const CRhinoMeshObject* pMeshObj, ON_Texture::TYPE textureType);
+
+/** \param bQuiet suppresses the command-line message that reports a missing texture map.
+	 Useful when processing several meshes and reporting the outcome only once. */
+RHRDK_SDK ON_Mesh* RhinoCreateMeshVertexColorsFromTexture(CRhinoDoc& doc, const CRhinoMeshObject* pMeshObj, ON_Texture::TYPE textureType, bool bQuiet);
+
 RHRDK_SDK bool RhinoCreateMeshVertexColorsFromDib(const CRhinoDoc& doc, ON_Mesh& mesh, const ON_TextureMapping& mapping, const ON_Xform& localMappingXform, const CRhinoDib& dib);
 
 /** \class CRhRdkPreviewSceneElement

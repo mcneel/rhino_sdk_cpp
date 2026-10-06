@@ -48,8 +48,13 @@ public:
     All input must come from command line, GetPoint, GetObject,
     GetString, etc.  Must use RhinoApp().Print() to report serious
     error conditions.  NO dialog boxes are permitted.
-    Batch mode is enabled by calling the Rhino BatchModeOn 
-    command in a command script.
+    Batch mode is enabled by the Rhino BatchMode command (BatchMode On,
+    BatchMode Off or BatchMode Toggle), which can be run from a command
+    script, and by starting Rhino with the /batchmode command line switch.
+    See CRhinoApp::IsBatchMode.
+
+    There was no way to turn batch mode on before Rhino 9. This block used
+    to name a BatchModeOn command, which was never written - see RH-98061.
 
   */
   enum COMMAND_STYLE

@@ -579,6 +579,13 @@ public:
   bool                m_bShowPoints;
   int                 m_nPointSize;
   ERhinoPointStyle    m_ePointStyle;
+
+  // Description:
+  //   Style used to draw control points whose weight is not 1. Defaults to
+  //   RPS_ROUND_CONTROL_POINT, matching the default m_ePointStyle, so weighted
+  //   control points are not called out until this is changed.
+  ERhinoPointStyle    WeightedPointStyle() const;
+  void                SetWeightedPointStyle(ERhinoPointStyle style);
   
 /////////////////////////////////////
 // Control Polygon specific attributes...

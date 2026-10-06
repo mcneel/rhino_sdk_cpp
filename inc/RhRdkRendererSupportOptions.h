@@ -176,6 +176,8 @@ public:
 	virtual int MaxPreviewCacheMB(void) const;
 	virtual int MaxPreviewSeconds(void) const;
 
+	virtual_su int DefaultWidgetTextureTransparency(void) const;
+
 	virtual_su int MaxDynamicIconCacheMB(void) const;
 
 	virtual bool EnablePreviewJobLog(void) const;

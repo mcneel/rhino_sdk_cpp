@@ -272,7 +272,7 @@ protected:
 	virtual bool Query(const IRhRdkTaskOrigin& origin, bool bOnItem) const override;
 };
 
-RDK_DEPRECATED class RHRDK_SDK CRhRdkCreateNew final // NOT IMPLEMENTED.
+RDK_DEPRECATED_CLASS class RHRDK_SDK CRhRdkCreateNew final // NOT IMPLEMENTED.
 {
 public:
 	CRhRdkCreateNew();

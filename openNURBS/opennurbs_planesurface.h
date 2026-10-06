@@ -649,12 +649,17 @@ public:
   /*
   Description:
     Create a plane that contains the *intersection* with a bounding box.
-    This method uses box edges intersections rather than box vertices
+    This method uses box edge intersections rather than box vertex
     projections on the plane, which is what CreatePseudoInfinitePlane
-    uses.
-    (While the resulting bounding box is tighter, it also means that
-    the plane must intersect with the plane, or no result will be
-    computed.)
+    uses. The resulting extents are tighter, but the plane must
+    intersect the box: otherwise false is returned and the surface is
+    set to CreatePseudoInfinitePlane's result, as a best effort for
+    callers that do not check the return value.  That best effort needs
+    a valid plane and a valid box; if either is invalid, false is
+    returned and the surface is not modified.
+    Box edges lying in the plane count as intersections,
+    so a box that is degenerate in the plane normal direction (e.g. the
+    bounding box of planar geometry coplanar with the plane) is handled.
   Parameters:
     plane - [in]
     bbox - [in]
@@ -673,12 +678,17 @@ public:
     /*
   Description:
     Create a plane that contains the *intersection* with a bounding box.
-    This method uses box edges intersections rather than box vertices
+    This method uses box edge intersections rather than box vertex
     projections on the plane, which is what CreatePseudoInfinitePlane
-    uses.
-    (While the resulting bounding box is tighter, it also means that
-    the plane must intersect with the plane, or no result will be
-    computed.)
+    uses. The resulting extents are tighter, but the plane must
+    intersect the box: otherwise false is returned and the surface is
+    set to CreatePseudoInfinitePlane's result, as a best effort for
+    callers that do not check the return value.  That best effort needs
+    a valid plane and a valid box; if either is invalid, false is
+    returned and the surface is not modified.
+    Box edges lying in the plane count as intersections,
+    so a box that is degenerate in the plane normal direction (e.g. the
+    bounding box of planar geometry coplanar with the plane) is handled.
   Parameters:
     plane - [in]
     bbox - [in]

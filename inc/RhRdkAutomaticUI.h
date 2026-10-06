@@ -3,7 +3,7 @@
 
 #include "RhRdkDefinitions.h"
 
-RDK_DEPRECATED class IRhRdkParamTransport // Obsolete.
+RDK_DEPRECATED_CLASS class IRhRdkParamTransport // Obsolete.
 {
 };
 
@@ -74,7 +74,7 @@ public:
 		\return \e true on success, \e false if parameter not found. */
 	virtual bool Get(const wchar_t* wszParamName, CRhRdkVariant& vValueOut) const = 0;
 
-	RDK_DEPRECATED enum eSortBy { paramName, friendlyName };
+	enum RDK_DEPRECATED eSortBy { paramName, friendlyName };
 
 	enum class SortBy : unsigned int { ParamName, DisplayName };
 

@@ -658,6 +658,16 @@ public:
   bool SuppressExtension2(const ON_DimStyle* parent_style) const;
   void SetSuppressExtension2(const ON_DimStyle* parent_style, bool b);
 
+  // Suppress the dimension line and arrowhead between the first
+  // extension line and the text.
+  bool SuppressDimLine1(const ON_DimStyle* parent_style) const;
+  void SetSuppressDimLine1(const ON_DimStyle* parent_style, bool b);
+
+  // Suppress the dimension line and arrowhead between the second
+  // extension line and the text.
+  bool SuppressDimLine2(const ON_DimStyle* parent_style) const;
+  void SetSuppressDimLine2(const ON_DimStyle* parent_style, bool b);
+
   // Extension of dimension line past extension lines
   double DimExtension(const ON_DimStyle* parent_style) const;
   void SetDimExtension(const ON_DimStyle* parent_style, const double e);

@@ -163,6 +163,20 @@ public:
   void DollyExtents();
 
   // Description:
+  //   Dolly this detail's viewport so its frustum contains the visible, or the
+  //   selected, objects in the detail.
+  //   Annotation in a detail is sized in page units, so its model space extents are
+  //   a function of the detail scale - the value being solved for. A single dolly
+  //   therefore lands short. This repeats the dolly until the detail scale settles,
+  //   so calling it a second time does not move the view.
+  // Parameters:
+  //   border:    [in] 1.0 fits tightly, > 1.0 leaves a border.
+  //   bSelected: [in] true to fit the selected objects, false to fit all visible objects.
+  // Returns:
+  //   true if the viewport was dollied.
+  bool DollyExtents(double border, bool bSelected);
+
+  // Description:
   //   Get detail_world2page transformation.
   //   This transformation that maps world coordinates to page
   //   coordinates with depth from near (z=1) to far (z= -1).

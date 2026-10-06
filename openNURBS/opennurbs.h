@@ -208,6 +208,7 @@
 #include "opennurbs_post_effects.h"        // Post Effect support.
 #include "opennurbs_mesh_modifiers.h"      // Mesh Modifiers support.
 #include "opennurbs_extensions.h"
+#include "opennurbs_worksession.h"         // Rhino worksession (.rws) files.
 #include "opennurbs_freetype.h"
 
 #if defined(OPENNURBS_PLUS)

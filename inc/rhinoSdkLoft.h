@@ -148,6 +148,17 @@ public:
     Tangent = 4,
   };
 
+  // 20 August 2026 (RH-97853) wfcook
+  // Direction of the surface tangent used when an end condition is LoftEnds::Tangent.
+  // Values match CRhinoPolyEdge::eTanMode, which rhino3Loft.cpp static_asserts.
+  // They are repeated here because rhinoSdkPolyEdge.h is included after this header.
+  enum class TangentDirection : unsigned char
+  {
+    Automatic = 0,     // isocurve direction on an isocurve edge, otherwise perpendicular
+    Isocurve = 1,      // parallel to the surface du or dv
+    Perpendicular = 2, // perpendicular to the edge
+  };
+
   CArgsRhinoLoftEx() = default;
   ~CArgsRhinoLoftEx() = default;
   CArgsRhinoLoftEx(const class CArgsRhinoLoft& src);
@@ -212,6 +223,14 @@ public:
   double Tolerance() const;
   void SetTolerance(double tol);
 
+  // 20 August 2026 (RH-97853) wfcook
+  // Used when the matching end condition is LoftEnds::Tangent.
+  TangentDirection StartTangentDirection() const;
+  void SetStartTangentDirection(TangentDirection direction);
+
+  TangentDirection EndTangentDirection() const;
+  void SetEndTangentDirection(TangentDirection direction);
+
 private:
   ON_3dPoint m_startpoint = ON_unset_point;
   ON_3dPoint m_endpoint = ON_unset_point;
@@ -224,7 +243,10 @@ private:
   bool m_bClosed = false;
   // 4 August 2026 (RH-89962) wfcook - m_bSolid replaces the former m_reserved1.
   bool m_bSolid = false;
-  unsigned short m_reserved2 = 0;
+  // 20 August 2026 (RH-97853) wfcook - the two tangent directions replace the former
+  // m_reserved2. Perpendicular is what Loft always did before they existed.
+  TangentDirection m_start_tangent_direction = TangentDirection::Perpendicular;
+  TangentDirection m_end_tangent_direction = TangentDirection::Perpendicular;
   enum LoftType m_loft_type = LoftType::Normal;
   enum LoftSimplify m_simplify_method = LoftSimplify::None;
   int m_rebuild_point_count = 10;

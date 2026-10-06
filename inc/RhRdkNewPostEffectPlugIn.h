@@ -33,7 +33,7 @@ protected:
 	and (partly) by 3rd-party plug-ins for custom post effects.
 
 	In the new system, post effects consist of:
-	- 'Early' post effects like Glare and Glow which operate on HDR (float) image data.
+	- 'Early' post effects like Bloom and Glow which operate on HDR (float) image data.
 	- 'Tone mapping' post effects like Filmic which convert HDR image data to LDR (8-bit) image data.
 	- 'Late' post effects like Gamma which operate on LDR image data.
 
@@ -492,10 +492,12 @@ public:
 		/** Return the pixel size in bytes for this channel. */
 		virtual unsigned int PixelSize(void) const = 0;
 
-		/** Return an interface to this channel for doing read/write operations on the channel using the CPU. */
+		/** Return an interface to this channel for doing read/write operations on the channel using the CPU.
+			This is null when the channel is on the graphics card and its pixels could not be read back. */
 		virtual IRhRdkRenderWindow::IChannelEx* CPU(void) = 0;
 
-		/** Return an interface to this channel for doing read-only operations on the channel using the CPU. */
+		/** Return an interface to this channel for doing read-only operations on the channel using the CPU.
+			This is null when the channel is on the graphics card and its pixels could not be read back. */
 		virtual const IRhRdkRenderWindow::IChannelEx* CPU(void) const = 0;
 
 		/** Return an interface to this channel for doing read/write operations on the channel using the GPU. */

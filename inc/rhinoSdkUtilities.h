@@ -1430,7 +1430,10 @@ Description:
 Parameters:
   input_loops [in] loops to sort and use as boundaries
   breps [out] array of 1 face Breps
-  notused - optional array to hold indices of the input curves that got used
+  used - optional array with one entry per input curve. Entry [i] is the index, into breps,
+         of the Brep input curve [i] was sorted onto, or -1 for none. Curves are listed per
+         sorted face, so an inner loop rejected while the Brep is built still leaves its
+         curves listed for that Brep.
 Returns:
   @untitled table
   TRUE     Success
@@ -2827,9 +2830,12 @@ Parameters:
   current_vp - [in]
     current projection - must be valid.
   border - [in]
-    If border > 1.0, then the frustum in enlarged by this factor
-    to provide a border around the view.  1.1 works well for
-    parallel projections; 0.0 is suggested for perspective projections.
+    If border > 1.0, then the frustum is enlarged by this factor
+    to provide a border around the view.  If 0.0 < border < 1.0, then
+    the frustum is shrunk by this factor and the objects will extend
+    past the edges of the view.  A border of 0.0 or 1.0 adds no border.
+    1.1 works well for parallel projections; 0.0 is suggested for
+    perspective projections.
   zoomed_vp - [out] (can be the same as current_vp)
     projection with a view frustum that contains the list
     of objects.
@@ -2867,9 +2873,12 @@ Description:
 Parameters:
   viewport - [in/out]
   border - [in]
-    If border > 1.0, then the frustum in enlarged by this factor
-    to provide a border around the view.  1.1 works well for
-    parallel projections; 0.0 is suggested for perspective projections.
+    If border > 1.0, then the frustum is enlarged by this factor
+    to provide a border around the view.  If 0.0 < border < 1.0, then
+    the frustum is shrunk by this factor and the objects will extend
+    past the edges of the view.  A border of 0.0 or 1.0 adds no border.
+    1.1 works well for parallel projections; 0.0 is suggested for
+    perspective projections.
 Returns:
   True if successful.
 Remarks:
@@ -2894,9 +2903,12 @@ Description:
 Parameters:
   viewport - [in/out]
   border - [in]
-    If border > 1.0, then the frustum in enlarged by this factor
-    to provide a border around the view.  1.1 works well for
-    parallel projections; 0.0 is suggested for perspective projections.
+    If border > 1.0, then the frustum is enlarged by this factor
+    to provide a border around the view.  If 0.0 < border < 1.0, then
+    the frustum is shrunk by this factor and the objects will extend
+    past the edges of the view.  A border of 0.0 or 1.0 adds no border.
+    1.1 works well for parallel projections; 0.0 is suggested for
+    perspective projections.
 Returns:
   True if successful.
 Remarks:
@@ -3143,17 +3155,121 @@ bool RhinoIntersectPlaneBrep(
 
 /*
 Description:
+  Data that RhinoIntersectPlaneGeometry computes from the geometry alone, kept between calls: the
+  mesh intersection cache of a mesh, and the brep a SubD, extrusion, surface or brep face converts to.
+  Reuse one cache for many planes through the same geometry, such as a contour stack.
+Remarks:
+  Entries are keyed by the address of the geometry. The cache must not outlive the geometry it was
+  used with. Call Clear() when that geometry is changed or deleted; not while it is in use.
+  One cache can be used from several threads at the same time.
+*/
+class RHINO_SDK_CLASS CRhinoPlaneIntersectionCache
+{
+public:
+  CRhinoPlaneIntersectionCache();
+  ~CRhinoPlaneIntersectionCache();
+  CRhinoPlaneIntersectionCache(const CRhinoPlaneIntersectionCache&) = delete;
+  CRhinoPlaneIntersectionCache& operator=(const CRhinoPlaneIntersectionCache&) = delete;
+
+  void Clear();
+
+private:
+  friend class CRhPlaneIntersectionCachePrivate;
+  class CRhPlaneIntersectionCachePrivate* m_private = nullptr;
+};
+
+/*
+Description:
+  Options for RhinoIntersectPlaneGeometry.
+*/
+class RHINO_SDK_CLASS CRhinoIntersectPlaneGeometryOptions
+{
+public:
+  CRhinoIntersectPlaneGeometryOptions();
+  ~CRhinoIntersectPlaneGeometryOptions();
+  CRhinoIntersectPlaneGeometryOptions(const CRhinoIntersectPlaneGeometryOptions&);
+  CRhinoIntersectPlaneGeometryOptions& operator=(const CRhinoIntersectPlaneGeometryOptions&);
+
+  // If true, join the resulting curves of each object where possible, for every geometry type.
+  // Curves of different objects, such as the objects of an instance definition, are never joined.
+  // True is the behavior of RhinoIntersectPlaneBrep.
+  bool m_bJoinCurves = true;
+
+  // If true, every point of a point cloud or point grid within tolerance of the plane is returned in
+  // points. If false, they are returned as one polyline in curves, as the Contour command does.
+  bool m_bPointCloudAsPoints = false;
+
+  // If false, the objects of an instance definition that are hidden or on a layer that is off are
+  // skipped, as the Contour command does. Nested instance references are entered whether they are
+  // visible or not, and their objects are tested one by one.
+  bool m_bIncludeHiddenObjects = false;
+
+  // The document that has the instance definition when the geometry is, or contains, an ON_InstanceRef.
+  // Can be null for other geometry.
+  const CRhinoDoc* m_doc = nullptr;
+
+  // Maps the geometry to the space of the plane and the results, as ON_InstanceRef::m_xform does.
+  // Avoids transforming a copy of the geometry. Must not be singular.
+  ON_Xform m_xform = ON_Xform::IdentityTransformation;
+
+  // Optional. Checked between the objects of an instance definition, in point clouds and in mesh
+  // intersections. A single brep intersection cannot be cancelled once it has started.
+  ON_Terminator* m_terminator = nullptr;
+
+  // Optional. See CRhinoPlaneIntersectionCache.
+  CRhinoPlaneIntersectionCache* m_cache = nullptr;
+
+private:
+  class CRhIntersectPlaneGeometryOptionsPrivate* m_private = nullptr;
+};
+
+/*
+Description:
   Plane - Geometry intersector.
 Parameters:
   plane       - [in]  The plane.
-  geometry    - [in]  The Brep.
+  pGeometry   - [in]  The geometry.
   tolerance   - [in]  The fitting and near miss tolerance.
-  bJoinCurves - [in]  If true, join the resulting curves where possible. Set to true for backwards compatibility with previous RhinoIntersectPlaneBrep
-  pDoc        - [in]  The document. Can be null if geometry is not an instance definition reference. Used for getting the instance definition transformation if geometry is an instance definition reference.
-  curves      - [out] The output 3d curves. NOTE, the caller is responsible for destroying these curves.
-  points      - [out] If non-NULL, the 3d intersection points.
+  options     - [in]  See CRhinoIntersectPlaneGeometryOptions.
+  curves      - [out] The output 3d curves are appended. NOTE, the caller is responsible for destroying these curves.
+  points      - [out] The 3d intersection points are appended.
 Returns:
-  TRUE if successful.
+  true if the intersection was computed, including when the plane misses the geometry.
+  For an ON_InstanceRef, true if it was computed for any object in the instance definition.
+  false if the plane is not valid, tolerance is negative or not a number, the geometry type is not
+  supported, the intersection failed or was cancelled, or options.m_xform or the transform of an
+  ON_InstanceRef is singular. Curves and points found before a failure or cancellation are still appended.
+Remarks:
+  The curves and points are projected onto the plane. Curves that are not valid after the
+  projection are not returned.
+  For options.m_xform and for an ON_InstanceRef, curves are fitted in the space of the geometry
+  with tolerance divided by the largest scale factor of the transform, so they are within tolerance
+  in world coordinates, also for non-uniform scale. Points are tested with their distance to the
+  plane in world coordinates. With non-uniform scale, overlaps of curves with the plane are detected
+  with the stricter curve tolerance, so a curve closer than tolerance to the plane can be missed as
+  an overlap.
+  When m_bJoinCurves is true, the open curves of each object are joined with RhinoMergeCurves: curves
+  can be reversed, very short curves can be dropped, and joined curves are ON_PolyCurve. Objects after a
+  cancellation are not joined.
+  For point clouds and point grids, the points within tolerance of the plane are returned in points
+  when m_bPointCloudAsPoints is true, all of them. Otherwise they are returned as one polyline in
+  curves, or in points when there is only one, and points closer together than tolerance are merged.
+  A lock is held while the intersection computes missing trim polylines of a brep (RH-55441).
+  Other data cached on pGeometry is not protected from other threads.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoIntersectPlaneGeometry(
+  const ON_Plane& plane,
+  const ON_Geometry* pGeometry,
+  double tolerance,
+  const CRhinoIntersectPlaneGeometryOptions& options,
+  ON_SimpleArray<ON_Curve*>& curves,
+  ON_3dPointArray& points);
+
+/*
+Description:
+  RhinoIntersectPlaneGeometry with options.m_bJoinCurves = bJoinCurves, options.m_doc = pDoc and
+  the other options at their defaults.
 */
 RHINO_SDK_FUNCTION
 bool RhinoIntersectPlaneGeometry(
@@ -3551,6 +3667,86 @@ bool RhinoBooleanSplit(
   const ON_SimpleArray<const ON_Brep*>& InBreps1,
   double tolerance,
   ON_SimpleArray<ON_Brep*>& OutBreps
+);
+
+/*
+Description:
+  Cuts a solid Brep with extrusions of closed planar curves.
+Parameters:
+  brep             - [in]  The solid (closed polysurface) to cut.
+  closed_curves    - [in]  Closed cutting curves. All are extruded along the same direction.
+  direction        - [in]  Extrusion direction of the cutters.
+  depth            - [in]  Extrusion depth. If <= 0 or ON_UNSET_VALUE, the cut
+                           goes all the way through the Brep (extent computed
+                           from the bounding box, as the command does on Enter).
+  bBothSides       - [in]  Extrude the cutters to both sides of the curves.
+                           Ignored when cutting through.
+  tolerance        - [in]  Intersection and boolean tolerance. If the boolean
+                           fails at this tolerance it is retried at a raised
+                           tolerance, as the command does.
+  bSplitKinkyFaces - [in]  Split output pieces along creases.
+  kept_pieces      - [out] Pieces that remain after the cut (boolean difference side).
+  cut_away_pieces  - [out] The cut-away pieces (boolean intersection side).
+Returns:
+  false if error.
+Remarks:
+  There is no keep/flip logic here - the caller decides which pieces to keep.
+  Memory for the output pieces is allocated and becomes the responsibility
+  of the caller.
+ */
+RHINO_SDK_FUNCTION
+bool RhinoWireCutBrep(
+  const ON_Brep& brep,
+  const ON_SimpleArray<const ON_Curve*>& closed_curves,
+  ON_3dVector direction,
+  double depth,
+  bool bBothSides,
+  double tolerance,
+  bool bSplitKinkyFaces,
+  ON_SimpleArray<ON_Brep*>& kept_pieces,
+  ON_SimpleArray<ON_Brep*>& cut_away_pieces
+);
+
+/*
+Description:
+  Cuts a solid Brep with a single open cutting curve. The open curve is extruded
+  along direction into a sheet, then along trim_direction to close the sheet
+  into a solid cutter.
+Parameters:
+  brep             - [in]  The solid (closed polysurface) to cut.
+  open_curve       - [in]  Open cutting curve.
+  direction        - [in]  First extrusion direction (the wire sweep).
+  trim_direction   - [in]  Second extrusion direction that closes the cutter.
+  depth            - [in]  Depth along direction. If <= 0 or ON_UNSET_VALUE,
+                           cuts through and skips trim capping.
+  trim_depth       - [in]  Depth along trim_direction. Ignored when cutting through.
+  bBothSides       - [in]  Extrude both ways along direction.
+  bTrimBothSides   - [in]  Extrude both ways along trim_direction.
+  tolerance        - [in]  Intersection and boolean tolerance.
+  bSplitKinkyFaces - [in]  Split output pieces along creases.
+  kept_pieces      - [out] Pieces that remain after the cut (boolean difference side).
+  cut_away_pieces  - [out] The cut-away pieces (boolean intersection side).
+Returns:
+  false if error.
+Remarks:
+  There is no keep/flip logic here - the caller decides which pieces to keep.
+  Memory for the output pieces is allocated and becomes the responsibility
+  of the caller.
+ */
+RHINO_SDK_FUNCTION
+bool RhinoWireCutBrepOpenCurve(
+  const ON_Brep& brep,
+  const ON_Curve& open_curve,
+  ON_3dVector direction,
+  ON_3dVector trim_direction,
+  double depth,
+  double trim_depth,
+  bool bBothSides,
+  bool bTrimBothSides,
+  double tolerance,
+  bool bSplitKinkyFaces,
+  ON_SimpleArray<ON_Brep*>& kept_pieces,
+  ON_SimpleArray<ON_Brep*>& cut_away_pieces
 );
 
 /*
@@ -6543,6 +6739,39 @@ bool RhinoPlanarSrf(
 
 /*
 Description:
+  Creates one or more Breps with a single planar face from an array of curves,
+  and reports which input curves bounded each Brep.
+Parameters:
+  InCurves     [in]  - Input loops to sort and use as boundaries.
+  OutBreps     [out] - Output array of Breps
+  tolerance    [in]  - The tolerance to be used to perform calculations.
+  BrepInputMap [out] - Emptied, then filled with one entry per Brep this call appends to
+                       OutBreps, in the same order. Entry [i] lists, ascending, the
+                       positions in InCurves of the curves sorted onto that Brep.
+Return:
+  True if successful, false otherwise.
+Remarks:
+  A curve that closes an outer loop and a curve that closes a hole in the same face are
+  both listed for that face, and a hole rejected while the Brep is built still leaves its
+  curves listed. A self-intersecting input is split into regions, and a curve
+  bounding several of them is listed for each, so the entries are not a partition of
+  InCurves. A curve the merge dropped, one sorted onto no face, and one whose face failed
+  to produce a valid Brep are listed nowhere.
+  Note, if a input  curve is self-intersecting, then curve boolean processing
+  will be used.
+  CRITICAL: Memory for the resulting Breps is allocated. It is the calling
+  functions responsibility to clean up the memory.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoPlanarSrf(
+  const ON_SimpleArray<const ON_Curve*>& InCurves,
+  ON_SimpleArray<ON_Brep*>& OutBreps,
+  double tolerance,
+  ON_ClassArray<ON_SimpleArray<int>>& BrepInputMap
+);
+
+/*
+Description:
   Given 6 or more pairs of screen (2d) and world (3d) points, together with
   the viewport, this function determines where the perspective camera is positioned.
   The image created by the screen points must be centered in the viewport; i.e., non
@@ -7459,6 +7688,7 @@ enum class RhinoRefitTrimKnotMode : int
 #pragma endregion
 
 /*
+WARNING: DEPRECATED. Use one of the new  RhinoCreate*FilletSrf
 Description:
   Creates a surface between two surfaces.
 Parameters:
@@ -7600,6 +7830,7 @@ bool RhinoFilletSurfaceToRail(
 );
 
 /*
+WARNING: DEPRECATED. Use one of the new  RhinoCreate*FilletSrf
 Description:
   Creates a non-rational constant-radius fillet surface between two surfaces.
 Parameters:
@@ -7641,6 +7872,7 @@ Parameters:
                       [3] max angle deviation along surface 1 (in degrees)
                       [4] max angle deviation between Bézier surfaces (in degrees)
                       [5] max  curvature difference between Bézier surfaces
+                      NOTE: Due to deprecation, the fitResults array will not be filled.
 Returns:
   true if successful, false otherwise.
 Remarks:
@@ -9896,7 +10128,9 @@ public:
   bool NonRationalCubicArcs(int rail_degree, bool bExtend, ON_SimpleArray<ON_Brep*>& Fillets);//Arc approximation
   bool NonRationalCubic(int rail_degree, double TanSlider, bool bExtend, ON_SimpleArray<ON_Brep*>& Fillets);
   bool G2ChordalQuintic(int rail_degree, bool bExtend, ON_SimpleArray<ON_Brep*>& Fillets);
-  //bool WhateverElse();
+  bool CollectRails(bool bExtend, ON_SimpleArray<ON_Curve*> Rails2d[2], ON_SimpleArray<ON_Curve*> Rails3d[2]);
+  // get the radii. these can be negative if the offset direction was flipped
+  bool CollectRadii(double radii[2]);
 
   //This will clear out the existing rails and fillet surfaces, 
   //and redo the offset intersections, etc. DO NOT use this for SrfToRail - there is no radius..  
@@ -10123,7 +10357,9 @@ Parameters:
   error            - [out] if the return value is false, the error will contain an error message.
 Returns:
   true if no errors were encountered.
+Deprecated: will always return false.
 */
+ON_DEPRECATED_MSG("will always return false.")
 RHINO_SDK_FUNCTION
 bool RhinoIntersectCurveImplicitFunction(
   const ON_Curve* curve,
@@ -10146,7 +10382,9 @@ Parameters:
   error            - [out] if the return value is false, the error will contain an error message.
 Returns:
   true if no errors were encountered.
+Deprecated: will always return false.
 */
+ON_DEPRECATED_MSG("will always return false.")
 RHINO_SDK_FUNCTION
 bool RhinoIntersectSurfaceImplicitFunction(
   const ON_Surface* surface,

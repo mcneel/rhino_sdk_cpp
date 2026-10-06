@@ -116,6 +116,43 @@ public:
   void SetDimensionTemplate(const ON_TextRunArray& template_runs);
   void ClearDimensionTemplate();
 
+  /*
+  Description:
+    Re-apply a dim style's font and text height to the authored dimension
+    template runs, in place. The template stores the authored text, so it must
+    follow the dim style's font and text height the way the displayed runs do;
+    rebuilding it from the plain user text instead would drop run-only
+    attributes such as super/subscript.
+    Runs whose font differs from the template's current baseline font are
+    treated as deliberate per-run overrides and are left unchanged.
+  Parameters:
+    dimstyle - [in]
+      The dim style the displayed text is being built for.
+    bResetBaseline - [in]
+      True when the template was just built or adopted for this dim style and
+      its runs already carry that font and height. The style is recorded as the
+      new baseline and no run is modified.
+  */
+  void SyncDimensionTemplateToDimStyle(
+    const ON_DimStyle* dimstyle,
+    bool bResetBaseline
+  );
+
+  /*
+  Description:
+    The dim style font and text height the dimension template runs are
+    currently configured for -- the baseline
+    SyncDimensionTemplateToDimStyle() compares against.
+    ON_TextContent::Create() resets this object to ON_TextContent::Empty and
+    so destroys the template along with this baseline. Callers that re-Create
+    an ON_TextContent and put the template runs back (the GetTextXform dim
+    style reparse) must restore the baseline with it: without it the next sync
+    has nothing to compare against and silently stops tracking the dim style.
+  */
+  const ON_Font* DimensionTemplateFont() const;
+  double DimensionTemplateTextHeight() const;
+  void SetDimensionTemplateBaseline(const ON_Font* font, double text_height);
+
   bool RunReplaceString(
     const wchar_t* repl_str,
     int start_run_idx,

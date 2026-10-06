@@ -1615,6 +1615,20 @@ public:
   */
   CRhinoPlugIn* PlugIn();
 
+  /*
+  Description:
+    Tests a CRhinoLicenseValidator pointer to see if it still references a
+    validator that has not been destroyed. Rhino Accounts hangs on to the
+    lease changed callback a plug-in supplied when it asked for a license, and
+    that callback outlives a validator owned by a plug-in that failed to load
+    or that was unloaded.
+  Parameters:
+    validator - [in] The pointer to test. NULL is allowed.
+  Returns:
+    True if validator points at a CRhinoLicenseValidator that is still alive.
+  */
+  static bool IsLiveValidator(const CRhinoLicenseValidator* validator);
+
 public:
   // This value will never be display in any user interface.
   // When your plug-in's ValidateProductKey member is called, it is

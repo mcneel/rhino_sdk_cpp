@@ -373,7 +373,7 @@ public: // Temporary implementation. [SDK_UNFREEZE]
 	static const IRhRdkSun* Sun(const IRhinoUiWithController& ui);
 };
 
-RDK_DEPRECATED class RHRDK_SDK IRhRdkRenderSettingsSection
+RDK_DEPRECATED_CLASS class RHRDK_SDK IRhRdkRenderSettingsSection
 {
 public:
 	/** Get the current environment settings. */

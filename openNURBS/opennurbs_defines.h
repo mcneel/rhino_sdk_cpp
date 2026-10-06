@@ -934,8 +934,15 @@ ON_StringMapOrdinalType ON_StringMapOrdinalTypeFromStringMapType(
 /// ON_ChainDirection is used to specify directions when building
 /// chains of components like edges or faces.
 ///</summary>
+#pragma region RH_C_SHARED_ENUM [ON_ChainDirection] [Rhino.Geometry.ChainDirection] [byte]
+/// <summary>
+/// Which way to search along a chain from the current link.
+/// </summary>
 enum class ON_ChainDirection : unsigned char
 {
+  ///<summary>
+  /// Not set.
+  ///</summary>
   Unset = 0,
 
   ///<summary>
@@ -953,6 +960,7 @@ enum class ON_ChainDirection : unsigned char
   ///</summary>
   Both = 3
 };
+#pragma endregion
 
 ///<summary>
 ///Style of color gradient
@@ -2394,7 +2402,8 @@ public:
     end_arrowhead        = 0x10, // arrow head at end
     both_arrowhead       = 0x18, // arrow heads at start and end
     end_arrowhead_base_at_end = 0x20,  // arrow head base at end
-    start_arrowhead_base_at_end = 0x28  // arrow head base at start
+    start_arrowhead_base_at_end = 0x28,  // arrow head base at start
+    both_arrowhead_base_at_end = 0x38  // arrow head bases at start and end
   };
   static object_decoration ObjectDecoration(int); // convert integer to line_pattern enum
 

@@ -279,7 +279,7 @@ private:
 class RHINO_SDK_CLASS CRhinoRebuildCurveOptions
 {
 public:
-  CRhinoRebuildCurveOptions() = default;
+  CRhinoRebuildCurveOptions();
   ~CRhinoRebuildCurveOptions() = default;
   CRhinoRebuildCurveOptions(const CRhinoRebuildCurveOptions&) = default;
   CRhinoRebuildCurveOptions& operator=(const CRhinoRebuildCurveOptions&) = default;
@@ -287,6 +287,9 @@ public:
 
 public:
   static const CRhinoRebuildCurveOptions Defaults;
+
+  void ReadSettings();
+  void WriteSettings();
 
 public:
   // Interface to use to get and update options used in curve rebuilding.
@@ -498,6 +501,21 @@ public:
       bool bDisplayOptionsChanged,
       const CRhinoRebuildCurveOptions& options)
   );
+
+  /// <summary>
+  /// https://mcneel.myjetbrains.com/youtrack/issue/RH-93796
+  /// When GetOptions() uses a dialog, the initial rebuild calculation is deferred so
+  /// that the dialog appears immediately instead of after that calculation finishes.
+  /// The dialog calls this function one time, after it is on the screen, and the
+  /// initial calculation and the first dynamic display happen then.
+  /// The dialog must update itself from these options when this function returns.
+  /// The calculation sets the current output properties a dialog reports and it can
+  /// increase the point count settings when kink splitting needs more points than
+  /// those settings specify.
+  /// Calling this function when no initial calculation is pending does nothing, so a
+  /// dialog that has already changed an option is not calculated twice.
+  /// </summary>
+  void CalculateInitialPreview();
 
   /// <summary>
   /// The value of RebuildOptionsHash() changes whenever any option that
@@ -872,6 +890,12 @@ private:
   bool m_bTangentMatchingPermitted = false;
   bool m_bKinkSplittingPermitted = false;
   bool m_bPointCountRangesPermitted = false;
+
+  /// <summary>
+  /// RH-93796 - True when GetOptions() deferred the initial rebuild calculation and
+  /// CalculateInitialPreview() has not performed it yet.
+  /// </summary>
+  bool m_bInitialPreviewPending = false;
   bool Internal_ClosedTargetCurves() const;
 
   ON_2dex m_before_kink_splitting_point_count_range = ON_2dex::Zero;
@@ -896,6 +920,15 @@ private:
   /// True if the point count settings were increased.
   /// </returns>
   bool Internal_IncreasePointCountForKinkSplitting();
+
+  /// <summary>
+  /// RH-93796 - Calculates the initial rebuilt curves, performs the first dynamic
+  /// display and reconciles the point count settings with what that calculation
+  /// actually used. GetOptions() calls this directly when there is no dialog to show
+  /// first and CalculateInitialPreview() calls it when there is.
+  /// </summary>
+  void Internal_CalculateInitialPreview();
+
   ON_SHA1_Hash m_rebuild_options_hash = ON_SHA1_Hash::EmptyContentHash;
   ON_SHA1_Hash m_document_management_options_hash = ON_SHA1_Hash::EmptyContentHash;
   unsigned int m_rhino_doc_sn = 0;

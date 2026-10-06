@@ -660,13 +660,15 @@ public:
   /* Used by UserDataChanged(). */
   enum class UserDataType
   {
-    Decals,
+    Decals, // Decal user data was changed.
+    All,    // The user data was replaced wholesale and the caller does not know what changed.
   };
 
   /*
   Description:
     This method should be called to notify the object that some user data has been changed.
-    At the moment, this is only used by decals.
+    At the moment, this is only used by decals. Callers that replace the user data without
+    knowing what was in it should pass UserDataType::All.
   */
 	void UserDataChanged(UserDataType type);
 
