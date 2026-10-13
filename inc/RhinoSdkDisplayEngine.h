@@ -663,6 +663,40 @@ public:
   //  left: [in] screen coordinate left location to draw top-left corner of dib
   //  top: [in] screen coordinate top location to draw top-left corner of dib
   virtual void DrawBitmap(const CRhinoDib& dib, int left, int top);
+
+  // Pixel formats accepted by DrawBitmap
+  enum class PixelFormat : unsigned int
+  {
+    RGBA32F = 0, // 4 x 32-bit float, R,G,B,A (16 bytes per pixel)
+    RGBA16F = 1, // 4 x 16-bit IEEE half float, R,G,B,A (8 bytes per pixel)
+    RGBA8   = 2, // 4 x 8-bit unsigned normalized, R,G,B,A (4 bytes per pixel)
+    BGRA8   = 3  // 4 x 8-bit unsigned normalized, B,G,R,A (4 bytes per pixel, Windows DIB order)
+  };
+
+  // Description:
+  //  Draw a bitmap from raw pixel data into a rectangle in viewport pixel
+  //  coordinates.
+  // Parameters:
+  //  pixels: [in] pixel data laid out as described by format and rowStrideBytes
+  //  width:  [in] bitmap width in pixels
+  //  height: [in] bitmap height in pixels
+  //  format: [in] format of the data in pixels.
+  //  destLeft: [in] viewport x coordinate of the left edge of the bitmap
+  //  destTop:  [in] viewport y coordinate of the top edge of the bitmap
+  //  destWidth:  [in] width in viewport pixels to draw the bitmap at
+  //  destHeight: [in] height in viewport pixels to draw the bitmap at
+  //  rowStrideBytes: [in] bytes from the start of one row to the start of the next.
+  //          0 means tightly packed (width * bytes per pixel). Otherwise it must be at
+  //          least width * bytes per pixel and a multiple of the pixel size.
+  //  bottomUp: [in] false if the first row in memory is the top of the bitmap,
+  //            true if it is the bottom of the bitmap. Pass the same value when
+  //            redrawing a cached bitmap.
+  //  cache: [in/out] where the uploaded bitmap is kept between calls
+  // Returns:
+  //  true if the bitmap was drawn (including when it is entirely outside the viewport)
+  bool DrawBitmap(const void* pixels, int width, int height, PixelFormat format,
+                  int destLeft, int destTop, int destWidth, int destHeight,
+                  int rowStrideBytes = 0, bool bottomUp = false, CRhinoCacheHandle* cache = nullptr);
   
   // Description:
   //  Flushes any and all buffers used by the engine.

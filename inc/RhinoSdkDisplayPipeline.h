@@ -11,6 +11,12 @@
 ////////////////////////////////////////////////////////////////
 #pragma once
 
+#if defined(ON_RUNTIME_APPLE) && defined(__OBJC__)
+@protocol MTLDevice;
+@protocol MTLCommandQueue;
+@protocol MTLRenderCommandEncoder;
+#endif
+
 
 struct ClippingInfo
 {
@@ -1980,6 +1986,38 @@ public:
   //  GPU technology.
   //  NOTE: AddRef is NOT called on this IUnknown instance
   struct ID3D11DeviceContext1* GetDirect3d11DeviceContext();
+
+#if defined(ON_RUNTIME_APPLE)
+#if defined(__OBJC__)
+  // Description:
+  //  If the pipeline is running on top of Metal, this function will
+  //  return the id<MTLDevice> being used. nil will be returned if the
+  //  pipeline is running on some other GPU technology.
+  //  NOTE: The returned object is NOT retained (+0). Do not release it.
+  id<MTLDevice> GetMetalDevice();
+  // Description:
+  //  If the pipeline is running on top of Metal, this function will
+  //  return the id<MTLCommandQueue> used for drawing. nil will be returned
+  //  if the pipeline is running on some other GPU technology.
+  //  NOTE: The returned object is NOT retained (+0). Do not release it.
+  id<MTLCommandQueue> GetMetalCommandQueue();
+  // Description:
+  //  If the pipeline is running on top of Metal and a frame is currently
+  //  being encoded, this function will return the id<MTLRenderCommandEncoder>
+  //  for the active render pass. Only valid during a conduit callback
+  //  (ExecConduit). nil will be returned if the pipeline is running on some
+  //  other GPU technology or no frame is being encoded.
+  //  NOTE: The returned object is NOT retained (+0). Do not release it, and do
+  //  not call endEncoding on it.
+  id<MTLRenderCommandEncoder> GetMetalRenderCommandEncoder();
+#else
+  // Plain C++ versions of the above. Returned pointers are the Objective-C
+  // objects cast to void* (use __bridge to convert). NOT retained.
+  void* GetMetalDevice();
+  void* GetMetalCommandQueue();
+  void* GetMetalRenderCommandEncoder();
+#endif
+#endif
 
 protected:
   // Description:

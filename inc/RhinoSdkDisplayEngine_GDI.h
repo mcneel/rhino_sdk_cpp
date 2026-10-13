@@ -83,6 +83,7 @@ public:
     class CRhinoCacheHandle* cache
     ) override;
 
+  using CRhinoDisplayEngine::DrawBitmap; // keep the raw pixel overload visible
   void DrawBitmap(const CRhinoDib&, int  nX, int  nY) override;
 
   void DrawString(const ON_TextContent& text, const ON_Xform& textXform, ON_Color color,

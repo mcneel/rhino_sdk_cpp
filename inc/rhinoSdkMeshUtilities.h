@@ -275,6 +275,8 @@ public:
   // RH-94152: borrowed. When non-null, the boolean fills it with one index set per output mesh,
   // listing the input-mesh indices that contributed to it (see SourceMeshIndexMap below).
   ON_ClassArray<ON_SimpleArray<int>>* m_inputMap = nullptr;
+  // RH-97369: borrowed; when non-null, receives the ends of the cuts that stop inside a mesh the operation splits.
+  ON_3dPointArray* m_openCutEnds = nullptr;
 };
 
 /// <summary>
@@ -311,6 +313,17 @@ public:
 
   /// <summary>Returns the index map requested via RequestSourceMeshIndexMap, or null.</summary>
   ON_ClassArray<ON_SimpleArray<int>>* SourceMeshIndexMap() const;
+
+  /// <summary>
+  /// Requests the ends of the intersections that stop inside a mesh the operation splits (RH-97369):
+  /// such a cut separates nothing. Nothing is computed unless requested. The pointer is borrowed; the
+  /// array is appended to, not cleared.
+  /// </summary>
+  /// <param name="ends">Receives the open cut ends, or null to disable.</param>
+  void RequestOpenCutEnds(ON_3dPointArray* ends);
+
+  /// <summary>Returns the array requested via RequestOpenCutEnds, or null.</summary>
+  ON_3dPointArray* OpenCutEnds() const;
 
 private:
   class CRhMeshBooleanOptionsPrivate* m_private = nullptr;
@@ -662,10 +675,28 @@ int RhinoAlignMeshVertices(ON_SimpleArray<ON_Mesh*>& MeshArray, const ON_ClassAr
 
 /*
 Description:
+Color to give the vertices of an object's mesh that has no vertex colors of its own, when that
+mesh is joined to meshes that have them. It is the color the object is drawn with, so the mesh
+looks the same after the join: objects colored by layer get their layer's current color, objects
+colored by object get their object color. The result is always opaque.
+
+Parameters:
+pObject - [in] Object whose mesh is being joined. Null gives the default layer's color, for
+  meshes that belong to no object.
+
+Returns:
+Opaque color for the vertices of the mesh.
+*/
+RHINO_SDK_FUNCTION
+ON_Color RhinoVertexColorForMeshWithoutVertexColors(const CRhinoObject* pObject);
+
+/*
+Description:
 Gives a mesh the per-vertex attributes asked for, using placeholder values where the mesh has
 nothing of its own to supply. Appending meshes together keeps a per-vertex attribute only when
 every one of them has it, so meshes about to be appended need to agree on which ones they carry.
-Vertex normals are computed; the other attributes are filled with placeholders.
+Vertex normals are computed; vertex colors are filled with missingVertexColor; the other
+attributes are filled with placeholders.
 
 Parameters:
 mesh - [in/out] Mesh to add the missing attributes to.
@@ -675,26 +706,33 @@ bVertexColors - [in] Add vertex colors if the mesh has none.
 bPrincipalCurvatures - [in] Add principal curvatures if the mesh has none.
 cachedTextureCoordinateCount - [in] Number of cached texture coordinate sets the mesh should end
   up with. Pass 0 to leave the cached sets alone.
+missingVertexColor - [in] Color of every vertex when vertex colors are added. Normally
+  RhinoVertexColorForMeshWithoutVertexColors() of the mesh's object.
 */
 RHINO_SDK_FUNCTION
-void RhinoMeshAddMissingVertexAttributes(ON_Mesh& mesh, bool bVertexNormals, bool bTextureCoordinates, bool bVertexColors, bool bPrincipalCurvatures, int cachedTextureCoordinateCount);
+void RhinoMeshAddMissingVertexAttributes(ON_Mesh& mesh, bool bVertexNormals, bool bTextureCoordinates, bool bVertexColors, bool bPrincipalCurvatures, int cachedTextureCoordinateCount, ON_Color missingVertexColor);
 
 /*
 Description:
 Appends meshes into one, keeping every per-vertex attribute that at least one of them carries.
 A mesh that does not carry an attribute the others do is given placeholder values for it, so a
-single mesh without vertex colors no longer costs the result the colors of all the others. An
-attribute none of them carries is left off the result.
+single mesh without vertex colors no longer costs the result the colors of all the others. A mesh
+without vertex colors gets its entry of missingVertexColors on every vertex; when every vertex color
+of the other meshes has alpha 255, which the display draws as opaque, the entry is given alpha 255
+too, so the result keeps drawing opaque. An attribute none of them carries is left off the result.
 
 Parameters:
 meshes - [in] Meshes to append together. Null entries are skipped.
 joinedMesh - [in/out] The meshes are appended to this one, which is normally empty on the way in.
+missingVertexColors - [in] Optional, parallel to meshes: the vertex color of each mesh that has
+  none, normally RhinoVertexColorForMeshWithoutVertexColors() of its object. A missing array or
+  entry gives RhinoVertexColorForMeshWithoutVertexColors(nullptr).
 
 Returns:
 True if at least one mesh was appended.
 */
 RHINO_SDK_FUNCTION
-bool RhinoJoinMeshesPreservingVertexAttributes(const ON_SimpleArray<const ON_Mesh*>& meshes, ON_Mesh& joinedMesh);
+bool RhinoJoinMeshesPreservingVertexAttributes(const ON_SimpleArray<const ON_Mesh*>& meshes, ON_Mesh& joinedMesh, const ON_SimpleArray<ON_Color>* missingVertexColors = nullptr);
 
 /*
 Description:
@@ -715,6 +753,9 @@ Parameters:
                              per-object attributes take them from this one.
   pieceInputIndices   - [out] Optional, parallel to the appended results: every index in meshes[]
                              that contributed to each piece, sorted and without duplicates.
+  missingVertexColors - [in] Optional, parallel to meshes: the vertex color of each mesh that has
+                             none, used when it is joined to meshes that have them. See
+                             RhinoJoinMeshesPreservingVertexAttributes().
 Returns:
   Number of meshes appended to joinedMeshes.
 */
@@ -726,7 +767,8 @@ int RhinoJoinMeshes(
   double alignDistance,
   ON_SimpleArray<ON_Mesh*>& joinedMeshes,
   ON_SimpleArray<int>* pieceSourceIndices = nullptr,
-  ON_ClassArray<ON_SimpleArray<int>>* pieceInputIndices = nullptr);
+  ON_ClassArray<ON_SimpleArray<int>>* pieceInputIndices = nullptr,
+  const ON_SimpleArray<ON_Color>* missingVertexColors = nullptr);
 
 /*
 Description:
@@ -784,6 +826,34 @@ results - [out] The returned results. Nullptr is inserted if the input needs no 
 */
 RHINO_SDK_FUNCTION
 int RhinoAlignVertices(ON_SimpleArray<const ON_Geometry*>& meshesSubdsAndPointclouds, ON_SimpleArray<ON_Geometry*>& results, double distance, bool onlyNaked, const ON_SimpleArray<const ON_SimpleArray<bool>*>* vertexFlags, bool averagePoints);
+
+/*
+Description:
+Same as RhinoAlignVerticesInPlace, with the caller deciding which vertices keep their place.
+Unless averagePoints is true, a vertex keeps its place and the vertices within distance move onto it,
+in the order the vertices are visited. By default that order is the order of the inputs, and of the
+vertex indices within each input.
+Parameters:
+claimOrder - [in] Pairs (i = index of the input, j = index of its vertex) that are visited first, in this
+  order. j uses the same indices as vertexFlags. A j of ON_UNSET_UINT_INDEX stands for every vertex of
+  input i. Vertices that are not listed are visited afterwards in the default order. Pairs out of range
+  are ignored. Can be null.
+[other parameters as in RhinoAlignVerticesInPlace]
+*/
+RHINO_SDK_FUNCTION
+int RhinoAlignVerticesInPlace(ON_SimpleArray<ON_Geometry*>& meshesSubdsAndPointclouds, double distance, bool onlyNaked, const ON_SimpleArray<const ON_SimpleArray<bool>*>* vertexFlags, bool averagePoints, const ON_SimpleArray<ON_2udex>* claimOrder);
+
+/*
+Description:
+Same as RhinoAlignVertices, with the caller deciding which vertices keep their place.
+Does not modify the input array.
+Parameters:
+results - [out] The returned results. Nullptr is inserted if the input needs no adjusting.
+claimOrder - [in] As in RhinoAlignVerticesInPlace with claimOrder.
+[other parameters as in RhinoAlignVerticesInPlace]
+*/
+RHINO_SDK_FUNCTION
+int RhinoAlignVertices(ON_SimpleArray<const ON_Geometry*>& meshesSubdsAndPointclouds, ON_SimpleArray<ON_Geometry*>& results, double distance, bool onlyNaked, const ON_SimpleArray<const ON_SimpleArray<bool>*>* vertexFlags, bool averagePoints, const ON_SimpleArray<ON_2udex>* claimOrder);
 
 /*
 Description:

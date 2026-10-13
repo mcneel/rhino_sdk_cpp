@@ -2461,8 +2461,8 @@ public:
     // The index of the markup that was added, deleted, undeleted, or modified.
     int m_markup_index;
 
-    // If the event is CRhinoDocMarkupTableChanged::EventType::MarkupModified, then
-    // the old markup. Otherwise, this parameter is nullptr.
+    // If the event is CRhinoDocMarkupTableChanged::EventType::MarkupModified or
+    // MarkupDeleted, then the old markup. Otherwise, this parameter is nullptr.
     // WARNING:
     //   This objects may be deleted at any time after Notify is called.
     //   Do not save the pointer and dereference it later.

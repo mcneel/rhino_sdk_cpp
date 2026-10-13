@@ -169,6 +169,7 @@ public:
   //  Draws a ground plane into the frame buffer.
   void DrawGroundPlane(const class CDisplayPipelineAttributes& dpa, const class CRhDisplayGroundPlane& groundplane) override;
 
+  using CRhinoDisplayEngine::DrawBitmap; // keep the raw pixel overload visible
   void DrawBitmap(const CRhinoDib& dib, int left, int top) override;
   void DrawBitmap(const CRhinoDib& dib, int left, int top, int width, int height);
 

@@ -2182,14 +2182,20 @@ public:
   /*
     An intersection curve that stops inside the mesh being split does not separate one side from the
     other, so the mesh is returned whole. When this is enabled, each such open end is joined to the
-    nearest border of the mesh, or to another cut, following edges the mesh already has. This yields
-    a best-effort cut where the intersection alone leaves the answer undetermined: the added stretch
-    follows existing edges rather than the cutter, so it is not an intersection result. No vertex is
-    moved and no face is added. Cuts that already close, or that already run from border to border,
-    are unaffected.
+    nearest border of the mesh, or to another cut, by the shortest path along existing edges or
+    straight across a quad or an n-gon between two of its vertices. This yields a best-effort cut
+    where the intersection alone leaves the answer undetermined: the added stretch follows the mesh
+    rather than the cutter, so it is not an intersection result. No vertex is added or moved; faces
+    crossed straight are re-tiled from their own vertices. Cuts that already close, or that already
+    run from border to border, are unaffected.
   */
   bool CompleteOpenCuts() const; // Defaults to false
   void SetCompleteOpenCuts(bool enable);
+
+  // When ends is not nullptr, a split appends to it the end of every intersection curve that stops inside a mesh being split.
+  // Nothing is computed when it is nullptr. The array must outlive the split; it is not cleared first.
+  void RequestOpenCutEnds(ON_3dPointArray* ends);
+  ON_3dPointArray* OpenCutEnds() const; // Defaults to nullptr
 };
 
 #endif
@@ -4447,11 +4453,12 @@ instance of ON_MeshIntersectionOptions.
     completeOpenCuts - [in]
       An intersection curve that stops inside the mesh does not separate one side from the other, so
       the mesh is returned whole. If true, each such open end is joined to the nearest border of the
-      mesh, or to another cut, following edges the mesh already has. This yields a best-effort cut
-      where the intersection alone leaves the answer undetermined: the added stretch follows existing
-      edges rather than the splitters, so it is not an intersection result. No vertex is moved and no
-      face is added. Cuts that already close, or that already run from border to border, are
-      unaffected. Defaults to false.
+      mesh, or to another cut, by the shortest path along existing edges or straight across a quad or
+      an n-gon between two of its vertices. This yields a best-effort cut where the intersection alone
+      leaves the answer undetermined: the added stretch follows the mesh rather than the splitters, so
+      it is not an intersection result. No vertex is added or moved; faces crossed straight are
+      re-tiled from their own vertices. Cuts that already close, or that already run from border to
+      border, are unaffected. Defaults to false.
     cancel - [out]
       If not nullptr, a trigger to request termination. When cancellation is requested, the return value will often be false.
       You are responsible to delete new objects that were returned, even if you requested cancellation.
@@ -4519,6 +4526,17 @@ instance of ON_MeshIntersectionOptions.
     ON_Terminator* cancel,
     ON_ProgressReporter* reporter,
     bool completeOpenCuts);
+
+  /*
+    Same as above, with every setting read from options (nullptr for the defaults), including
+    ON_MeshSplitOptions::RequestOpenCutEnds.
+  */
+  static bool SplitArray(
+    const ON_SimpleArray<const ON_Mesh*>& meshesToSplit,
+    const ON_SimpleArray<const ON_Mesh*>& meshesThatSplit,
+    const ON_MeshSplitOptions* options,
+    bool* somethingHappened,
+    ON_SimpleArray<ON_Mesh*>& results);
 
   /*
   Description:
