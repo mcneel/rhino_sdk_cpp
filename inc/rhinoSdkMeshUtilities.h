@@ -277,6 +277,11 @@ public:
   ON_ClassArray<ON_SimpleArray<int>>* m_inputMap = nullptr;
   // RH-97369: borrowed; when non-null, receives the ends of the cuts that stop inside a mesh the operation splits.
   ON_3dPointArray* m_openCutEnds = nullptr;
+  // Borrowed; when non-null, each receives what the operation could not do (see the matching Request functions).
+  ON_SimpleArray<ON_2dex>* m_unmergedResultPairs = nullptr;
+  ON_SimpleArray<int>* m_openResults = nullptr;
+  ON_SimpleArray<ON_2dex>* m_failedInputPairs = nullptr;
+  bool m_resolveSelfIntersections = false;
 };
 
 /// <summary>
@@ -324,6 +329,51 @@ public:
 
   /// <summary>Returns the array requested via RequestOpenCutEnds, or null.</summary>
   ON_3dPointArray* OpenCutEnds() const;
+
+  /// <summary>
+  /// Requests the pairs of union results that were left apart because joining them would have left
+  /// naked edges, as indices into the results of the call. Nothing is computed unless requested. The
+  /// pointer is borrowed; the array is appended to, not cleared.
+  /// </summary>
+  /// <param name="pairs">Receives the index pairs, or null to disable.</param>
+  void RequestUnmergedResultPairs(ON_SimpleArray<ON_2dex>* pairs);
+
+  /// <summary>Returns the array requested via RequestUnmergedResultPairs, or null.</summary>
+  ON_SimpleArray<ON_2dex>* UnmergedResultPairs() const;
+
+  /// <summary>
+  /// Requests the indices of the results that have naked edges although no input mesh had any.
+  /// Nothing is computed unless requested. The pointer is borrowed; the array is appended to, not cleared.
+  /// </summary>
+  /// <param name="results">Receives the result indices, or null to disable.</param>
+  void RequestOpenResults(ON_SimpleArray<int>* results);
+
+  /// <summary>Returns the array requested via RequestOpenResults, or null.</summary>
+  ON_SimpleArray<int>* OpenResults() const;
+
+  /// <summary>
+  /// Requests the pairs of input meshes whose operation with each other could not be computed. For the
+  /// two-set operations (Difference/Intersection/Split) the indices are flat-concatenated as in
+  /// RequestSourceMeshIndexMap; a union pair is listed only when its meshes ended in different results.
+  /// Nothing is computed unless requested. The pointer is borrowed; the array is appended to, not cleared.
+  /// </summary>
+  /// <param name="pairs">Receives the input index pairs, or null to disable.</param>
+  void RequestFailedInputPairs(ON_SimpleArray<ON_2dex>* pairs);
+
+  /// <summary>Returns the array requested via RequestFailedInputPairs, or null.</summary>
+  ON_SimpleArray<ON_2dex>* FailedInputPairs() const;
+
+  /// <summary>
+  /// Sets whether union, difference and intersection first read an input mesh that intersects itself, or whose
+  /// closed parts nest in each other or are wound inside out, as the solid it encloses. When disabled, the
+  /// default, this is done only when the result computed from the inputs as given has naked or non-manifold
+  /// edges it should not have, or could not be computed, and the result from the resolved inputs has neither.
+  /// </summary>
+  /// <param name="resolve">True to always resolve such inputs.</param>
+  void SetResolveSelfIntersections(bool resolve);
+
+  /// <summary>Returns the value set via SetResolveSelfIntersections.</summary>
+  bool ResolveSelfIntersections() const;
 
 private:
   class CRhMeshBooleanOptionsPrivate* m_private = nullptr;

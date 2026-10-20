@@ -3283,6 +3283,31 @@ bool RhinoIntersectPlaneGeometry(
 
 /*
 Description:
+  Intersects a mesh with each plane on its own, as RhinoIntersectPlaneGeometry does for one plane.
+Parameters:
+  planes     - [in]  Planes that are not valid are skipped and make the result false.
+  mesh       - [in]  The mesh.
+  tolerance  - [in]  The document tolerance, as for RhinoIntersectPlaneGeometry.
+  cache      - [in/out] Optional. Can be reused for more planes through the same mesh.
+  terminator - [in]  Optional.
+  polylines  - [out] The intersections and the outlines of the parts of the mesh lying in a plane are
+                     appended in plane order, not projected onto the planes. The caller deletes them.
+Returns:
+  true if every plane was intersected, including planes that miss the mesh.
+  false if the mesh is empty, tolerance is negative or not a number, a plane is not valid, or an
+  intersection failed or was cancelled. Polylines found before a failure are still appended.
+*/
+RHINO_SDK_FUNCTION
+bool RhinoIntersectPlanesMesh(
+  const ON_SimpleArray<ON_Plane>& planes,
+  const ON_Mesh& mesh,
+  double tolerance,
+  ON_MeshIntersectionCache* cache,
+  ON_Terminator* terminator,
+  ON_SimpleArray<ON_Polyline*>& polylines);
+
+/*
+Description:
   Brep face - curve intersector. Gets 3d points of intersection
   and 3d overlap curves.  Returns FALSE if there is an error processing an
   overlap curve.  In that case, partial results will be returned.

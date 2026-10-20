@@ -187,7 +187,7 @@ public:
   void SetIOSettings(ON_3dmIOSettings io_settings );
   
   void UpdateFileWriteOptionsFromIOSettings(CRhinoFileWriteOptions& fwo) const;
-  void UpdateIOSettingsFromFileWriteOptions(const CRhinoFileWriteOptions& fwo); //Calls SetIOSettings
+  void UpdateIOSettingsFromFileWriteOptions(const CRhinoFileWriteOptions& fwo); //Calls SetIOSettings only when a value changes
 
   //////////
   // model space tolerances and unit system

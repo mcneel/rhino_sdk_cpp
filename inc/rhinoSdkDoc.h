@@ -4909,6 +4909,28 @@ public:
 
   /*
   Returns:
+    The description of the undo record currently being recorded, as
+    shown in Undo, Redo, and UndoMultiple. If no description has been
+    set, this is the name of the command that owns the record. Empty
+    if undo recording is not active.
+  */
+  ON_wString CurrentUndoRecordDescription() const;
+
+  /*
+  Description:
+    Sets the description of the undo record currently being recorded.
+    Lets code running inside a command (e.g. RunPythonScript) give its
+    undo record a meaningful name in Undo, Redo, and UndoMultiple.
+  Parameters:
+    sDescription - [in] new description. Cannot be nullptr, empty, or
+                   only white space.
+  Returns:
+    true if an undo record is active and its description was set.
+  */
+  bool SetCurrentUndoRecordDescription(const wchar_t* sDescription);
+
+  /*
+  Returns:
     The serial number that will be assigned to the next
     undo record that is constructed.
   */

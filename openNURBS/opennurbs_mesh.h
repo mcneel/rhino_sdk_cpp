@@ -6469,6 +6469,34 @@ Returns:
 
   /*
   Description:
+    Intersect this mesh with each plane on its own.
+  Parameters:
+    planes - [in] planes that are not valid are skipped and make the result false.
+    tolerance - [in] see remarks at GetIntersections() function.
+    perforations - [out] intersection polylines are appended in plane order if not nullptr.
+    overlaps - [out] outlines of the parts of this mesh lying in a plane are appended in plane
+               order if not nullptr. Can be the same array as perforations.
+    cache - [in-out] optional; can be reused for more planes through this same mesh.
+    cancel - [in] optional.
+  Returns:
+    true if every plane was intersected, including planes that miss this mesh.
+    false if this mesh is empty, tolerance is negative or not a number, a plane is not valid,
+    or an intersection failed or was cancelled. Polylines found before are still appended.
+    The caller deletes the polylines.
+  Remarks:
+    ON_MeshXPlane and TL_MeshXPlane are the other mesh-plane intersectors.
+  */
+  bool IntersectPlanes(
+          const ON_SimpleArray<ON_Plane>& planes,
+          double tolerance,
+          ON_SimpleArray<ON_Polyline*>* perforations,
+          ON_SimpleArray<ON_Polyline*>* overlaps,
+          ON_MeshIntersectionCache* cache = nullptr,
+          ON_Terminator* cancel = nullptr
+          ) const;
+
+  /*
+  Description:
     Compute area of the mesh.
   Parameters:
     error_estimate - [out]  if not nullptr, an upper bound on the error
@@ -10022,6 +10050,7 @@ private:
   ON_MeshX& operator=(const ON_MeshX&) = delete;
 };
 
+// Another mesh-plane intersector: see ON_Mesh::IntersectPlanes.
 class ON_CLASS ON_MeshXPlane : public ON_MeshX
 {
 public:
