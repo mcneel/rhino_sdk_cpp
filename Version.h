@@ -6,7 +6,7 @@
 
 // To update version numbers, edit ..\build\build_dates.msbuild
 #define RMA_VERSION_MAJOR 9
-#define RMA_VERSION_MINOR 0
+#define RMA_VERSION_MINOR 1
 
 ////////////////////////////////////////////////////////////////
 //
@@ -14,10 +14,10 @@
 // first step in each build.
 //
 #define RMA_VERSION_YEAR   2026
-#define RMA_VERSION_MONTH  10
-#define RMA_VERSION_DATE   27
+#define RMA_VERSION_MONTH  11
+#define RMA_VERSION_DATE   10
 #define RMA_VERSION_HOUR   9
-#define RMA_VERSION_MINUTE 40
+#define RMA_VERSION_MINUTE 0
 
 ////////////////////////////////////////////////////////////////
 //
@@ -35,8 +35,8 @@
 //     3 = build system release build
 #define RMA_VERSION_BRANCH 2
 
-#define VERSION_WITH_COMMAS  9,0,26300,9402
-#define VERSION_WITH_PERIODS 9.0.26300.09402
+#define VERSION_WITH_COMMAS  9,1,26314,9002
+#define VERSION_WITH_PERIODS 9.1.26314.09002
 #define COPYRIGHT "Copyright (C) 1993-2026, Robert McNeel & Associates. All Rights Reserved."
 #define SPECIAL_BUILD_DESCRIPTION "Rhino 9"
 
@@ -44,11 +44,11 @@
 #define RMA_VERSION_NUMBER_MAJOR_WSTRING L"9"
 #define RMA_PREVIOUS_VERSION_NUMBER_MAJOR_WSTRING L"8"
 
-#define RMA_VERSION_NUMBER_SR_STRING   "SR0"
-#define RMA_VERSION_NUMBER_SR_WSTRING L"SR0"
+#define RMA_VERSION_NUMBER_SR_STRING   "SR1"
+#define RMA_VERSION_NUMBER_SR_WSTRING L"SR1"
 
-#define RMA_VERSION_WITH_PERIODS_STRING   "9.0.26300.09402"
-#define RMA_VERSION_WITH_PERIODS_WSTRING L"9.0.26300.09402"
+#define RMA_VERSION_WITH_PERIODS_STRING   "9.1.26314.09002"
+#define RMA_VERSION_WITH_PERIODS_WSTRING L"9.1.26314.09002"
 
 // BEGIN - OBSOLETE SVN INFORMATION ////////////////////////////
 ////////////////////////////////////////////////////////////////
@@ -58,7 +58,7 @@
 // the git revision SHA-1 hash in hexadecimal format.
 
 // OBSOLETE - current set to git hash
-#define RMA_SRC_SVN_REVISION "b5c4aa079c11dd91ccd7b6aa067f5029f3fccf72"
+#define RMA_SRC_SVN_REVISION "e7a246f3aefa1afad39e4dc6c2abb31fa5ca4d6f"
 
 // OBSOLETE - never changed
 #define RMA_SRC_SVN_BRANCH ""

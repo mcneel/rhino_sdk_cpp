@@ -418,6 +418,63 @@ private:
   ON_MemoryAllocationTracking& operator=(const ON_MemoryAllocationTracking&) = delete;
 };
 
+#if defined(OPENNURBS_PLUS)
+/*
+Description:
+  While a deferral is open on the calling thread, memory allocation does not
+  stop that thread when its worker has been canceled. If a cancel arrived while
+  open, the thread stops when the outermost deferral ends.
+  Code that starts helper threads using the calling thread's stack must keep a
+  deferral open until those threads are joined, and should poll
+  ON_WorkerThreadStopRequested() to return early.
+  Use ON_WorkerThreadTerminateDeferral instead of calling these directly.
+*/
+ON_DECL
+void ON_BeginWorkerThreadTerminateDeferral();
+
+ON_DECL
+void ON_EndWorkerThreadTerminateDeferral();
+
+/*
+Description:
+  Call on a worker thread, before it opens any deferral, so its deferrals
+  are included in ON_WorkerThreadTerminateDeferralCount().
+*/
+ON_DECL
+void ON_TrackWorkerThreadTerminateDeferrals();
+
+/*
+Returns:
+  Number of deferrals open on threads that called ON_TrackWorkerThreadTerminateDeferrals().
+*/
+ON_DECL
+unsigned int ON_WorkerThreadTerminateDeferralCount();
+
+/*
+Returns:
+  True if the calling thread runs a worker that has been asked to stop.
+*/
+ON_DECL
+bool ON_WorkerThreadStopRequested();
+
+/*
+Description:
+  Sets the function ON_WorkerThreadStopRequested() calls.
+*/
+ON_DECL
+void ON_SetWorkerThreadStopRequestedQuery(bool(*fStopRequested)(void));
+
+class ON_WorkerThreadTerminateDeferral
+{
+public:
+  ON_WorkerThreadTerminateDeferral() { ON_BeginWorkerThreadTerminateDeferral(); }
+  ~ON_WorkerThreadTerminateDeferral() { ON_EndWorkerThreadTerminateDeferral(); }
+
+  ON_WorkerThreadTerminateDeferral(const ON_WorkerThreadTerminateDeferral&) = delete;
+  ON_WorkerThreadTerminateDeferral& operator=(const ON_WorkerThreadTerminateDeferral&) = delete;
+};
+#endif
+
 #endif
 
 #endif

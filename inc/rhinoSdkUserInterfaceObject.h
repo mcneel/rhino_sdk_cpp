@@ -1124,6 +1124,99 @@ private:
 };
 
 // Description:
+//  A drop-down list: a box that shows the item chosen, and the list of items that
+//  opens under it when the box is clicked. Choosing an item in the list, with the
+//  mouse or the keyboard, changes the selection and calls OnSelectionChanged, the
+//  virtual to override to do something about the change.
+//
+//  The open list is drawn over every other user interface object and over the
+//  edges of the grid the drop-down sits in. While it is open it has the mouse to
+//  itself: a click on an item chooses it, and a click anywhere else in the view
+//  closes the list and goes no further. The mouse wheel scrolls a list that is
+//  longer than MaximumVisibleItems.
+//
+//  The keyboard, once the drop-down has focus: Up and Down, Home and End move
+//  through the items - choosing as they go when the list is closed, the way a
+//  combo box in a dialog does, and only moving the highlight when it is open.
+//  Alt+Down, F4 or Space opens the list; Enter or Space chooses the highlighted
+//  item, Escape closes the list without changing anything and Tab moves on. A
+//  letter goes to the next item that starts with it.
+//
+//  The box shows the selected item, or the placeholder text when nothing is
+//  selected. CRhinoUserInterfaceControl::Text is not used.
+class RHINO_SDK_CLASS CRhinoUserInterfaceDropDown : public CRhinoUserInterfaceControl
+{
+public:
+  CRhinoUserInterfaceDropDown();
+  virtual ~CRhinoUserInterfaceDropDown();
+
+  void Draw(CRhinoDisplayPipeline& dp) override;
+  bool IsMouseOver(const CRhinoMouseEventArgs& mouse) override;
+  void OnMouseDown(const CRhinoMouseEventArgs& mouse) override;
+  void OnMouseEnter(const CRhinoMouseEventArgs& mouse) override;
+  void OnMouseLeave(const CRhinoMouseEventArgs& mouse) override;
+
+  ON_2fSize ComputeSize() const override;
+  ON_4fRect ComputedRect(const CRhinoDisplayPipeline* pipeline, bool logicalPixels) const override;
+
+  bool AcceptsKeyboardFocus() const override;
+  void OnKeyboardFocusChanged(bool hasFocus) override;
+  bool OnKeyDown(unsigned int virtualKey, unsigned int flags) override;
+  bool OnCharacter(unsigned int character, unsigned int flags) override;
+
+  // Description:
+  //  The items in the list, in the order they are shown. AddItem returns the index
+  //  the item went in at. Inserting or removing items keeps the same item selected;
+  //  removing the selected item leaves nothing selected. None of these call
+  //  OnSelectionChanged.
+  int ItemCount() const;
+  int AddItem(const wchar_t* text);
+  bool InsertItem(int index, const wchar_t* text);
+  bool RemoveItem(int index);
+  void RemoveAllItems();
+  ON_wString Item(int index) const;
+  bool SetItem(int index, const wchar_t* text);
+
+  // Description:
+  //  Index of the item chosen, -1 when nothing is. Setting it does not call
+  //  OnSelectionChanged; that is only for a choice the user made. An index out of
+  //  range selects nothing. SelectedItem is the text of the item chosen, empty when
+  //  nothing is.
+  int SelectedIndex() const;
+  void SetSelectedIndex(int index);
+  ON_wString SelectedItem() const;
+
+  // Description:
+  //  Text drawn, dimmed, in the box when nothing is selected
+  void SetPlaceholderText(const wchar_t* text);
+  const ON_wString& PlaceholderText() const;
+
+  // Description:
+  //  Most items the open list shows at once; a longer list scrolls. The default is
+  //  10. The list also shrinks to what fits in the view.
+  void SetMaximumVisibleItems(int count);
+  int MaximumVisibleItems() const;
+
+  // Description:
+  //  Is the list open? OpenList opens it in the view the drop-down was last drawn
+  //  in, or in the active view before it has been drawn, and returns false when the
+  //  drop-down is hidden or has no items. Only one list is open at a time: opening
+  //  one closes any other. CloseList closes it without changing the selection.
+  bool IsListOpen() const;
+  bool OpenList();
+  void CloseList();
+
+  // Description:
+  //  Called after the user chose a different item, from the list or with the keys.
+  //  The base implementation does nothing.
+  virtual void OnSelectionChanged();
+
+private:
+  friend class CRhUserInterfaceDropDownPrivate;
+  class CRhUserInterfaceDropDownPrivate* m_ui_dropdown_private = nullptr;
+};
+
+// Description:
 //  A control that arranges child controls in a grid of rows and columns.
 //  A grid shares ownership of the controls added to it: it holds a
 //  std::shared_ptr to each one, so a control lives for as long as the grid or

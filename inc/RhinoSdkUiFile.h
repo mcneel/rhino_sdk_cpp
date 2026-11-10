@@ -25,6 +25,15 @@ public:
   ON_wString m_tooltip;
 };
 
+// One image as returned by CRhinoUiFile::Pngs().
+class RHINO_SDK_CLASS CRhinoUiImagePng
+{
+public:
+  UUID m_image_id = ON_nil_uuid;
+  // PNG encoded bytes; empty when the image could not be rendered.
+  ON_SimpleArray<unsigned char> m_png;
+};
+
 class RHINO_SDK_CLASS CRhinoUiFile
 {
 public:
@@ -247,6 +256,20 @@ public:
   // Parameters:
   //  background[in] Background color. ON_Color::UnsetColor keeps the image transparent.
   static bool Png(UUID idFile, UUID idImage, bool darkMode, int size, const ON_Color& background, ON_SimpleArray<unsigned char>& png);
+
+  // Description:
+  //  Same as Png() for many images at once. The images are rendered in parallel, so use
+  //  this instead of calling Png() per image. Images are rendered from their SVG every time,
+  //  without the toolbar image cache or a custom image theme.
+  // Parameters:
+  //  idFile[in] Id of the file containing the images.
+  //  imageIds[in] Ids of the images to render.
+  //  darkMode, size, background[in] Same as for Png(). With a size of 0 each image goes through
+  //    Png() one at a time, so pass the size you need.
+  //  pngs[out] Receives one entry per id in imageIds, in the same order. Emptied first.
+  // Returns:
+  //  The number of images rendered.
+  static int Pngs(UUID idFile, const ON_SimpleArray<UUID>& imageIds, bool darkMode, int size, const ON_Color& background, ON_ClassArray<CRhinoUiImagePng>& pngs);
 
 private:
   CRhinoUiFile() = delete;

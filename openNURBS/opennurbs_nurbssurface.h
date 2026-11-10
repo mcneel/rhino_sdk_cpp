@@ -653,10 +653,6 @@ public:
    );
 #endif
 
-#if defined(ON_COMPILER_CLANG)
-#pragma clang diagnostic push
-#pragma clang diagnostic ignored "-Winconsistent-missing-override"
-#endif
   /*
   Description:
     Offset surface.
@@ -676,10 +672,25 @@ public:
         double offset_distance, 
         double tolerance, 
         double* max_deviation = nullptr
-        ) const;
-  // NOTE: some compilers believe the above is an override and msvc/others do not
-#if defined(ON_COMPILER_CLANG)
-#pragma clang diagnostic pop
+        ) const
+
+// MDvR: the base class ON_Surface::Offset is only defined when OPENNURBS_PLUS is defined
+// but ON_NurbsSurface::Offset is defined even if OPENNURBS_PLUS is not defined.
+// this conditional override ensures no warnings are emitted. 
+#if defined(OPENNURBS_PLUS)
+    override
+#endif
+    ;
+
+#if defined(OPENNURBS_PLUS)
+  // virtual ON_Surface::GetLocalClosestPoint override.
+  bool GetLocalClosestPoint(
+    const ON_3dPoint& P,
+    double s, double t,
+    double *u, double *v,
+    const ON_Interval *s_subdomain = nullptr,
+    const ON_Interval *t_subdomain = nullptr
+  ) const override;
 #endif
 
   // virtual ON_Surface::GetNurbForm() override.

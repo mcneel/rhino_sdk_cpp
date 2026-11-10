@@ -921,6 +921,30 @@ typedef bool (*ON_PLUS_FUNCTION_ON_NurbsCurveGetLength)(
 
 ////////////////////////////////////////////////////////////////////////
 //
+// Used by ON_NurbsCurve::GetNormalizedArcLengthPoint.
+//
+typedef bool (*ON_PLUS_FUNCTION_ON_NurbsCurveGetNormalizedArcLengthPoint)(
+  const class ON_NurbsCurve*,
+  double,
+  double*,
+  double,
+  const ON_Interval*);
+
+////////////////////////////////////////////////////////////////////////
+//
+// Used by ON_NurbsCurve::GetNormalizedArcLengthPoints.
+//
+typedef bool (*ON_PLUS_FUNCTION_ON_NurbsCurveGetNormalizedArcLengthPoints)(
+  const class ON_NurbsCurve*,
+  int,
+  const double*,
+  double*,
+  double,
+  double,
+  const ON_Interval*);
+
+////////////////////////////////////////////////////////////////////////
+//
 // Used by ON_NurbsCurve::GetLocalClosestPoint.
 //
 typedef bool (*ON_PLUS_FUNCTION_ON_NurbsCurveGetLocalClosestPoint)(
@@ -940,6 +964,36 @@ typedef ON_Surface* (*ON_PLUS_FUNCTION_ON_NurbsSurfaceOffset)(
   double,
   double,
   double*);
+
+////////////////////////////////////////////////////////////////////////
+//
+// Used by ON_NurbsSurface::GetLocalClosestPoint.
+//
+typedef bool (*ON_PLUS_FUNCTION_ON_NurbsSurfaceGetLocalClosestPoint)(
+  const class ON_NurbsSurface*,
+  const ON_3dPoint&,
+  double,
+  double,
+  double*,
+  double*,
+  const ON_Interval*,
+  const ON_Interval*
+  );
+
+////////////////////////////////////////////////////////////////////////
+//
+// Used by ON_SumSurface::GetLocalClosestPoint.
+//
+typedef bool (*ON_PLUS_FUNCTION_ON_SumSurface_GetLocalClosestPoint)(
+  const class ON_SumSurface*,
+  const ON_3dPoint&,
+  double,
+  double,
+  double*,
+  double*,
+  const ON_Interval*,
+  const ON_Interval*
+  );
 
 ////////////////////////////////////////////////////////////////////////
 //
@@ -1251,9 +1305,25 @@ public:
   static
     ON_PLUS_FUNCTION_ON_NurbsCurveGetLocalClosestPoint f_ON_NurbsCurve_GetLocalClosestPoint;
 
+  // Used by ON_NurbsCurve::GetNormalizedArcLengthPoint
+  static
+    ON_PLUS_FUNCTION_ON_NurbsCurveGetNormalizedArcLengthPoint f_ON_NurbsCurve_GetNormalizedArcLengthPoint;
+
+  // Used by ON_NurbsCurve::GetNormalizedArcLengthPoints
+  static
+    ON_PLUS_FUNCTION_ON_NurbsCurveGetNormalizedArcLengthPoints f_ON_NurbsCurve_GetNormalizedArcLengthPoints;
+
   // Used by ON_NurbsSurface::Offset
   static
     ON_PLUS_FUNCTION_ON_NurbsSurfaceOffset f_ON_NurbsSurface_Offset;
+
+  // Used by ON_NurbsSurface::GetLocalClosestPoint
+  static
+    ON_PLUS_FUNCTION_ON_NurbsSurfaceGetLocalClosestPoint f_ON_NurbsSurface_GetLocalClosestPoint;
+
+  // Used by ON_SumSurface::GetLocalClosestPoint
+  static
+    ON_PLUS_FUNCTION_ON_SumSurface_GetLocalClosestPoint f_ON_SumSurface_GetLocalClosestPoint;
 };
 
 
@@ -1301,8 +1371,12 @@ void TL_PLUS_FUNCTION_Set_IntegratePointers();
 void TL_PLUS_FUNCTION_Set_MinimizePointers();
 void TL_PLUS_FUNCTION_Set_GetCurveSeparationPointers();
 void TL_PLUS_FUNCTION_Set_NurbsCurveGetLength();
+void TL_PLUS_FUNCTION_Set_NurbsCurveGetNormalizedArcLengthPoint();
+void TL_PLUS_FUNCTION_Set_NurbsCurveGetNormalizedArcLengthPoints();
 void TL_PLUS_FUNCTION_Set_NurbsCurveGetLocalClosestPoint();
 void TL_PLUS_FUNCTION_Set_NurbsSurfaceOffset();
+void TL_PLUS_FUNCTION_Set_NurbsSurfaceGetLocalClosestPoint();
+void TL_PLUS_FUNCTION_Set_SumSurfaceGetLocalClosestPoint();
 #endif
 
 #endif

@@ -2538,6 +2538,7 @@ public:
   friend class CRhDisplayEnginePrivate_OGL;
   friend class CRhDisplayEnginePrivate_D3D11;
   friend class CRhDisplayEnginePrivate_D3D12;
+  friend class CRhDisplayEnginePrivate_Vulkan;
 };
 
 

@@ -268,6 +268,26 @@ public:
   ) const override;
 
   // virtual ON_Curve override
+  bool GetNormalizedArcLengthPoint(
+    double s,
+    double* t,
+    double fractional_tolerance = 1.0e-8,
+    const ON_Interval* sub_domain = nullptr
+  ) const override;
+
+  // virtual ON_Curve override. Note: the fractional arc length
+  // values in 's' must be in [0, 1] and must
+  // be monotonically ascending: s[i] < s[i+1]
+  bool GetNormalizedArcLengthPoints(
+    int count,
+    const double* s,
+    double* t,
+    double absolute_tolerance = 0.0,
+    double fractional_tolerance = 1.0e-8,
+    const ON_Interval* sub_domain = nullptr
+  ) const override;
+
+  // virtual ON_Curve override
   bool GetLocalClosestPoint( 
     const ON_3dPoint& test_point,
     double seed_parameter,

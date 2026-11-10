@@ -72,6 +72,23 @@ class ON_CLASS ON_DepthImage
     ON_UUID projection_id
     );
 
+  /*
+  Description:
+    Same as SetProjection(vp,image_width,image_height,projection_id), but stores only
+    the rows first_row <= j < first_row+row_count. The stored rows get exactly the
+    same values as in a full image. Nothing is drawn into the other rows, and
+    GetPixel() returns false for them. Several threads can each draw one band of
+    an image this way.
+  */
+  bool SetProjection(
+    const ON_Viewport& vp,
+    unsigned int image_width,
+    unsigned int image_height,
+    ON_UUID projection_id,
+    unsigned int first_row,
+    unsigned int row_count
+    );
+
   ON_UUID ProjectionId() const;
 
   const ON_Viewport& ProjectionViewport() const;

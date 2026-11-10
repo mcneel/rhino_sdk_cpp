@@ -174,6 +174,13 @@ public:
              const ON_MeshParameters& mp,
              ON_Mesh* mesh = nullptr
              ) const override;
+
+  bool GetLocalClosestPoint(const ON_3dPoint& test_point,
+        double s0, double t0,       // seed_parameters
+        double* s, double* t,       // parameters of local closest point returned here
+        const ON_Interval* sdomain, // first parameter sub_domain
+        const ON_Interval* tdomain  // second parameter sub_domain
+        ) const override;
 #endif
 
   bool SetDomain( 

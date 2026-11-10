@@ -12,6 +12,113 @@
 
 #pragma once
 
+/*
+Description:
+  Options for RhinoSdkBlend::SurfaceBlend. The defaults give the result of
+  the BlendSrf command when its dialog is accepted unchanged.
+  Side 0 is the first edge, side 1 the second.
+*/
+class RHINO_SDK_CLASS CArgsRhinoSurfaceBlend
+{
+public:
+  CArgsRhinoSurfaceBlend();
+  ~CArgsRhinoSurfaceBlend();
+  CArgsRhinoSurfaceBlend(const CArgsRhinoSurfaceBlend&);
+  CArgsRhinoSurfaceBlend& operator=(const CArgsRhinoSurfaceBlend&);
+
+  /*
+  Returns:
+    Continuity of the blend at the side's edge.
+      0: position
+      1: tangency
+      2: curvature (default)
+      3: G3
+      4: G4
+  */
+  int Continuity(int side) const;
+
+  /*
+  Parameters:
+    continuity - [in] 0 to 4. Other values are clamped to that range.
+  */
+  void SetContinuity(int side, int continuity);
+
+  /*
+  Returns:
+    Scale factor for the blend's tangent lengths at the side's edge,
+    the Bulge setting of BlendSrf. The default is 1.0.
+  */
+  double Bulge(int side) const;
+
+  /*
+  Parameters:
+    bulge - [in] Must be greater than zero. Other values leave the
+                 setting unchanged.
+  */
+  void SetBulge(int side, double bulge);
+
+  /*
+  Returns:
+    True to give every blend shape the height of a shape spanning the
+    average of the gaps at the two ends of the blend, the Same height
+    setting of BlendSrf. The default is false.
+  */
+  bool SameHeight() const;
+  void SetSameHeight(bool bSameHeight);
+
+  /*
+  Returns:
+    True to add blend shapes at the edit points of the edges when the edges
+    are compatible, the Interior shapes setting of BlendSrf. Has no effect when
+    Refine() is true. The default is true.
+  */
+  bool InteriorShapes() const;
+  void SetInteriorShapes(bool bInteriorShapes);
+
+  /*
+  Returns:
+    True to fit the blend to tolerance instead of making the simple blend
+    that compatible edges allow, the Refine setting of BlendSrf.
+    The default is false.
+  */
+  bool Refine() const;
+  void SetRefine(bool bRefine);
+
+  /*
+  Returns:
+    True if every blend shape lies in a plane parallel to
+    PlanarSectionDirection(), the Planar sections setting of BlendSrf.
+    The default is false.
+  */
+  bool PlanarSections() const;
+  void SetPlanarSections(bool bPlanarSections);
+
+  /*
+  Returns:
+    Direction the planar sections are parallel to. Used only when
+    PlanarSections() is true. The default is the world z axis.
+  */
+  ON_3dVector PlanarSectionDirection() const;
+
+  /*
+  Parameters:
+    direction - [in] A zero or invalid vector leaves the setting unchanged.
+  */
+  void SetPlanarSectionDirection(const ON_3dVector& direction);
+
+private:
+  int m_continuity[2] = { 2, 2 };
+  double m_bulge[2] = { 1.0, 1.0 };
+  bool m_bSameHeight = false;
+  bool m_bInteriorShapes = true;
+  bool m_bRefine = false;
+  bool m_bPlanarSections = false;
+  ON_3dVector m_planar_section_direction = ON_3dVector::ZAxis;
+
+  // Settings added in later versions go here, so the layout of this class does not change
+  class CRhSurfaceBlendArgsPrivate* m_private = nullptr;
+};
+
 class RHINO_SDK_CLASS RhinoSdkBlend
 {
 public:
@@ -86,6 +193,8 @@ public:
                              0: position
                              1: tangency
                              2: curvature
+                             3: G3
+                             4: G4
       [in] pF1         - Second face to blend from
       [in] pE1         - Second edge to blend from
       [in] domain1     - domain on pE1 to use
@@ -95,10 +204,15 @@ public:
                              0: position
                              1: tangency
                              2: curvature
+                             3: G3
+                             4: G4
       [out] output_surfaces - results returned here
     Returns:
       true if successful
       false if not
+    Remarks:
+      Same as the form that takes CArgsRhinoSurfaceBlend, with default settings and
+      the absolute tolerance of the modeless user interface document.
   */
   ON_DEPRECATED_MSG("Use the form that takes a rhino document")
   static bool SurfaceBlend(
@@ -128,6 +242,8 @@ public:
                            0: position
                            1: tangency
                            2: curvature
+                           3: G3
+                           4: G4
     [in] pF1         - Second face to blend from
     [in] pE1         - Second edge to blend from
     [in] domain1     - domain on pE1 to use
@@ -137,13 +253,18 @@ public:
                            0: position
                            1: tangency
                            2: curvature
+                           3: G3
+                           4: G4
     [out] output_surfaces - results returned here
   Returns:
     true if successful
     false if not
+  Remarks:
+    Same as the form that takes CArgsRhinoSurfaceBlend, with default settings and
+    the absolute tolerance of doc.
 */
   static bool SurfaceBlend(
-    CRhinoDoc& doc, 
+    CRhinoDoc& doc,
     const ON_BrepFace* pF0,
     const ON_BrepEdge* pE0,
     ON_Interval domain0,
@@ -154,6 +275,44 @@ public:
     ON_Interval domain1,
     bool bRev1,
     int continuity1,
+    ON_SimpleArray<ON_Brep*>& output_surfaces);
+
+/*
+  Description
+    Makes the surface blend the BlendSrf command makes between 2 surface edges
+  Parameters:
+    [in] pF0         - First face to blend from
+    [in] pE0         - Edge of pF0 to blend from
+    [in] domain0     - Part of pE0 to use, in pE0's parameters
+    [in] bRev0       - if bRev0 is false, pE0 will be used in its natural direction
+                       if bRev0 is true, pE0 will be used in the reversed direction
+    [in] pF1         - Second face to blend from
+    [in] pE1         - Edge of pF1 to blend from
+    [in] domain1     - Part of pE1 to use, in pE1's parameters
+    [in] bRev1       - if bRev1 is false, pE1 will be used in its natural direction
+                       if bRev1 is true, pE1 will be used in the reversed direction
+    [in] args        - Continuity and the other BlendSrf settings
+    [in] tolerance   - Fitting tolerance, the document's absolute tolerance in BlendSrf
+    [out] output_surfaces - results are appended here
+  Returns:
+    true if successful
+    false if not
+  Remarks:
+    When the whole of two closed edges is used, the blend is closed, and the seams
+    and directions are matched the way BlendSrf matches them automatically.
+    bRev0 and bRev1 are not used in that case.
+*/
+  static bool SurfaceBlend(
+    const ON_BrepFace* pF0,
+    const ON_BrepEdge* pE0,
+    ON_Interval domain0,
+    bool bRev0,
+    const ON_BrepFace* pF1,
+    const ON_BrepEdge* pE1,
+    ON_Interval domain1,
+    bool bRev1,
+    const CArgsRhinoSurfaceBlend& args,
+    double tolerance,
     ON_SimpleArray<ON_Brep*>& output_surfaces);
 
 /*

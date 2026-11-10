@@ -120,6 +120,23 @@ public:
   bool ContainsAllEdges() const;
   
 #if defined(OPENNURBS_PLUS)
+  
+  /*
+  Description:
+    Evaluate surface point.
+  Parameters:
+    t - [in] ON_PolyEdgeCurve curve parameter
+    srfpoint - [out] location on surface
+  Remarks:
+    srfpoint will usually not coincide exactly with the point obtained from
+    ::EvPoint, ::PointAt or ::Evaluate as the surface edge curve is
+    an approximation to within tolerance of the surface trim.
+  */
+  bool EvSrfPoint(
+    double T,
+    ON_3dPoint& srfpoint
+    ) const;
+
   /*
   Description:
     Evaluate surface binormal and normal.
@@ -127,17 +144,53 @@ public:
     t - [in] ON_PolyEdgeCurve curve parameter
     srfpoint - [out] location on surface
     edgetangent - [out] tangent to the edge
-    srfbinormal - [out] "binormal" tangent to the surface, perpendicular to the edge
+    edgebinormal - [out] "binormal" to the surface, perpendicular to the edge tangent and surface normal
     srfisodir - [out] tangent to the surface, parallel to the isocurve closest to binormal direction
     srfnormal - [out] normal to surface
+  Remarks:
+    - srfpoint will usually not coincide exactly with the point obtained from
+      ::EvPoint, ::PointAt or ::Evaluate as the surface edge curve is
+      an approximation to within tolerance of the surface trim.
+    - edgetangent is the tangent from the edge curve
+    - edgebinormal is perpendicular to the *edge* tangent and the surface normal
+  See also:
+    EvSrfTangent
   */
   bool EvaluateTangents( 
           double t,
           ON_3dPoint& srfpoint,
           ON_3dVector& edgetangent,
-          ON_3dVector& srfbinormal,
+          ON_3dVector& edgebinormal,
           ON_3dVector& srfisodir,
           ON_3dVector& srfnormal
+          ) const;
+
+  /*
+  Description:
+    Evaluate surface point and tangent.
+  Parameters:
+    t - [in] ON_PolyEdgeCurve curve parameter
+    bIsoDir - [in] (if true, the tangent will be parallel to an isodir)
+    srfpoint - [out] location on surface
+    srftangent - [out] the tangent along the edge in the surface tangent plane
+    srfnormal - [out] normal to surface
+  Returns:
+    true if the segment at parameter t is a brep edge and the results were calculated successfully
+  Remarks:
+    - srfpoint will usually not coincide exactly with the point obtained from
+      ::EvPoint, ::PointAt or ::Evaluate as the surface edge curve is
+      an approximation to within tolerance of the surface trim.
+    - srftangent will usually not coincide exactly with the edgetangent obtained
+      from ::EvaluateTangents as the surface edge curve is an approximation
+      to within tolernace of the surface trim and its tangent will not lie
+      exactly in the surface tangent plane.
+  See also:
+    EvaluateTangents
+  */
+  bool EvSrfTangent( 
+          double t,
+          ON_3dPoint& srfpoint,
+          ON_3dVector& srftangent
           ) const;
 
   /*
@@ -147,16 +200,26 @@ public:
     t - [in] ON_PolyEdgeCurve curve parameter
     bIsoDir - [in] (if true, the tangent will be parallel to an isodir)
     srfpoint - [out] location on surface
-    srftangent - [out] "binormal" tangent to the surface.
+    srfbinormal - [out] "binormal" tangent to the surface, perpendicular to the surface tangent and the surface normal.
          The direction of this tangent is controlled by
-         the surface tangent mode setting.
-    srfnormal - [out] normal to surface,
+         the surface tangent mode setting. It always points out of the face.
+    srfnormal - [out] normal to surface
+  Returns:
+    true if the segment at parameter t is a brep edge and the results were calculated successfully
+  Remarks:
+    - srfpoint will usually not coincide exactly with the point obtained from
+      ::EvPoint, ::PointAt or ::Evaluate as the surface edge curve is
+      an approximation to within tolerance of the surface trim.
+    - srfbinormal is perpendicular to the *surface* tangent and the surface normal
+      and will usually not coincide exactly with the binormal obtained from ::EvaluateTangents
+  See also:
+    EvaluateTangents
   */
   bool EvSrfTangent( 
           double t,
           bool bIsoDir,
           ON_3dPoint& srfpoint,
-          ON_3dVector& srftangent,
+          ON_3dVector& srfbinormal,
           ON_3dVector& srfnormal
           ) const;
 
@@ -180,6 +243,25 @@ public:
 
   /*
   Description:
+    Evaluate the curvature of the curve C(t) = S(u(t), v(t))
+  Parameters:
+    t - [in] ON_PolyEdgeCurve curve parameter
+    srfpoint - [out] location on surface
+    srftangent - [in] tangent to the surface
+    srfcurvature - [out] curvature
+  See Also:
+    ON_PolyEdgeCurve::EvSrfNormalCurvature
+    ON_PolyEdgeCurve::EvSrfTangent   
+  */
+  bool EvSrfCurvature(
+            double t,
+            ON_3dPoint& srfpoint,
+            ON_3dVector& srftangent,
+            ON_3dVector& srfcurvature
+          ) const;
+
+  /*
+  Description:
     Evaluate surface derivatives.
   Parameters:
     t - [in] ON_PolyEdgeCurve curve parameter
@@ -189,6 +271,10 @@ public:
     duu - [out]
     duv - [out]
     dvv - [out]
+  Remarks:
+    srfpoint will usually not coincide exactly with the point obtained from
+    ::EvPoint, ::PointAt or ::Evaluate as the surface edge curve is
+    an approximation to within tolerance of the surface trim.
   */
   bool EvSrfDerivatives(
           double t,

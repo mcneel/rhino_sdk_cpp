@@ -126,8 +126,13 @@ public:
 		clip_id -[in]   This is an optional parameter the user can use to identify the clipping plane.
 	Returns:
 		true if clipping planes have been set.
+		false if Draw has already been called.
 	Remarks:
 		A point x in model space is visible if p(x)<=0 for each clipping plane p.
+
+		Every plane is appended, so a plane's index matches the order it was added in.
+		A plane that is not set (ON_PlaneEquation::IsSet(): a coefficient is unset, NaN or infinite,
+		or the normal is zero) is kept in the list but clips nothing.
 
 		Only allowed before calling Draw.
 		The clipping planes are append to the ON_HiddenLineDrawing::m_clipping_plane array.
